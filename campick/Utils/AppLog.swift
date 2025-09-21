@@ -11,11 +11,7 @@ enum AppLogLevel: String { case debug = "DEBUG", info = "INFO", warn = "WARN", e
 
 enum AppLog {
     // Toggle for global enable/disable in DEBUG
-    #if DEBUG
-    static let enabled = true
-    #else
-    static let enabled = false
-    #endif
+    static let enabled = true // 디버그 모드 일 때만 보고 싶으면, false로 수정
 
     static func debug(_ message: String, category: String = "APP") {
         log(.debug, message, category: category)

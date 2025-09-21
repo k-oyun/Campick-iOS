@@ -46,24 +46,30 @@ class ProfileDataViewModel: ObservableObject {
 
         let targetMemberId = memberId ?? UserState.shared.memberId
 
+        print("[ProfileDataViewModel] loadProfile targetMemberId: \(targetMemberId.isEmpty ? "<empty>" : targetMemberId)")
+
         guard !targetMemberId.isEmpty else {
-            errorMessage = "사용자 ID를 찾을 수 없습니다."
+            errorMessage = "사용자 정보를 찾을 수 없습니다."
             isLoading = false
+            shouldRedirectToLogin = true
             return
         }
 
         do {
             // 프로필 정보는 반드시 필요하므로 먼저 조회
             let profile = try await ProfileService.fetchMemberInfo(memberId: targetMemberId)
+            print("[ProfileDataViewModel] fetchMemberInfo success for memberId: \(targetMemberId)")
             profileResponse = profile
 
             // 판매중 상품 조회 (401/403 시 빈 배열 처리)
             do {
                 let sellingPage = try await ProfileService.fetchMemberProducts(memberId: targetMemberId, page: 0, size: 2)
+                print("[ProfileDataViewModel] fetchMemberProducts success - count: \(sellingPage.content.count)")
                 sellingProductsPage = sellingPage
                 sellingProducts = sellingPage.content
                 currentSellingPage = 0
             } catch {
+                print("[ProfileDataViewModel] fetchMemberProducts error: \(error)")
                 if isAuthError(error) {
                     // 401/403 오류 시 빈 배열로 처리
                     sellingProductsPage = createEmptyPage()
@@ -77,10 +83,12 @@ class ProfileDataViewModel: ObservableObject {
             // 판매완료 상품 조회 (401/403 시 빈 배열 처리)
             do {
                 let soldPage = try await ProfileService.fetchMemberSoldProducts(memberId: targetMemberId, page: 0, size: 2)
+                print("[ProfileDataViewModel] fetchMemberSoldProducts success - count: \(soldPage.content.count)")
                 soldProductsPage = soldPage
                 soldProducts = soldPage.content
                 currentSoldPage = 0
             } catch {
+                print("[ProfileDataViewModel] fetchMemberSoldProducts error: \(error)")
                 if isAuthError(error) {
                     // 401/403 오류 시 빈 배열로 처리
                     soldProductsPage = createEmptyPage()
@@ -92,6 +100,7 @@ class ProfileDataViewModel: ObservableObject {
             }
 
         } catch {
+            print("[ProfileDataViewModel] loadProfile error: \(error)")
             handleError(error)
         }
 
@@ -151,6 +160,7 @@ class ProfileDataViewModel: ObservableObject {
     }
 
     private func handleError(_ error: Error) {
+        print("[ProfileDataViewModel] handleError: \(error)")
         if isAuthError(error) {
             // 401 Unauthorized 또는 403 Forbidden - 로그인 필요
             shouldRedirectToLogin = true
@@ -165,6 +175,7 @@ class ProfileDataViewModel: ObservableObject {
            case let .responseValidationFailed(reason) = afError,
            case let .unacceptableStatusCode(code) = reason,
            (code == 401 || code == 403) {
+            print("[ProfileDataViewModel] Detected auth error status code: \(code)")
             return true
         }
         return false

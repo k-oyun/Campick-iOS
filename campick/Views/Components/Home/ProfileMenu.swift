@@ -52,18 +52,30 @@ struct ProfileMenu: View {
                         VStack(spacing: 16) {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 12) {
-                                    Image("bannerImage",bundle: nil)
-                                        .resizable()
-                                        .frame(width: 40, height: 40)
-                                        .clipShape(Circle())
+                                    AsyncImage(url: URL(string: userState.profileImageUrl)) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.2))
+                                            .overlay(
+                                                Image(systemName: "person.fill")
+                                                    .foregroundColor(.white.opacity(0.6))
+                                            )
+                                    }
+                                    .frame(width: 44, height: 44)
+                                    .clipShape(Circle())
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(userState.name.isEmpty ? "사용자님" : userState.name)
-                                            .font(.system(size: 14, weight: .heavy))
+                                        Text(UserState.shared.nickName)
+                                            .font(.system(size: 15, weight: .semibold))
                                             .foregroundColor(.white)
-//                                        Text(userState.nickName.isEmpty ? "캠핑카 애호가" : userState.nickName)
-//                                            .font(.system(size: 11))
-//                                            .foregroundColor(.white.opacity(0.6))
+                                        if !userState.email.isEmpty {
+                                            Text(userState.email)
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.white.opacity(0.6))
+                                        }
                                     }
                                     .padding(.leading, 2)
                                 }
@@ -127,7 +139,7 @@ struct ProfileMenu: View {
             }
         }
         .zIndex(300)
+        .onAppear { UserState.shared.loadUserData() }
         
     }
 }
-

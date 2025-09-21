@@ -9,6 +9,8 @@ import SwiftUI
 
 struct Header: View {
     @Binding var showSlideMenu: Bool
+    @StateObject private var userState = UserState.shared
+
     var body: some View {
         HStack {
             Text("Campick")
@@ -23,14 +25,25 @@ struct Header: View {
                     showSlideMenu = true
                 }
             }) {
-                Image(systemName: "person")
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(AppColors.brandOrange)
-                    .clipShape(Circle())
+                AsyncImage(url: URL(string: userState.profileImageUrl)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Circle()
+                        .fill(AppColors.brandOrange)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .foregroundColor(.white)
+                                .font(.system(size: 20, weight: .semibold))
+                        )
+                }
+                .frame(width: 40, height: 40)
+                .clipShape(Circle())
             }
         }
         .padding()
         .background(AppColors.brandBackground)
     }
+
 }
