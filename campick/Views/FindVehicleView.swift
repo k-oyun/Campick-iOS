@@ -15,7 +15,7 @@ struct FindVehicleView: View {
         ZStack {
             AppColors.background.edgesIgnoringSafeArea(.all)
             VStack {
-                TopBarView(title: "매물 찾기") {
+                TopBarView(title: "매물 찾기", showsBackButton: false) {
                     dismiss()
                 }
 
