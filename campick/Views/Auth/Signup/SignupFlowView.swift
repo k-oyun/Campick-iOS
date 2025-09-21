@@ -73,6 +73,12 @@ struct SignupFlowView: View {
         .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $vm.showServerAlert) {
             Button("확인", role: .cancel) {}
         }
+        .onChange(of: vm.shouldNavigateHome) { _, navigate in
+            if navigate {
+                vm.shouldNavigateHome = false
+                dismiss()
+            }
+        }
     }
 
     // Removed inline step views; see fileprivate step structs below
