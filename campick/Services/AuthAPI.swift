@@ -15,13 +15,41 @@ enum AuthAPI {
             let request = APIService.shared
                 .request(Endpoint.login.url, method: .post, parameters: req, encoder: JSONParameterEncoder.default)
                 .validate()
-            // 서버가 envelope { status, success, message, data: { accessToken, ... } } 형태를 반환함
             let wrapped = try await request.serializingDecodable(ApiResponse<LoginDataDTO>.self).value
-            guard let token = wrapped.data?.accessToken else {
+            guard let data = wrapped.data else {
                 throw AppError.decoding
             }
-            // 기존 AuthResponse 형태로 맞춰서 반환 (user는 서버 응답에 없으므로 nil)
-            return AuthResponse(accessToken: token, user: nil)
+            AppLog.info("accessToken length: \(data.accessToken.count)", category: "AUTH")
+            AppLog.info("refreshToken exists: \(data.refreshToken != nil)", category: "AUTH")
+            AppLog.info("memberId: \(data.memberId ?? "nil")", category: "AUTH")
+            AppLog.info("dealerId: \(data.dealerId ?? "nil")", category: "AUTH")
+            AppLog.info("profileImageUrl: \(data.profileImageUrl ?? "nil")", category: "AUTH")
+            AppLog.info("profileThumbnailUrl: \(data.profileThumbnailUrl ?? "nil")", category: "AUTH")
+            AppLog.info("phoneNumber: \(data.phoneNumber ?? "nil")", category: "AUTH")
+            AppLog.info("role: \(data.role ?? "nil")", category: "AUTH")
+            if let user = data.user {
+                AppLog.info("user.id: \(user.id ?? "nil")", category: "AUTH")
+                AppLog.info("user.memberId: \(user.memberId ?? "nil")", category: "AUTH")
+                AppLog.info("user.nickname: \(user.nickname ?? "nil")", category: "AUTH")
+                AppLog.info("user.mobileNumber: \(user.mobileNumber ?? "nil")", category: "AUTH")
+                AppLog.info("user.role: \(user.role ?? "nil")", category: "AUTH")
+                AppLog.info("user.email: \(user.email ?? "nil")", category: "AUTH")
+                AppLog.info("user.profileImageUrl: \(user.profileImageUrl ?? "nil")", category: "AUTH")
+            } else {
+                AppLog.info("user object: nil", category: "AUTH")
+            }
+            return AuthResponse(
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+                user: data.user,
+                memberId: data.memberId,
+                dealerId: data.dealerId,
+                profileImageUrl: data.profileImageUrl,
+                profileThumbnailUrl: data.profileThumbnailUrl,
+                phoneNumber: data.phoneNumber,
+                role: data.role,
+                nickname: data.nickname
+            )
         } catch {
             throw ErrorMapper.map(error)
         }
