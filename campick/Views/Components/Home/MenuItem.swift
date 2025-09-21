@@ -55,6 +55,9 @@ struct MenuItem: View {
             }
             .padding(.horizontal)
         }
+        .simultaneousGesture(TapGesture().onEnded {
+            showSlideMenu = false
+        })
         .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
