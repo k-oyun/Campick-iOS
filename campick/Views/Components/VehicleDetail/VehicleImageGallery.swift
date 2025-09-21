@@ -67,8 +67,6 @@ struct VehicleImageGallery: View {
                         }
                         .padding(.trailing, 16)
                     }
-                    .padding(.top, 16)
-
                     Spacer()
                 }
             }
@@ -127,7 +125,7 @@ struct VehicleImageGallery: View {
                                     )
                                 }
                             }
-                            .padding(.horizontal, 16)
+                            .padding(.leading, 16)
                         }
 
                         // +버튼 (5개 이상일 때만 표시)

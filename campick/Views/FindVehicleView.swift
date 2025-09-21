@@ -49,32 +49,6 @@ struct FindVehicleView: View {
                 .padding(.horizontal, 12)
                 .padding(.bottom, 4)
                 
-                // 자동차 브랜드 선택(선택)
-//                ScrollView(.horizontal, showsIndicators: false) {
-//                    HStack(spacing: 12) {
-//                        ForEach(vehicleType, id: \.self) { brand in
-//                            Chip(title: brand,
-//                                 isSelected: selectedBrands.contains(brand)) {
-//                                if brand == "전체" {
-//                                    selectedBrands = ["전체"]
-//                                } else {
-//                                    if
-//                                        selectedBrands.contains(brand) {
-//                                        selectedBrands.remove(brand)
-//                                    } else {
-//                                        selectedBrands.insert(brand)
-//                                    }
-//                                    selectedBrands.remove("전체")
-//                                    if selectedBrands.isEmpty {
-//                                        selectedBrands = ["전체"]
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    .padding(.horizontal, 12)
-//                }
-
                 // 필터링
                 HStack(spacing: 12) {
                     Chip(title: "필터", systemImage: "line.3.horizontal.decrease.circle", isSelected: false) {
@@ -138,6 +112,7 @@ struct FindVehicleView: View {
         .onChange(of: vm.filterOptions) { _, _ in vm.onChangeFilter() }
         .onChange(of: vm.selectedSort) { _, _ in vm.onChangeSort() }
         .onAppear { vm.onAppear() }
+        .padding(.bottom, 60)
     }
 }
 

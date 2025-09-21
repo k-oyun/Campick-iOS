@@ -88,8 +88,6 @@ struct VehicleSellerCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
-        .padding(.horizontal, 16)
-        .padding(.top, 20)
     }
 }
 
