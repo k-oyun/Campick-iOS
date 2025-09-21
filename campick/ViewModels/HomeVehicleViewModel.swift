@@ -27,5 +27,28 @@ final class HomeVehicleViewModel: ObservableObject {
             }
         }
     }
-
+    
+    func formatPrice(_ price: String) -> String {
+        if let value = Int(price) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            
+            let formatted = formatter.string(from: NSNumber(value: value / 10_000)) ?? "\(value / 10_000)"
+            return "\(formatted)만원"
+        }
+        return price
+    }
+    
+    func formatMileage(_ mileage: String) -> String {
+        if let value = Int(mileage) {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            return "\(formatter.string(from: NSNumber(value: value)) ?? mileage)km"
+        }
+        return mileage
+    }
+    
+    func formatGeneration(_ generation: Int) -> String {
+        return "\(generation)년식"
+    }
 }

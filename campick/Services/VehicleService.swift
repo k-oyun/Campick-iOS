@@ -39,3 +39,5 @@ class VehicleService: ObservableObject {
                 }
         }
 }
+
+

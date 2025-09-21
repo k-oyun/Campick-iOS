@@ -12,6 +12,9 @@ struct ProfileMenu: View {
     @Binding var showSlideMenu: Bool
     @State private var navigateToProfile = false
     @StateObject private var userState = UserState.shared
+    @StateObject private var viewModel = HomeProfileViewModel()
+    
+    
     
     var body: some View {
         ZStack{
@@ -119,7 +122,9 @@ struct ProfileMenu: View {
                         
                         Spacer()
                         
-                        Button(action: {}) {
+                        Button(action: {
+                            viewModel.logout()
+                        }) {
                             HStack {
                                 Image(systemName: "arrow.backward.square")
                                     .font(.system(size: 13))
