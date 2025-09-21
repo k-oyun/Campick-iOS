@@ -19,7 +19,9 @@ struct MediaPickerSheet: View {
     @Binding var selectedImage: UIImage?
 
     @State private var cameraAuthorized: Bool = false
-    @State private var checkedPermission = false
+    @State private var cameraPermissionChecked = false
+    @State private var photoAuthorized: Bool = false
+    @State private var photoPermissionChecked = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -27,9 +29,9 @@ struct MediaPickerSheet: View {
         Group {
             switch source {
             case .camera:
-                if checkedPermission && cameraAuthorized {
+                if cameraPermissionChecked && cameraAuthorized {
                     ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
-                } else if checkedPermission && !cameraAuthorized {
+                } else if cameraPermissionChecked && !cameraAuthorized {
                     PermissionDeniedView(
                         title: "카메라 접근 권한 필요",
                         message: "설정 > 개인정보 보호 > 카메라에서 접근을 허용해주세요.",
@@ -39,27 +41,32 @@ struct MediaPickerSheet: View {
                     ProgressView().onAppear { checkCameraPermission() }
                 }
             case .photoLibrary:
-                // PhotosUI 기반 피커는 권한 없이도 동작하므로 바로 표시
-                PhotoPickerView(selectedImage: $selectedImage)
+                if photoPermissionChecked && photoAuthorized {
+                    PhotoPickerView(selectedImage: $selectedImage)
+                } else if photoPermissionChecked && !photoAuthorized {
+                    PermissionDeniedView(
+                        title: "사진 보관함 접근 권한 필요",
+                        message: "설정 > 개인정보 보호 > 사진에서 접근을 허용해주세요.",
+                        onDismiss: { dismiss() }
+                    )
+                } else {
+                    ProgressView().onAppear { checkPhotoPermission() }
+                }
             }
         }
     }
 
     private func checkCameraPermission() {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .authorized:
-            cameraAuthorized = true; checkedPermission = true
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                DispatchQueue.main.async {
-                    self.cameraAuthorized = granted
-                    self.checkedPermission = true
-                }
-            }
-        case .denied, .restricted:
-            cameraAuthorized = false; checkedPermission = true
-        @unknown default:
-            cameraAuthorized = false; checkedPermission = true
+        MediaPermissionManager.requestCameraPermission { granted in
+            cameraAuthorized = granted
+            cameraPermissionChecked = true
+        }
+    }
+
+    private func checkPhotoPermission() {
+        MediaPermissionManager.requestPhotoPermission { granted in
+            photoAuthorized = granted
+            photoPermissionChecked = true
         }
     }
 }
@@ -95,4 +102,3 @@ struct PermissionDeniedView: View {
         .background(AppColors.brandBackground)
     }
 }
-
