@@ -28,8 +28,8 @@ struct RecommendedVehicle: Decodable, Identifiable {
     let createdAt: String
     let thumbNail: String?
     let status: RecommendedVehicleStats
-    let isLiked: Bool
-    let likeCount: Int?
+    var isLiked: Bool
+    var likeCount: Int?
 
     var id: Int { productId }
 }

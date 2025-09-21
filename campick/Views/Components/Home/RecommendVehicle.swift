@@ -58,7 +58,9 @@ struct RecommendVehicle: View {
                             likeCount: vehicle.likeCount ?? 0,
                             badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
                             badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
-                            isLiked: vehicle.isLiked
+                            isLiked: vehicle.isLiked,
+                            onLike: { viewModel.toggleLike(productId: vehicle.id) }
+                        
                         )
                     }
                 }
@@ -82,7 +84,7 @@ struct VehicleCard: View {
     var badge: String?
     var badgeColor: Color
     var isLiked: Bool
-    
+    var onLike: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
@@ -135,7 +137,7 @@ struct VehicleCard: View {
                         .foregroundColor(.white)
                         .bold()
                     Spacer()
-                    Button(action: {}) {
+                    Button(action: { onLike() }) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
                             .foregroundColor(isLiked ? .red : .white.opacity(0.7))
                     }
@@ -163,10 +165,10 @@ struct VehicleCard: View {
                     Spacer()
                     HStack(spacing: 2) {
                         Image(systemName: "heart.fill")
-                            .foregroundColor(.yellow)
+                            .foregroundColor(.red)
                             .font(.caption)
                         Text(String(likeCount))
-                            .foregroundColor(.yellow)
+                            .foregroundColor(.red)
                             .font(.caption)
                     }
                 }
