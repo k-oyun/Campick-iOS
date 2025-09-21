@@ -92,14 +92,18 @@ final class FindVehicleViewModel: ObservableObject {
         case "SOLD", "SOLD_OUT": status = .sold
         default: status = .active
         }
-        let locationText = "\(dto.location.province) \(dto.location.city)"
+        let locationText = dto.location.isEmpty ? "-" : dto.location
         let extractedYear: String = {
+            if let generation = dto.generation, generation > 0 {
+                return "\(generation)년"
+            }
             let pattern = "(20[0-4][0-9]|19[0-9]{2})"
             if let range = dto.title.range(of: pattern, options: .regularExpression) {
                 return String(dto.title[range]) + "년"
             }
             return "-"
         }()
+        let formattedMileage = formatMileage(dto.mileage)
         return Vehicle(
             id: id,
             imageName: nil,
@@ -107,7 +111,7 @@ final class FindVehicleViewModel: ObservableObject {
             title: dto.title,
             price: dto.price,
             year: extractedYear,
-            mileage: dto.mileage,
+            mileage: formattedMileage,
             fuelType: dto.fuelType,
             transmission: dto.transmission,
             location: locationText,
@@ -124,6 +128,78 @@ final class FindVehicleViewModel: ObservableObject {
         return Int(n) ?? 0
     }
     private func priceValue(_ s: String) -> Int { digits(from: s) }
-    private func mileageValue(_ s: String) -> Int { digits(from: s) }
+    private func mileageValue(_ s: String) -> Int {
+        let normalized = s.replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: ",", with: "")
+            .lowercased()
+
+        if normalized.contains("만") {
+            let numericString = normalized
+                .replacingOccurrences(of: "만km", with: "")
+                .replacingOccurrences(of: "만", with: "")
+                .replacingOccurrences(of: "km", with: "")
+                .filter { $0.isNumber || $0 == "." }
+            if let value = Double(numericString) {
+                return Int(value * 10000)
+            }
+        }
+
+        let numericString = normalized.replacingOccurrences(of: "km", with: "").filter { $0.isNumber }
+        return Int(numericString) ?? 0
+    }
     private func yearValue(_ s: String) -> Int { digits(from: s) }
+
+    private func formatMileage(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "-" }
+
+        let normalized = trimmed.replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "KM", with: "km")
+
+        if normalized.lowercased().contains("만") {
+            let numericString = normalized
+                .lowercased()
+                .replacingOccurrences(of: "만km", with: "")
+                .replacingOccurrences(of: "만", with: "")
+                .replacingOccurrences(of: "km", with: "")
+                .filter { $0.isNumber || $0 == "." }
+            if let value = Double(numericString) {
+                return "\(formatManValue(value))만km"
+            }
+            return normalized.hasSuffix("km") ? normalized : normalized + "km"
+        }
+
+        let sanitized = normalized.replacingOccurrences(of: "km", with: "")
+        let numericString = sanitized.filter { $0.isNumber || $0 == "." }
+
+        guard let rawValue = Double(numericString) else {
+            return trimmed
+        }
+
+        if sanitized.contains(".") && rawValue < 1000 {
+            return "\(formatManValue(rawValue))만km"
+        }
+
+        if rawValue >= 10000 {
+            let manValue = rawValue / 10000.0
+            return "\(formatManValue(manValue))만km"
+        }
+
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        formatter.locale = Locale(identifier: "ko_KR")
+        let formatted = formatter.string(from: NSNumber(value: rawValue)) ?? String(Int(rawValue))
+        return "\(formatted)km"
+    }
+
+    private func formatManValue(_ value: Double) -> String {
+        let scaled = (value * 10).rounded() / 10
+        if abs(scaled.rounded() - scaled) < 0.0001 {
+            return String(format: "%.0f", scaled)
+        } else {
+            return String(format: "%.1f", scaled)
+        }
+    }
 }

@@ -72,45 +72,6 @@ struct Review: Codable {
     }
 }
 
-struct ProductPage: Codable {
-    let product: Page<Product>
-
-    enum CodingKeys: String, CodingKey {
-        case product
-    }
-}
-
-struct Page<T: Codable>: Codable {
-    let content: [T]
-    let totalElements: Int
-    let totalPages: Int
-    let size: Int
-    let number: Int
-    let numberOfElements: Int
-    let first: Bool
-    let last: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case content, totalElements, totalPages, size, number, numberOfElements, first, last
-    }
-}
-
-struct Product: Codable {
-    let productId: String
-    let title: String
-    let cost: String
-    let generation: Int
-    let mileage: Int
-    let location: String
-    let createdAt: Date
-    let thumbNailUrl: String
-    let status: String
-
-    enum CodingKeys: String, CodingKey {
-        case productId, title, cost, generation, mileage, location, createdAt, thumbNailUrl, status
-    }
-}
-
 // 기존 UserProfile 구조체 (하위 호환성을 위해 유지)
 struct UserProfile {
     let id: String

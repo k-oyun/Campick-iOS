@@ -25,7 +25,7 @@ enum ProductAPI {
         }
     }
 
-    static func fetchProducts(page: Int? = nil, size: Int? = nil) async throws -> ProductListDTO {
+    static func fetchProducts(page: Int? = nil, size: Int? = nil) async throws -> Page<ProductItemDTO> {
         do {
             var params: [String: Any] = [:]
             if let page = page { params["page"] = page }
@@ -41,10 +41,26 @@ enum ProductAPI {
                     encoding: URLEncoding.default
                 )
                 .validate()
-            // 서버 응답: ApiResponse<ProductListDTO>
-            let wrapped = try await request.serializingDecodable(ApiResponse<ProductListDTO>.self).value
-            guard let list = wrapped.data else { return ProductListDTO(totalElements: 0, totalPages: 0, size: 0, content: [], number: 0, sort: ProductSortDTO(empty: true, sorted: false, unsorted: true), pageable: ProductPageableDTO(offset: 0, sort: ProductSortDTO(empty: true, sorted: false, unsorted: true), paged: true, pageNumber: 0, pageSize: 0, unpaged: true), numberOfElements: 0, first: true, last: true, empty: true) }
+            // 서버 응답: ApiResponse<Page<ProductItemDTO>>
+            let wrapped = try await request.serializingDecodable(ApiResponse<Page<ProductItemDTO>>.self).value
+            guard let list = wrapped.data else { return Page<ProductItemDTO>.empty() }
             return list
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    static func fetchProductDetail(productId: String) async throws -> ProductDetailDTO {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.productDetail(productId: productId).url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ProductDetailResponse.self).value
+            if let detail = wrapped.data {
+                return detail
+            } else {
+                throw NSError(domain: "ProductDetailError", code: -1, userInfo: [NSLocalizedDescriptionKey: wrapped.message ?? "상품 정보를 불러오지 못했습니다."])
+            }
         } catch {
             throw ErrorMapper.map(error)
         }

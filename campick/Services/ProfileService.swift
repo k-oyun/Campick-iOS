@@ -29,7 +29,7 @@ final class ProfileService {
         }
     }
 
-    static func fetchMemberProducts(memberId: String, page: Int, size: Int = 2) async throws -> Page<Product> {
+    static func fetchMemberProducts(memberId: String, page: Int, size: Int = 2) async throws -> Page<ProfileProduct> {
         let endpoint = Endpoint.memberProducts(memberId: memberId)
         let url = endpoint.url
 
@@ -41,7 +41,7 @@ final class ProfileService {
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.request(url, method: .get, parameters: parameters)
                 .validate()
-                .responseDecodable(of: ProductPage.self) { response in
+                .responseDecodable(of: ProfileProductPageResponse.self) { response in
                     switch response.result {
                     case .success(let productPage):
                         continuation.resume(returning: productPage.product)
@@ -52,7 +52,7 @@ final class ProfileService {
         }
     }
 
-    static func fetchMemberSoldProducts(memberId: String, page: Int, size: Int = 2) async throws -> Page<Product> {
+    static func fetchMemberSoldProducts(memberId: String, page: Int, size: Int = 2) async throws -> Page<ProfileProduct> {
         let endpoint = Endpoint.memberSoldProducts(memberId: memberId)
         let url = endpoint.url
 
@@ -64,7 +64,7 @@ final class ProfileService {
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.request(url, method: .get, parameters: parameters)
                 .validate()
-                .responseDecodable(of: ProductPage.self) { response in
+                .responseDecodable(of: ProfileProductPageResponse.self) { response in
                     switch response.result {
                     case .success(let productPage):
                         continuation.resume(returning: productPage.product)

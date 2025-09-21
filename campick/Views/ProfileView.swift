@@ -197,7 +197,7 @@ struct ProfileView: View {
         )
     }
 
-    private var currentProducts: [Product] {
+    private var currentProducts: [ProfileProduct] {
         switch activeTab {
         case .selling:
             return profileDataViewModel.sellingProducts

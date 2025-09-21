@@ -12,8 +12,8 @@ import Alamofire
 @MainActor
 class ProfileDataViewModel: ObservableObject {
     @Published var profileResponse: ProfileResponse?
-    @Published var sellingProducts: [Product] = []
-    @Published var soldProducts: [Product] = []
+    @Published var sellingProducts: [ProfileProduct] = []
+    @Published var soldProducts: [ProfileProduct] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var shouldRedirectToLogin: Bool = false
@@ -35,8 +35,8 @@ class ProfileDataViewModel: ObservableObject {
         soldProductsPage?.totalElements ?? 0
     }
 
-    private var sellingProductsPage: Page<Product>?
-    private var soldProductsPage: Page<Product>?
+    private var sellingProductsPage: Page<ProfileProduct>?
+    private var soldProductsPage: Page<ProfileProduct>?
     private var currentSellingPage = 0
     private var currentSoldPage = 0
 
@@ -181,8 +181,8 @@ class ProfileDataViewModel: ObservableObject {
         return false
     }
 
-    private func createEmptyPage() -> Page<Product> {
-        return Page<Product>(
+    private func createEmptyPage() -> Page<ProfileProduct> {
+        Page(
             content: [],
             totalElements: 0,
             totalPages: 0,
@@ -190,7 +190,10 @@ class ProfileDataViewModel: ObservableObject {
             number: 0,
             numberOfElements: 0,
             first: true,
-            last: true
+            last: true,
+            empty: true,
+            sort: nil,
+            pageable: nil
         )
     }
 }

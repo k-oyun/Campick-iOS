@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ProductListSection: View {
-    let products: [Product]
+    let products: [ProfileProduct]
     let hasMore: Bool
     let onLoadMore: () -> Void
 
@@ -47,7 +47,7 @@ struct ProductListSection: View {
 }
 
 struct ProductCard: View {
-    let product: Product
+    let product: ProfileProduct
 
     var body: some View {
         HStack(spacing: 12) {

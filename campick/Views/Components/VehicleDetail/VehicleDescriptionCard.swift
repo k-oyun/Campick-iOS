@@ -19,8 +19,8 @@ struct VehicleDescriptionCard: View {
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.white)
+                Spacer()
             }
-
             Text(description)
                 .font(.body)
                 .foregroundColor(.white.opacity(0.8))
@@ -35,8 +35,6 @@ struct VehicleDescriptionCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
-        .padding(.horizontal, 16)
-        .padding(.top, 20)
     }
 }
 
@@ -46,7 +44,7 @@ struct VehicleDescriptionCard: View {
             .ignoresSafeArea()
 
         VehicleDescriptionCard(
-            description: "완벽한 상태의 프리미엄 모터홈입니다. 정기적인 관리로 최상의 컨디션을 유지하고 있으며, 모든 편의시설이 완비되어 있습니다. 전국 어디든 캠핑을 즐길 수 있는 최고의 선택입니다."
+            description: "완벽한 상태의 프리미엄 모터홈입니다."
         )
     }
 }
