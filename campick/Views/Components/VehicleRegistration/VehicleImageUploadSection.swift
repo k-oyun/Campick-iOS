@@ -18,6 +18,7 @@ struct VehicleImageUploadSection: View {
     @State private var showingCamera = false
     @State private var showingMainImagePicker = false
     @State private var isUploading = false
+    @State private var permissionAlert: PermissionAlertItem?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -69,6 +70,9 @@ struct VehicleImageUploadSection: View {
                 }
                 showingMainImagePicker = false
             }
+        }
+        .alert(item: $permissionAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("확인")))
         }
     }
 
@@ -177,7 +181,16 @@ struct VehicleImageUploadSection: View {
 
     private var cameraButton: some View {
         Button(action: {
-            showingCamera = true
+            MediaPermissionManager.requestCameraPermission { granted in
+                if granted {
+                    showingCamera = true
+                } else {
+                    permissionAlert = PermissionAlertItem(
+                        title: "카메라 접근이 제한되었습니다",
+                        message: "설정 앱에서 카메라 접근 권한을 허용한 뒤 다시 시도해주세요."
+                    )
+                }
+            }
         }) {
             VStack(spacing: 4) {
                 Image(systemName: "camera.fill")
@@ -202,7 +215,16 @@ struct VehicleImageUploadSection: View {
 
     private var mainImageCropButton: some View {
         Button(action: {
-            showingMainImagePicker = true
+            MediaPermissionManager.requestPhotoPermission { granted in
+                if granted {
+                    showingMainImagePicker = true
+                } else {
+                    permissionAlert = PermissionAlertItem(
+                        title: "사진 접근이 제한되었습니다",
+                        message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
+                    )
+                }
+            }
         }) {
             VStack(spacing: 4) {
                 Image(systemName: "crop")
@@ -309,6 +331,12 @@ struct VehicleImageUploadSection: View {
         }
         selectedPhotos.removeAll()
     }
+}
+
+private struct PermissionAlertItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
 }
 
 // CameraView 정의
