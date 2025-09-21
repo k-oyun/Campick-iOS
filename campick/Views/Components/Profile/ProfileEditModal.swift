@@ -23,6 +23,7 @@ struct ProfileEditModal: View {
     @State private var shouldRedirectToLogin = false
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
+    @State private var permissionAlert: PermissionAlertItem?
 
     init(profile: ProfileResponse, onSave: @escaping () -> Void) {
         self.profile = profile
@@ -65,8 +66,16 @@ struct ProfileEditModal: View {
                     // Profile Image Section with Camera Overlay
                     VStack(spacing: 12) {
                         Button(action: {
-                            if !isImageUploading && !isUpdating {
-                                showImagePicker = true
+                            guard !isImageUploading && !isUpdating else { return }
+                            MediaPermissionManager.requestPhotoPermission { granted in
+                                if granted {
+                                    showImagePicker = true
+                                } else {
+                                    permissionAlert = PermissionAlertItem(
+                                        title: "사진 접근이 제한되었습니다",
+                                        message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
+                                    )
+                                }
                             }
                         }) {
                             ZStack {
@@ -170,7 +179,7 @@ struct ProfileEditModal: View {
             }
         }
         .sheet(isPresented: $showImagePicker) {
-            ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+            MediaPickerSheet(source: .photoLibrary, selectedImage: $selectedImage)
         }
         .fullScreenCover(isPresented: $shouldRedirectToLogin) {
             LoginView()
@@ -180,6 +189,15 @@ struct ProfileEditModal: View {
         } message: {
             Text(errorMessage)
         }
+        .alert(item: $permissionAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("확인")))
+        }
+    }
+
+    private struct PermissionAlertItem: Identifiable {
+        let id = UUID()
+        let title: String
+        let message: String
     }
 
     private func saveProfileChanges() async {

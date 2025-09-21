@@ -9,9 +9,9 @@ import SwiftUI
 
 struct AttachmentMenu: View {
     @Binding var showAttachmentMenu: Bool
-    @Binding var showImagePicker: Bool
-    @Binding var showCamera: Bool
-    
+    let onPhotoTap: () -> Void
+    let onCameraTap: () -> Void
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             Color.black.opacity(0.35)
@@ -25,7 +25,7 @@ struct AttachmentMenu: View {
             
             VStack(alignment: .leading, spacing: 10) {
                 Button {
-                    showImagePicker = true
+                    onPhotoTap()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                         showAttachmentMenu = false
                     }
@@ -37,7 +37,7 @@ struct AttachmentMenu: View {
                 }
                 
                 Button {
-                    showCamera = true
+                    onCameraTap()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                         showAttachmentMenu = false
                     }

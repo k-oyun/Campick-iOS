@@ -15,7 +15,8 @@ struct ImagePickerView: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.sourceType = sourceType
         picker.delegate = context.coordinator
-        picker.allowsEditing = true
+        picker.allowsEditing = sourceType != .camera
+        picker.modalPresentationStyle = .fullScreen
         return picker
     }
 
@@ -41,4 +42,3 @@ struct ImagePickerView: UIViewControllerRepresentable {
         }
     }
 }
-
