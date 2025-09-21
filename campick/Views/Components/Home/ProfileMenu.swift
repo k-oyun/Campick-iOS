@@ -103,7 +103,13 @@ struct ProfileMenu: View {
                             )
                             .padding(.horizontal)
                             VStack(spacing: 20){
-                                MenuItem(icon: "car.fill", title: "내 매물", subtitle: "등록한 매물 관리", destination: AnyView(Text("내 매물")), showSlideMenu: $showSlideMenu )
+                                MenuItem(
+                                    icon: "car.fill",
+                                    title: "내 매물",
+                                    subtitle: "등록한 매물 관리",
+                                    destination: AnyView(MyProductListView(memberId: userState.memberId)),
+                                    showSlideMenu: $showSlideMenu
+                                )
                                 MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3", destination: AnyView(ChatRoomListView()),  showSlideMenu: $showSlideMenu)
                             }
                             .padding(10)
