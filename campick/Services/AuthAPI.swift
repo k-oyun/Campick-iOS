@@ -26,7 +26,7 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     static func signup(
         email: String,
         password: String,
@@ -56,7 +56,7 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     // 일부 서버가 본문 없이 200만 반환하는 경우 대응용
     static func signupAllowingEmpty(
         email: String,
@@ -95,7 +95,7 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     static func sendEmailCode(email: String) async throws {
         do {
             let body = EmailSendRequest(email: email)
@@ -107,7 +107,7 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     static func confirmEmailCode(code: String) async throws {
         do {
             let body = EmailVerifyCodeRequest(code: code)
@@ -119,7 +119,7 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     static func logout() async throws {
         do {
             let request = APIService.shared
@@ -130,7 +130,7 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     /// 저장된 액세스 토큰으로 재발급을 요청합니다.
     static func reissueAccessToken() async throws -> String {
         do {
@@ -146,7 +146,15 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
+    static func issueTemporaryPassword(email: String, verificationCode: String) async throws -> String {
+        // TODO: 서버의 임시 비밀번호 발급 API 연동 필요.
+        _ = email
+        _ = verificationCode
+        return "1234"
+    }
+    
+    
     static func changePassword(_ request: PasswordChangeRequest) async throws {
         do {
             let apiRequest = APIService.shared
@@ -157,6 +165,8 @@ enum AuthAPI {
             throw ErrorMapper.map(error)
         }
     }
-
+    
     // 회원탈퇴 API는 아직 미구현이므로 연동 제거
+    
+    
 }
