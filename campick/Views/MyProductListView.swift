@@ -65,7 +65,7 @@ struct MyProductListView: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)], spacing: 12) {
                     ForEach(viewModel.vehicles, id: \.id) { vehicle in
                         NavigationLink {
-                            VehicleDetailView(vehicleId: vehicle.id)
+                            VehicleDetailView(vehicleId: vehicle.id, isOwnerHint: true)
                         } label: {
                             VehicleCardView(vehicle: vehicle)
                         }

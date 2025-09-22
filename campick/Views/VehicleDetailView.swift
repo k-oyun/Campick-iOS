@@ -10,11 +10,18 @@ import SwiftUI
 struct VehicleDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let vehicleId: String
+    let isOwnerHint: Bool
     @StateObject private var viewModel = VehicleDetailViewModel()
     @State private var currentImageIndex = 0
     @State private var showSellerModal = false
     @State private var isFavorite = false
     @State private var chatMessage = ""
+    @State private var navigateToEdit = false
+
+    init(vehicleId: String, isOwnerHint: Bool = false) {
+        self.vehicleId = vehicleId
+        self.isOwnerHint = isOwnerHint
+    }
 
     var body: some View {
         ZStack {
@@ -24,13 +31,19 @@ struct VehicleDetailView: View {
             if let detail = viewModel.detail {
                 ScrollView {
                     VStack {
+                        let isOwner: Bool = {
+                            if isOwnerHint { return true }
+                            let mine = UserState.shared.memberId.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let seller = detail.seller.id.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if let a = Int(mine), let b = Int(seller) { return a == b }
+                            return !mine.isEmpty && mine == seller
+                        }()
                         VehicleImageGallery(
                             currentImageIndex: $currentImageIndex,
                             images: detail.images.isEmpty ? ["bannerImage"] : detail.images,
                             onBackTap: { dismiss() },
-                            onShareTap: {
-                                // TODO: 공유 기능 연동
-                            }
+                            showsEditButton: isOwner,
+                            onEditTap: { navigateToEdit = true }
                         )
                     }
                     
@@ -147,6 +160,9 @@ struct VehicleDetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .navigationDestination(isPresented: $navigateToEdit) {
+            VehicleRegistrationView(showBackButton: true, editingProductId: vehicleId)
+        }
         .sheet(isPresented: $showSellerModal) {
             if let seller = viewModel.detail?.seller {
                 SellerModalView(seller: seller)
