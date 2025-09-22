@@ -26,7 +26,9 @@ struct VehicleImageGallery: View {
                             .tag(index)
                     }
                 }
-                .frame(height: 250)
+                // 헤더 이미지가 상단 안전영역까지 확장되도록 safeArea 상단만큼 높이를 늘리고, 위로 당겨 붙입니다.
+                .frame(height: 250 + topSafeArea)
+                .padding(.top, -topSafeArea)
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
                 VStack {
@@ -161,7 +163,15 @@ struct VehicleImageGallery: View {
             }
             .padding(.vertical, 16)
         }
+        .ignoresSafeArea(edges: .top)
     }
+}
+
+private var topSafeArea: CGFloat {
+    let scenes = UIApplication.shared.connectedScenes
+    let windowScene = scenes.first as? UIWindowScene
+    let window = windowScene?.windows.first { $0.isKeyWindow }
+    return window?.safeAreaInsets.top ?? 0
 }
 
 struct ThumbnailImageView: View {
