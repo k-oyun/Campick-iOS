@@ -15,36 +15,7 @@ struct VehicleImage: Identifiable, Hashable {
 }
 
 
-struct VehicleOption: Identifiable, Codable {
-    let id = UUID()
-    var optionName: String
-    var isInclude: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case optionName, isInclude
-    }
-}
+// VehicleOption은 서버 DTO로 분리되었습니다. (Models/Product/VehicleOption.swift 참고)
 
 
-// API Models
-struct VehicleRegistrationRequest: Codable {
-    let generation: String
-    let mileage: String
-    let vehicleType: String
-    let vehicleModel: String
-    let price: String
-    let location: String
-    let plateHash: String
-    let title: String
-    let description: String
-    let productImageUrl: [String]
-    let option: [VehicleOption]
-    let mainProductImageUrl: String
-}
-
-struct APIResponse<T: Codable>: Codable {
-    let status: Int
-    let success: Bool
-    let message: String
-    let data: T?
-}
+// VehicleRegistrationRequest 및 ApiResponse는 Models 계층으로 이동했습니다.

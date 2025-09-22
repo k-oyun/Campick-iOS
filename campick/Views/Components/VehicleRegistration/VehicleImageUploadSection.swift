@@ -10,6 +10,7 @@ import PhotosUI
 import UIKit
 
 struct VehicleImageUploadSection: View {
+    @EnvironmentObject private var vm: VehicleRegistrationViewModel
     @Binding var vehicleImages: [VehicleImage]
     @Binding var uploadedImageUrls: [String]
     @Binding var selectedPhotos: [PhotosPickerItem]
@@ -290,28 +291,7 @@ struct VehicleImageUploadSection: View {
     }
 
     private func uploadImageToServer(_ image: UIImage, for imageId: UUID) {
-        isUploading = true
-
-        ImageUploadService.shared.uploadImage(image) { result in
-            DispatchQueue.main.async {
-                self.isUploading = false
-
-                switch result {
-                case .success(let imageUrl):
-                    self.uploadedImageUrls.append(imageUrl)
-
-                    // Update the VehicleImage with the uploaded URL
-                    if let index = self.vehicleImages.firstIndex(where: { $0.id == imageId }) {
-                        self.vehicleImages[index].uploadedUrl = imageUrl
-                    }
-
-                    print("Image uploaded successfully: \(imageUrl)")
-                case .failure(let error):
-                    print("Image upload failed: \(error.localizedDescription)")
-                    self.errors["images"] = "이미지 업로드 실패: \(error.localizedDescription)"
-                }
-            }
-        }
+        vm.uploadImage(image, for: imageId)
     }
 
     private func loadSelectedPhotos(_ items: [PhotosPickerItem]) {
