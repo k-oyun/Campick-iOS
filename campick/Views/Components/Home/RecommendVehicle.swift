@@ -51,19 +51,23 @@ struct RecommendVehicle: View {
                         .padding()
                 } else {
                     ForEach(Array(viewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
-                        VehicleCard(
-                            image: vehicle.thumbNail ?? "",
-                            title: vehicle.title,
-                            generation: viewModel.formatGeneration(vehicle.generation),
-                            milage: viewModel.formatMileage(vehicle.mileage),
-                            price: viewModel.formatPrice(vehicle.price),
-                            likeCount: vehicle.likeCount ?? 0,
-                            badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
-                            badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
-                            isLiked: vehicle.isLiked,
-                            onLike: { viewModel.toggleLike(productId: vehicle.id) }
-                        
-                        )
+                        NavigationLink {
+                            VehicleDetailView(vehicleId: String(vehicle.productId))
+                        } label: {
+                            VehicleCard(
+                                image: vehicle.thumbNail ?? "",
+                                title: vehicle.title,
+                                generation: viewModel.formatGeneration(vehicle.generation),
+                                milage: viewModel.formatMileage(vehicle.mileage),
+                                price: viewModel.formatPrice(vehicle.price),
+                                likeCount: vehicle.likeCount ?? 0,
+                                badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
+                                badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
+                                isLiked: vehicle.isLiked,
+                                onLike: { viewModel.toggleLike(productId: vehicle.id) }
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
@@ -185,4 +189,3 @@ struct VehicleCard: View {
         )
     }
 }
-
