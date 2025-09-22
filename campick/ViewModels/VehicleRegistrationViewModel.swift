@@ -34,6 +34,8 @@ final class VehicleRegistrationViewModel: ObservableObject {
     @Published var availableOptions: [String] = []
     @Published var isLoadingProductInfo = false
     @Published var isUploading = false
+    @Published var isEditing = false
+    @Published var editingProductId: String? = nil
 
     func loadProductInfo() async {
         isLoadingProductInfo = true
@@ -53,6 +55,47 @@ final class VehicleRegistrationViewModel: ObservableObject {
             vehicleOptions = availableOptions.map { VehicleOption(optionName: $0, isInclude: false) }
         }
         isLoadingProductInfo = false
+    }
+
+    // 편집 모드: 상세를 불러와 입력값 채우기
+    func loadForEdit(productId: String) async {
+        isEditing = true
+        editingProductId = productId
+        do {
+            let dto = try await ProductAPI.fetchProductDetail(productId: productId)
+            apply(detail: dto)
+        } catch {
+            let appError = ErrorMapper.map(error)
+            AppLog.error("Load detail for edit failed: \(appError.message)", category: "PRODUCT")
+        }
+    }
+
+    private func apply(detail dto: ProductDetailDTO) {
+        title = dto.title ?? ""
+        generation = {
+            if let g = dto.generation { return String(g) }
+            return ""
+        }()
+        mileage = dto.mileage ?? ""
+        vehicleType = dto.vehicleType ?? ""
+        vehicleModel = dto.vehicleModel ?? ""
+        price = dto.price ?? ""
+        location = dto.location ?? ""
+        plateHash = dto.plateHash ?? ""
+        description = dto.description ?? ""
+
+        // 이미지 URL 세팅 (메인 + 나머지)
+        if let urls = dto.productImage, !urls.isEmpty {
+            uploadedImageUrls = urls
+        }
+
+        // 옵션 매핑: availableOptions를 기준으로 포함 여부 세팅
+        if let opts = dto.option {
+            let included = Set(opts.filter { $0.isInclude }.map { $0.optionName })
+            vehicleOptions = availableOptions.map { name in
+                VehicleOption(optionName: name, isInclude: included.contains(name))
+            }
+        }
     }
 
     func validateAndSubmit() {
@@ -112,23 +155,43 @@ final class VehicleRegistrationViewModel: ObservableObject {
             mainProductImageUrl: mainUrl
         )
 
-        AppLog.info("Creating product (title: \(title))", category: "PRODUCT")
-        do {
-            let res = try await ProductAPI.createProduct(request)
-            // 성공은 2xx(예: 200, 201 포함) 또는 success == true 로 판단
-            let statusCode = res.status ?? 0
-            if res.success == true || (200..<300).contains(statusCode) {
-                alertMessage = res.message ?? "등록이 완료되었습니다."
-                showingSuccessAlert = true
-            } else {
-                alertMessage = res.message ?? "등록에 실패했습니다."
+        if isEditing, let productId = editingProductId {
+            AppLog.info("Updating product (id: \(productId))", category: "PRODUCT")
+            do {
+                let res = try await ProductAPI.updateProduct(productId: productId, body: request)
+                let statusCode = res.status ?? 0
+                if res.success == true || (200..<300).contains(statusCode) {
+                    alertMessage = "성공적으로 매물 정보가 수정되었습니다."
+                    showingSuccessAlert = true
+                } else {
+                    alertMessage = res.message ?? "수정에 실패했습니다."
+                    showingErrorAlert = true
+                }
+            } catch {
+                let appError = ErrorMapper.map(error)
+                AppLog.error("Product update failed: \(appError.message)", category: "PRODUCT")
+                alertMessage = appError.message
                 showingErrorAlert = true
             }
-        } catch {
-            let appError = ErrorMapper.map(error)
-            AppLog.error("Product create failed: \(appError.message)", category: "PRODUCT")
-            alertMessage = appError.message
-            showingErrorAlert = true
+        } else {
+            AppLog.info("Creating product (title: \(title))", category: "PRODUCT")
+            do {
+                let res = try await ProductAPI.createProduct(request)
+                // 성공은 2xx(예: 200, 201 포함) 또는 success == true 로 판단
+                let statusCode = res.status ?? 0
+                if res.success == true || (200..<300).contains(statusCode) {
+                    alertMessage = res.message ?? "등록이 완료되었습니다."
+                    showingSuccessAlert = true
+                } else {
+                    alertMessage = res.message ?? "등록에 실패했습니다."
+                    showingErrorAlert = true
+                }
+            } catch {
+                let appError = ErrorMapper.map(error)
+                AppLog.error("Product create failed: \(appError.message)", category: "PRODUCT")
+                alertMessage = appError.message
+                showingErrorAlert = true
+            }
         }
     }
 

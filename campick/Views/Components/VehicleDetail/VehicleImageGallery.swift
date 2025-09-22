@@ -11,7 +11,9 @@ struct VehicleImageGallery: View {
     @Binding var currentImageIndex: Int
     let images: [String]
     let onBackTap: () -> Void
-    let onShareTap: () -> Void
+    // 편집 버튼 표시 여부 및 액션
+    var showsEditButton: Bool = false
+    let onEditTap: () -> Void
 
     @State private var isExpanded = false
 
@@ -56,14 +58,16 @@ struct VehicleImageGallery: View {
 
                         Spacer()
 
-                        Button(action: onShareTap) {
-                            Image(systemName: "square.and.arrow.up")
-                                .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
+                        if showsEditButton {
+                            Button(action: onEditTap) {
+                                Image(systemName: "pencil")
+                                    .foregroundColor(.white)
+                                    .frame(width: 32, height: 32)
+                                    .background(Color.black.opacity(0.5))
+                                    .clipShape(Circle())
+                            }
+                            .padding(.trailing, 16)
                         }
-                        .padding(.trailing, 16)
                     }
                     Spacer()
                 }
@@ -226,6 +230,7 @@ private struct RemoteOrAssetImage: View {
         currentImageIndex: .constant(0),
         images: Array(1...8).map { "test\($0)" }, // 8개 이미지로 테스트
         onBackTap: {},
-        onShareTap: {}
+        showsEditButton: true,
+        onEditTap: {}
     )
 }
