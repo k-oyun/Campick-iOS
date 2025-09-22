@@ -46,13 +46,19 @@ enum AppLog {
 
     static func logResponse(status: Int, method: String, url: String, data: Data?, error: String?) {
         guard enabled else { return }
+        var out = "[RESPONSE] (\(status)) \(method) \(url)"
         if let error {
-            var out = "[RESPONSE] (\(status)) \(method) \(url) - error: \(error)"
-            if let data, let text = String(data: data, encoding: .utf8) { out += "\n   body: \(text)" }
-            print(out)
-        } else {
-            print("[RESPONSE] (\(status)) \(method) \(url)")
+            out += " - error: \(error)"
         }
+        if let data {
+            // 가능하면 pretty JSON으로 출력, 실패하면 원문 출력
+            if let json = maskedJSONString(from: data) {
+                out += "\n   body: \(json)"
+            } else if let text = String(data: data, encoding: .utf8) {
+                out += "\n   body: \(text)"
+            }
+        }
+        print(out)
     }
 
     // MARK: - Masking utilities

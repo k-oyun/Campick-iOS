@@ -62,8 +62,7 @@ enum ProductAPI {
                 .validate()
             // 서버 응답: ApiResponse<Page<ProductItemDTO>>
             let wrapped = try await request.serializingDecodable(ApiResponse<Page<ProductItemDTO>>.self).value
-            guard let list = wrapped.data else { return Page<ProductItemDTO>.empty() }
-            return list
+            return wrapped.data ?? Page<ProductItemDTO>.empty()
         } catch {
             throw ErrorMapper.map(error)
         }

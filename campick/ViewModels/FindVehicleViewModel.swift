@@ -81,7 +81,7 @@ final class FindVehicleViewModel: ObservableObject {
     // MARK: - DTO -> View Model mapping
     private func mapToVehicle(_ dto: ProductItemDTO) -> Vehicle {
         let id = String(dto.productId)
-        let thumb = dto.thumbNail.flatMap { URL(string: $0) }
+        let thumb = urlFrom(dto.thumbNail)
         let status: VehicleStatus
         switch dto.status.uppercased() {
         case "AVAILABLE": status = .active
@@ -117,6 +117,20 @@ final class FindVehicleViewModel: ObservableObject {
             isOnSale: status == .active,
             isFavorite: dto.isLiked
         )
+    }
+
+    // Try both raw and percent-decoded strings to build a URL
+    private func urlFrom(_ s: String?) -> URL? {
+        guard let s = s, !s.isEmpty else { return nil }
+        // 1) 우선 percent-decoded 시도 (storage.googleapis.com 경로형 URL이 %2F 포함 시 404 방지)
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) {
+            return u
+        }
+        // 2) 원본 문자열로 시도
+        if let u = URL(string: s) {
+            return u
+        }
+        return nil
     }
 
     // MARK: - Parsing helpers

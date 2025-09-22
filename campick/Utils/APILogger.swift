@@ -14,7 +14,24 @@ final class APILogger: EventMonitor {
     func request(_ request: Request, didCreateURLRequest urlRequest: URLRequest) {
         let method = urlRequest.httpMethod ?? "-"
         let url = urlRequest.url?.absoluteString ?? "-"
-        AppLog.logRequest(method: method, url: url, body: urlRequest.httpBody)
+        // Header 로깅 (Authorization은 마스킹)
+        var headerLines: [String] = []
+        if let headers = urlRequest.allHTTPHeaderFields, !headers.isEmpty {
+            for (k, v) in headers {
+                if k.lowercased() == "authorization" {
+                    let masked = v.count > 16 ? String(v.prefix(16)) + "…(len=\(v.count))" : "…"
+                    headerLines.append("  \(k): \(masked)")
+                } else {
+                    headerLines.append("  \(k): \(v)")
+                }
+            }
+        }
+        if headerLines.isEmpty {
+            AppLog.logRequest(method: method, url: url, body: urlRequest.httpBody)
+        } else {
+            AppLog.debug("REQUEST HEADERS\n" + headerLines.joined(separator: "\n"), category: "NET")
+            AppLog.logRequest(method: method, url: url, body: urlRequest.httpBody)
+        }
     }
 
     func requestDidResume(_ request: Request) {
@@ -39,3 +56,4 @@ final class APILogger: EventMonitor {
         }
     }
 }
+
