@@ -15,6 +15,8 @@ final class FindPasswordViewModel: ObservableObject {
     @Published var temporaryPassword: String? = nil
     @Published var showSuccessAlert: Bool = false
     @Published var successMessage: String? = nil
+    @Published var showCodeMismatchAlert: Bool = false
+    @Published var showResetSuccessModal: Bool = false
 
     var canSendCode: Bool {
         emailIsValid
@@ -25,6 +27,7 @@ final class FindPasswordViewModel: ObservableObject {
     }
 
     func sendVerificationCode() async {
+        // 비밀번호 찾기: 재설정 링크(코드) 발송 API 호출 후 코드 입력으로 진행
         guard emailIsValid else {
             errorMessage = "올바른 이메일 형식이 아닙니다."
             return
@@ -36,8 +39,8 @@ final class FindPasswordViewModel: ObservableObject {
         codeSent = false
 
         do {
-            try await AuthAPI.sendEmailCode(email: email)
-            infoMessage = "인증번호를 발송했습니다. 메일함을 확인하세요."
+            try await AuthAPI.sendPasswordResetLink(email: email)
+            infoMessage = "인증번호(재설정 코드)를 발송했습니다. 메일함을 확인하세요."
             codeSent = true
         } catch {
             errorMessage = map(error)
@@ -48,6 +51,7 @@ final class FindPasswordViewModel: ObservableObject {
     }
 
     func issueTemporaryPassword() async {
+        // 이메일 인증번호를 서버로 전송하여 새 비밀번호 발송 요청
         guard canIssuePassword else {
             errorMessage = "인증번호를 입력한 후 다시 시도해주세요."
             return
@@ -55,16 +59,16 @@ final class FindPasswordViewModel: ObservableObject {
         isIssuingPassword = true
         errorMessage = nil
         infoMessage = nil
+        showCodeMismatchAlert = false
 
         do {
-            try await AuthAPI.confirmEmailCode(code: verificationCode)
-            let issued = try await AuthAPI.issueTemporaryPassword(email: email, verificationCode: verificationCode)
-            temporaryPassword = issued
-            successMessage = "임시 비밀번호가 발급되었습니다. 로그인 후 비밀번호를 변경해 주세요."
-            showSuccessAlert = true
+            _ = try await AuthAPI.resetPassword(withCode: verificationCode)
+            // 200 응답 수신 시 성공 모달 표시
+            showResetSuccessModal = true
             codeSent = false
         } catch {
-            errorMessage = map(error)
+            // 200 이외 응답은 코드 불일치 팝업
+            showCodeMismatchAlert = true
         }
 
         isIssuingPassword = false
