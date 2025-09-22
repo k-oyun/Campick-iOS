@@ -147,12 +147,24 @@ extension FindVehicleView {
         let mileageActive = vm.filterOptions.mileageRange != defaultMileage
         let yearActive = vm.filterOptions.yearRange != defaultYear
         let types = Array(vm.filterOptions.selectedVehicleTypes)
+        let anyFilterActive = priceActive || mileageActive || yearActive || !types.isEmpty
 
         return VStack(alignment: .leading, spacing: 8) {
-            if priceActive || mileageActive || yearActive || !types.isEmpty {
+            if anyFilterActive {
                 FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
-                    // 정렬 조건 Chip (최근 등록순이면 표기하지 않음)
-                    if vm.selectedSort != .recentlyAdded {
+                    // 정렬 조건 Chip
+                    if vm.selectedSort == .recentlyAdded {
+                        // 최근 등록순은 제거(X) 불가 - 표시만
+                        Chip(text: vm.selectedSort.rawValue,
+                             foreground: .white,
+                             background: AppColors.brandOrange,
+                             horizontalPadding: 10,
+                             verticalPadding: 6,
+                             font: .system(size: 12),
+                             cornerStyle: .capsule,
+                             action: nil)
+                    } else {
+                        // 다른 정렬이 선택된 경우 제거 시 최근 등록순으로 복귀
                         RemovableChip(text: vm.selectedSort.rawValue) {
                             vm.selectedSort = .recentlyAdded
                         }
@@ -160,21 +172,25 @@ extension FindVehicleView {
                     if priceActive {
                         RemovableChip(text: "\(Int(vm.filterOptions.priceRange.lowerBound))~\(Int(vm.filterOptions.priceRange.upperBound))만원") {
                             vm.filterOptions.priceRange = defaultPrice
+                            vm.selectedSort = .recentlyAdded
                         }
                     }
                     if mileageActive {
                         RemovableChip(text: "\(Int(vm.filterOptions.mileageRange.lowerBound))~\(Int(vm.filterOptions.mileageRange.upperBound))km") {
                             vm.filterOptions.mileageRange = defaultMileage
+                            vm.selectedSort = .recentlyAdded
                         }
                     }
                     if yearActive {
                         RemovableChip(text: "\(Int(vm.filterOptions.yearRange.lowerBound))~\(Int(vm.filterOptions.yearRange.upperBound))년") {
                             vm.filterOptions.yearRange = defaultYear
+                            vm.selectedSort = .recentlyAdded
                         }
                     }
                     ForEach(types, id: \.self) { t in
                         RemovableChip(text: t) {
                             vm.filterOptions.selectedVehicleTypes.remove(t)
+                            vm.selectedSort = .recentlyAdded
                         }
                     }
                 }
