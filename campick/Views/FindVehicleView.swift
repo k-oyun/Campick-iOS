@@ -11,14 +11,14 @@ import Foundation
 struct FindVehicleView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var vm = FindVehicleViewModel()
+    // 홈 등에서 진입 시 초기 적용할 차량 종류(옵션)
+    var initialTypes: [String]? = nil
+    @State private var didApplyInitial = false
 
     var body: some View {
         ZStack {
             AppColors.background.edgesIgnoringSafeArea(.all)
             VStack {
-//                TopBarView(title: "매물 찾기", showsBackButton: false) {
-//                    dismiss()
-//                }
 
                 // 매물 검색 필드
                 ZStack(alignment: .leading) {
@@ -117,7 +117,17 @@ struct FindVehicleView: View {
         }
         .onChange(of: vm.filterOptions) { _, _ in vm.onChangeFilter() }
         .onChange(of: vm.selectedSort) { _, _ in vm.onChangeSort() }
-        .onAppear { vm.onAppear() }
+        .onAppear {
+            if !didApplyInitial, let types = initialTypes, !types.isEmpty {
+                let allowed: Set<String> = ["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]
+                let valid = types.first(where: { allowed.contains($0) })
+                vm.filterOptions.selectedVehicleTypes = valid.map { Set([$0]) } ?? []
+                didApplyInitial = true
+                vm.onChangeFilter()
+            } else {
+                vm.onAppear()
+            }
+        }
         .padding(.bottom, 60)
     }
 }

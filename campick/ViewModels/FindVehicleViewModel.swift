@@ -81,7 +81,7 @@ final class FindVehicleViewModel: ObservableObject {
     // MARK: - DTO -> View Model mapping
     private func mapToVehicle(_ dto: ProductItemDTO) -> Vehicle {
         let id = String(dto.productId)
-        let thumb = URL(string: dto.thumbNail)
+        let thumb = dto.thumbNail.flatMap { URL(string: $0) }
         let status: VehicleStatus
         switch dto.status.uppercased() {
         case "AVAILABLE": status = .active

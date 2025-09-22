@@ -96,13 +96,13 @@ final class ProfileService {
     }
 
     static func updateMemberProfile(nickname: String, description: String, mobileNumber: String) async throws {
-        let endpoint = Endpoint.memberNickname
+        let endpoint = Endpoint.memberUpdate
         let url = endpoint.url
 
         let parameters: [String: Any] = [
             "nickname": nickname,
             "description": description,
-            "mobile_number": mobileNumber
+            "mobileNumber": mobileNumber
         ]
 
         return try await withCheckedThrowingContinuation { continuation in

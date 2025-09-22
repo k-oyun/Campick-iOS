@@ -11,9 +11,9 @@ struct ProductItemDTO: Decodable {
     let mileage: String
     let location: String
     let createdAt: String
-    let thumbNail: String
+    let thumbNail: String?
     let isLiked: Bool
-    let likeCount: Int
+    let likeCount: Int?
     let status: String
 
     private enum CodingKeys: String, CodingKey {
@@ -59,9 +59,9 @@ struct ProductItemDTO: Decodable {
         }
 
         createdAt = try container.decode(String.self, forKey: .createdAt)
-        thumbNail = try container.decode(String.self, forKey: .thumbNail)
-        isLiked = try container.decode(Bool.self, forKey: .isLiked)
-        likeCount = try container.decode(Int.self, forKey: .likeCount)
+        thumbNail = try? container.decode(String.self, forKey: .thumbNail)
+        isLiked = (try? container.decode(Bool.self, forKey: .isLiked)) ?? false
+        likeCount = try? container.decode(Int.self, forKey: .likeCount)
         status = try container.decode(String.self, forKey: .status)
     }
 }
@@ -82,5 +82,5 @@ struct ProductSellerDTO: Decodable {
     let rating: Double
     let sellingCount: Int
     let completeCount: Int
-    let userId: Int
+    let userId: Int?
 }
