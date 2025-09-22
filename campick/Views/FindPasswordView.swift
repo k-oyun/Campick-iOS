@@ -21,29 +21,59 @@ struct FindPasswordView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                AppColors.background.ignoresSafeArea()
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        headerSection
-                        emailSection
-                        if vm.codeSent { verificationSection }
-                        Spacer(minLength: 0)
+            ScrollViewReader { proxy in
+                ZStack {
+                    AppColors.background.ignoresSafeArea()
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 24) {
+                            headerSection
+                            
+                            SignupProgress(progress: vm.step == .verify ? 0.5 : 1.0)
+                                .padding(.trailing, 8)
+                            
+                            
+                            if vm.step == .verify {
+                                emailSection
+                                if vm.codeSent { verifyCodeSection }
+                            } else {
+                                newPasswordSection
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 32)
+                        .padding(.bottom, 40)
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 32)
-                    .padding(.bottom, 40)
+                }
+                .onChange(of: codeFocused) { _, focused in
+                    guard focused else { return }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        withAnimation { proxy.scrollTo("codeField", anchor: .top) }
+                    }
+                }
+                .onChange(of: vm.codeSent) { _, newValue in
+                    if newValue {
+                        timerVM.startTimer()
+                        emailFocused = false
+                        codeFocused = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            withAnimation { proxy.scrollTo("codeField", anchor: .top) }
+                        }
+                    } else {
+                        timerVM.stopTimer()
+                        codeFocused = false
+                    }
                 }
             }
             .navigationBarBackButtonHidden(true)
             .toolbar { toolbarContent }
-            .alert("임시 비밀번호 발급", isPresented: $vm.showSuccessAlert) {
+            // 코드 불일치 안내 모달
+            .alert("인증번호가 일치하지 않습니다.", isPresented: $vm.showCodeMismatchAlert) {
                 Button("확인") {
-                    vm.showSuccessAlert = false
-                    dismiss()
+                    vm.showCodeMismatchAlert = false
                 }
             } message: {
-                Text(vm.successMessage ?? "발급된 임시 비밀번호로 로그인한 뒤, 비밀번호를 변경해 주세요.")
+                Text("받으신 인증번호를 다시 확인한 뒤 입력해주세요.")
             }
             .alert("오류", isPresented: Binding(
                 get: { vm.errorMessage != nil && !vm.showSuccessAlert },
@@ -53,23 +83,23 @@ struct FindPasswordView: View {
             } message: {
                 Text(vm.errorMessage ?? "일시적인 오류가 발생했습니다.")
             }
+            // 초기화 성공 안내 모달 → 확인 시 로그인 화면으로 복귀
+            .alert("비밀번호가 초기화되었습니다.", isPresented: $vm.showResetSuccessModal) {
+                Button("로그인 하러 가기") {
+                    vm.showResetSuccessModal = false
+                    dismiss()
+                }
+            } message: {
+                Text("새 비밀번호로 로그인해 주세요.")
+            }
             .onReceive(ticker) { _ in
                 guard vm.codeSent else { return }
                 timerVM.tick()
             }
-            .onChange(of: vm.codeSent) { _, newValue in
-                if newValue {
-                    timerVM.startTimer()
-                    emailFocused = false
-                    codeFocused = true
-                } else {
-                    timerVM.stopTimer()
-                    codeFocused = false
-                }
-            }
             .onChange(of: vm.verificationCode) { _, newValue in
                 vm.verificationCode = newValue.filter { $0.isNumber }
             }
+            // 별도 네비게이션 푸시는 하지 않음(뒤로가기 제거 목적)
         }
     }
 
@@ -97,6 +127,7 @@ struct FindPasswordView: View {
                 keyboardType: .emailAddress,
                 focus: $emailFocused
             )
+            .id("emailField")
 
             PrimaryActionButton(
                 title: vm.codeSent ? "인증번호 재전송" : "인증번호 전송",
@@ -120,7 +151,7 @@ struct FindPasswordView: View {
         }
     }
 
-    private var verificationSection: some View {
+    private var verifyCodeSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("인증번호 입력")
                 .font(.headline)
@@ -134,6 +165,7 @@ struct FindPasswordView: View {
                 keyboardType: .numberPad,
                 focus: $codeFocused
             )
+            .id("codeField")
 
             HStack {
                 Spacer()
@@ -153,39 +185,35 @@ struct FindPasswordView: View {
             }
 
             PrimaryActionButton(
-                title: "임시 비밀번호 발급 받기",
+                title: "인증하기",
                 titleFont: .system(size: 18, weight: .bold),
-                isDisabled: !vm.canIssuePassword || vm.isIssuingPassword || timerVM.remainingSeconds == 0
+                isDisabled: vm.verificationCode.isEmpty || vm.isIssuingPassword || timerVM.remainingSeconds == 0
             ) {
-                Task { await vm.issueTemporaryPassword() }
+                Task { await vm.verifyCode() }
             }
 
-            if let temp = vm.temporaryPassword {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("발급된 임시 비밀번호")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.white)
-                    HStack {
-                        Text(temp)
-                            .font(.headline)
-                            .foregroundStyle(AppColors.brandOrange)
-                        Spacer()
-                        Button {
-                            UIPasteboard.general.string = temp
-                            vm.infoMessage = "클립보드에 복사되었습니다."
-                        } label: {
-                            Text("복사")
-                                .font(.footnote.weight(.semibold))
-                                .foregroundStyle(AppColors.brandOrange)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                    )
-                }
+            // 임시 비밀번호 표시 UI 제거 (재설정 방식 변경)
+        }
+    }
+
+    private var newPasswordSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("새 비밀번호 입력")
+                .font(.headline)
+                .foregroundStyle(.white)
+
+            NoPasteSecureField(
+                text: $vm.newPassword,
+                placeholder: "새 비밀번호 (6자 이상)",
+                systemImage: "lock"
+            )
+
+            PrimaryActionButton(
+                title: "비밀번호 변경",
+                titleFont: .system(size: 18, weight: .bold),
+                isDisabled: !vm.canIssuePassword || vm.isIssuingPassword
+            ) {
+                Task { await vm.changePassword() }
             }
         }
     }
