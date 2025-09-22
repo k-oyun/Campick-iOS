@@ -86,13 +86,14 @@ enum ProductAPI {
     }
 
     // 매물 등록 요청: VehicleRegistrationRequest를 서버로 전송
-    static func createProduct(_ requestBody: VehicleRegistrationRequest) async throws -> ApiResponse<[String: String]> {
+    // 서버 응답 예시: {"status":201,"success":true,"message":"매물 생성 성공","data":106}
+    static func createProduct(_ requestBody: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
         do {
             AppLog.info("Creating product (title: \(requestBody.title))", category: "PRODUCT")
             let request = APIService.shared
                 .request(Endpoint.registerProduct.url, method: .post, parameters: requestBody, encoder: JSONParameterEncoder.default)
                 .validate()
-            let wrapped = try await request.serializingDecodable(ApiResponse<[String: String]>.self).value
+            let wrapped = try await request.serializingDecodable(ApiResponse<Int>.self).value
             return wrapped
         } catch {
             throw ErrorMapper.map(error)
