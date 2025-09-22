@@ -18,15 +18,15 @@ struct ProfileMenu: View {
     
     var body: some View {
         ZStack{
-            if showSlideMenu {
-                Color.black.opacity(0.5)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showSlideMenu = false
-                        }
+            Color.black
+                .opacity(showSlideMenu ? 0.5 : 0)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showSlideMenu = false
                     }
-            }
+                }
             
             HStack {
                 Spacer()
@@ -85,7 +85,9 @@ struct ProfileMenu: View {
                                 .padding(.bottom,1)
                                 
                                 Button(action: {
-                                    showSlideMenu = false
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        showSlideMenu = false
+                                    }
                                     navigateToProfile = true
                                 }) {
                                     Text("프로필 보기")
@@ -146,6 +148,7 @@ struct ProfileMenu: View {
                 }
                 .frame(width: 280)
                 .offset(x: showSlideMenu ? 0 : 300) // 오른쪽에서 슬라이드
+                .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
                 .environmentObject(UserState.shared)
             }
         }

@@ -44,12 +44,12 @@ struct RootView: View {
                             )
                             .zIndex(1)
                             
-                            if showSlideMenu {
+//                            if showSlideMenu {
                                 ProfileMenu(showSlideMenu: $showSlideMenu)
                                     .allowsHitTesting(true)
                                     .zIndex(2)
                                 
-                            }
+//                            }
                                 
                             
                         }
