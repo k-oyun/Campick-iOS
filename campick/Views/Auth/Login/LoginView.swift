@@ -36,9 +36,9 @@ struct LoginView: View {
                             OutlinedInputField(text: $vm.email, placeholder: "이메일을 입력하세요", systemImage: "envelope")
                                 .padding(.bottom, 16)
 
-                            // 비밀번호
+                            // 비밀번호 (복사/붙여넣기 방지)
                             FormLabel(text: "비밀번호")
-                            OutlinedInputField(text: $vm.password, placeholder: "비밀번호를 입력하세요", isSecure: true)
+                            NoPasteSecureField(text: $vm.password, placeholder: "비밀번호를 입력하세요")
 
                             // 로그인 유지 체크박스
                             HStack {
