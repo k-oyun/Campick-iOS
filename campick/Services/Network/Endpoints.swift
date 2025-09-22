@@ -25,6 +25,7 @@ enum Endpoint {
     case tokenReissue // 토큰 재발급 요청
     case memberInfo(memberId: String)
     case memberProducts(memberId: String)
+    case memberSellOrReserveProducts(memberId: String)
     case memberSoldProducts(memberId: String)
     case memberMyProductList(memberId: String)
     case memberSignout
@@ -56,6 +57,7 @@ enum Endpoint {
         case .tokenReissue: return "/api/member/reissue"
         case .memberInfo(let memberId): return "/api/member/info/\(memberId)"
         case .memberProducts(let memberId): return "/api/member/product/all/\(memberId)"
+        case .memberSellOrReserveProducts(let memberId): return "/api/member/product/sell-or-reserve/\(memberId)"
         case .memberSoldProducts(let memberId): return "/api/member/sold/\(memberId)"
         case .memberMyProductList(let memberId): return "/api/member/product/sold/\(memberId)"
         case .memberSignout: return "/api/member"

@@ -30,7 +30,8 @@ final class ProfileService {
     }
 
     static func fetchMemberProducts(memberId: String, page: Int, size: Int = 2) async throws -> Page<ProfileProduct> {
-        let endpoint = Endpoint.memberProducts(memberId: memberId)
+        // 판매중/예약중만 조회하는 신규 엔드포인트 사용
+        let endpoint = Endpoint.memberSellOrReserveProducts(memberId: memberId)
         let url = endpoint.url
 
         let parameters: [String: Any] = [
