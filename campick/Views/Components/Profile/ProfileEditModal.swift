@@ -20,7 +20,7 @@ struct ProfileEditModal: View {
     @State private var mobileNumber: String
     @State private var isUpdating = false
     @State private var isImageUploading = false
-    @State private var shouldRedirectToLogin = false
+    // 로그인 전환은 RootView에서 일괄 처리
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     @State private var permissionAlert: PermissionAlertItem?
@@ -181,9 +181,7 @@ struct ProfileEditModal: View {
         .sheet(isPresented: $showImagePicker) {
             MediaPickerSheet(source: .photoLibrary, selectedImage: $selectedImage)
         }
-        .fullScreenCover(isPresented: $shouldRedirectToLogin) {
-            LoginView()
-        }
+        // 로그인 전환은 RootView의 isLoggedIn 변화로 일원화
         .alert("오류", isPresented: $showErrorAlert) {
             Button("확인") { }
         } message: {
@@ -233,7 +231,7 @@ struct ProfileEditModal: View {
                case let .unacceptableStatusCode(code) = reason {
                 if code == 401 {
                     await MainActor.run {
-                        shouldRedirectToLogin = true
+                        // 전역 로그아웃 → RootView에서 로그인 화면으로 전환됨
                         UserState.shared.logout()
                     }
                 } else if code == 403 {

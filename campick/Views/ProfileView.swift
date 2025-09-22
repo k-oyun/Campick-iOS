@@ -140,9 +140,7 @@ struct ProfileView: View {
         .task {
             await profileDataViewModel.loadProfile(memberId: memberId)
         }
-        .fullScreenCover(isPresented: $profileDataViewModel.shouldRedirectToLogin) {
-            LoginView()
-        }
+        // 로그인 전환은 RootView의 isLoggedIn 변화로 일원화
         .navigationDestination(isPresented: $navigateToMyProducts) {
             MyProductListView(memberId: memberId ?? UserState.shared.memberId)
         }
