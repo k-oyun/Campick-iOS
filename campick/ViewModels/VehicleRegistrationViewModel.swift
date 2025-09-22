@@ -115,7 +115,9 @@ final class VehicleRegistrationViewModel: ObservableObject {
         AppLog.info("Creating product (title: \(title))", category: "PRODUCT")
         do {
             let res = try await ProductAPI.createProduct(request)
-            if res.success == true || res.status == 200 {
+            // 성공은 2xx(예: 200, 201 포함) 또는 success == true 로 판단
+            let statusCode = res.status ?? 0
+            if res.success == true || (200..<300).contains(statusCode) {
                 alertMessage = res.message ?? "등록이 완료되었습니다."
                 showingSuccessAlert = true
             } else {
