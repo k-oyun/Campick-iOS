@@ -10,6 +10,7 @@ import Foundation
 
 struct FindVehicleView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var vm = FindVehicleViewModel()
     // 홈 등에서 진입 시 초기 적용할 차량 종류(옵션)
     var initialTypes: [String]? = nil
@@ -124,6 +125,8 @@ struct FindVehicleView: View {
                 vm.filterOptions.selectedVehicleTypes = valid.map { Set([$0]) } ?? []
                 didApplyInitial = true
                 vm.onChangeFilter()
+                // 초기 타입은 1회성으로 사용 후 초기화 (재진입 시 중복 적용 방지)
+                tabRouter.initialVehicleTypes = nil
             } else {
                 vm.onAppear()
             }
