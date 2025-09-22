@@ -41,10 +41,10 @@ final class ProfileService {
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.request(url, method: .get, parameters: parameters)
                 .validate()
-                .responseDecodable(of: ProfileProductPageResponse.self) { response in
+                .responseDecodable(of: ApiResponse<Page<ProfileProduct>>.self) { response in
                     switch response.result {
-                    case .success(let productPage):
-                        continuation.resume(returning: productPage.product)
+                    case .success(let wrapped):
+                        continuation.resume(returning: wrapped.data ?? Page<ProfileProduct>.empty())
                     case .failure(let error):
                         continuation.resume(throwing: error)
                     }
@@ -64,10 +64,10 @@ final class ProfileService {
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.request(url, method: .get, parameters: parameters)
                 .validate()
-                .responseDecodable(of: ProfileProductPageResponse.self) { response in
+                .responseDecodable(of: ApiResponse<Page<ProfileProduct>>.self) { response in
                     switch response.result {
-                    case .success(let productPage):
-                        continuation.resume(returning: productPage.product)
+                    case .success(let wrapped):
+                        continuation.resume(returning: wrapped.data ?? Page<ProfileProduct>.empty())
                     case .failure(let error):
                         continuation.resume(throwing: error)
                     }
