@@ -77,10 +77,10 @@ struct ProductOptionDTO: Codable {
 }
 
 struct ProductSellerDTO: Decodable {
-    let nickName: String
-    let role: String
-    let rating: Double
-    let sellingCount: Int
-    let completeCount: Int
+    let nickName: String?
+    let role: String?
+    let rating: Double?
+    let sellingCount: Int?
+    let completeCount: Int?
     let userId: Int?
 }
