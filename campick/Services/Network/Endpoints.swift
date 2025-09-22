@@ -51,7 +51,7 @@ enum Endpoint {
         case .carRecommend: return "/api/product/recommend"
         case .logout: return "/api/member/logout"
         case .chatList: return "/api/chat/my"
-        case .products: return "/api/products"
+        case .products: return "/api/product"
         case .tokenReissue: return "/api/member/reissue"
         case .memberInfo(let memberId): return "/api/member/info/\(memberId)"
         case .memberProducts(let memberId): return "/api/member/product/all/\(memberId)"
