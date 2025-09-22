@@ -295,11 +295,15 @@ struct VehicleRegistrationView: View {
         let cleanPrice = price.replacingOccurrences(of: ",", with: "")
         let cleanMileage = mileage.replacingOccurrences(of: ",", with: "")
 
+        // 서버가 한국어 값을 사용하도록 타입/모델을 한국어로 정규화
+        let localizedType = LocalizationMaps.typeKo(vehicleType)
+        let localizedModel = LocalizationMaps.modelKo(vehicleModel)
+
         let request = VehicleRegistrationRequest(
             generation: generation,
             mileage: cleanMileage,
-            vehicleType: vehicleType,
-            vehicleModel: vehicleModel,
+            vehicleType: localizedType,
+            vehicleModel: localizedModel,
             price: cleanPrice,
             location: location,
             plateHash: plateHash,
@@ -374,8 +378,9 @@ struct VehicleRegistrationView: View {
         do {
             let productInfo = try await ProductAPI.fetchProductInfo()
             await MainActor.run {
-                availableTypes = productInfo.type
-                availableModels = productInfo.model
+                // 서버에서 영어 코드가 내려와도 한국어로 표기/전달하도록 변환
+                availableTypes = LocalizationMaps.typesKo(productInfo.type)
+                availableModels = LocalizationMaps.modelsKo(productInfo.model)
                 availableOptions = productInfo.option
                 // API에서 받아온 옵션들을 VehicleOption으로 변환
                 vehicleOptions = productInfo.option.map { optionName in
