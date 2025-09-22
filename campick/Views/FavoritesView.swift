@@ -20,7 +20,6 @@ struct FavoritesView: View {
         ZStack {
             AppColors.background.edgesIgnoringSafeArea(.all)
             VStack(spacing: 0) {
-                TopBarView(title: "찜 목록") { dismiss() }
 
                 Rectangle()
                     .fill(Color.white.opacity(0.12))
