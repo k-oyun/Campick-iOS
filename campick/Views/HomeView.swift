@@ -8,61 +8,62 @@
 import SwiftUI
 
 struct HomeView: View {
-    @Binding var showSlideMenu : Bool
+    @Binding var showSlideMenu: Bool
     @StateObject private var viewModel = HomeChatViewModel()
     @State private var navigateToFind = false
     @State private var selectedType: String? = nil
-    
-    
+
     var body: some View {
-        NavigationStack{
-            ZStack {
-                AppColors.brandBackground
-                    .ignoresSafeArea()
-                VStack(spacing: 0) {
-                    // 헤더
-                    Header(showSlideMenu: $showSlideMenu)
-                    // 컨텐츠 섹션
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            // 상단 배너
-                            TopBanner()
-                            // 매물 찾기
-                            FindVehicle()
-                            // 차량 종류
-                            VehicleCategory { type in
-                                selectedType = type
-                                navigateToFind = true
-                            }
-                            // 추천 매물
-                            RecommendVehicle()
-                            // 하단 배너
-                            BottomBanner()
-                                .padding(.bottom,70)
+        ZStack {
+            AppColors.brandBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // 헤더
+                Header(showSlideMenu: $showSlideMenu)
+
+                // 컨텐츠 섹션
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // 상단 배너
+                        TopBanner()
+                        // 매물 찾기
+                        FindVehicle()
+                        // 차량 종류
+                        VehicleCategory { type in
+                            selectedType = type
+                            navigateToFind = true
                         }
-                        .padding()
+                        // 추천 매물
+                        RecommendVehicle()
+                        // 하단 배너
+                        BottomBanner()
+                            .padding(.bottom, 70)
                     }
-    //                .safeAreaInset(edge: .bottom) {
-    //                    BottomTabBarView(currentSelection: .home)
-    //                }
+                    .padding()
                 }
-                // 슬라이드 메뉴
-//                ProfileMenu(showSlideMenu: $showSlideMenu)
-    //                .allowsHitTesting(showSlideMenu)
+                // .safeAreaInset(edge: .bottom) {
+                //     BottomTabBarView(currentSelection: .home)
+                // }
             }
-            .onAppear {
-                viewModel.connectWebSocket(userId: "1")
-            }
-            .navigationDestination(isPresented: $navigateToFind) {
+
+            // Hidden navigation link trigger
+            NavigationLink(isActive: $navigateToFind) {
                 FindVehicleView()
+            } label: {
+                EmptyView()
             }
+            .hidden()
         }
-        
+        .onAppear {
+            viewModel.connectWebSocket(userId: "1")
+        }
     }
 }
 
 struct HomeView_Previews: PreviewProvider {
+    @State static var show = false
     static var previews: some View {
-//        HomeView(showSlideMenu: $show)
+        HomeView(showSlideMenu: $show)
     }
 }

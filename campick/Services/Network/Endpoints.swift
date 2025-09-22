@@ -28,7 +28,7 @@ enum Endpoint {
     case memberSoldProducts(memberId: String)
     case memberMyProductList(memberId: String)
     case memberSignout
-    case memberNickname
+    case memberUpdate
     case memberImage
     case changePassword
     case productInfo
@@ -58,7 +58,7 @@ enum Endpoint {
         case .memberSoldProducts(let memberId): return "/api/member/sold/\(memberId)"
         case .memberMyProductList(let memberId): return "/api/member/product/sold/\(memberId)"
         case .memberSignout: return "/api/member"
-        case .memberNickname: return "/api/member/nickname"
+        case .memberUpdate: return "/api/member/update"
         case .memberImage: return "/api/member/image"
         case .changePassword: return "/api/member/password"
         case .productInfo: return "/api/product/info"

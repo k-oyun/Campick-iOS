@@ -209,7 +209,7 @@ struct VehicleCardView_Previews: PreviewProvider {
                 imageName: "testImage3",
                 thumbnailURL: nil,
                 title: "기아 K5",
-                price: "3,200만원",
+                price: "3200",
                 year: "2023년",
                 mileage: "8,000km",
                 fuelType: "가솔린",
