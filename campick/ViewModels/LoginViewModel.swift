@@ -27,7 +27,11 @@ final class LoginViewModel: ObservableObject {
             do {
                 AppLog.debug("login request start for email: \(self.email)", category: "AUTH")
                 let res = try await AuthAPI.login(email: email, password: password)
+                // Auto-login preference disabled (pending decision)
+                // AuthPreferences.keepLoggedIn = self.keepLoggedIn
                 TokenManager.shared.saveAccessToken(res.accessToken)
+                // Refresh token persistence disabled (pending auto-login decision)
+                // TokenManager.shared.saveRefreshToken(res.refreshToken)
 
                 if let user = res.user {
                     AppLog.info("Applying user DTO with memberId: \(user.memberId ?? "nil")", category: "AUTH")

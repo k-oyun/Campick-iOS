@@ -37,10 +37,8 @@ class UserState: ObservableObject {
         profileImageUrl = UserDefaultsManager.getString(forKey: "profileImageUrl") ?? ""
         joinDate = UserDefaultsManager.getString(forKey: "joinDate") ?? ""
 
-        // Keychain에 토큰만 남아 있어도 즉시 로그인 상태를 유지
-        let hasAccessToken = TokenManager.shared.hasValidAccessToken
-
-        isLoggedIn = hasAccessToken
+        // 로그인 상태는 여기서 변경하지 않습니다. (호출 시점에 따라 화면 전환 이슈를 유발할 수 있음)
+        // 이전에는 저장된 토큰 유무로 isLoggedIn을 변경했으나, 현재는 명시적 로그인/로그아웃 시에만 변경합니다.
     }
 
     func saveUserData(
