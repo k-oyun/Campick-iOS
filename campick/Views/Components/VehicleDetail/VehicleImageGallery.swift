@@ -20,9 +20,7 @@ struct VehicleImageGallery: View {
             ZStack {
                 TabView(selection: $currentImageIndex) {
                     ForEach(0..<images.count, id: \.self) { index in
-                        Image("bannerImage")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
+                        RemoteOrAssetImage(images[index])
                             .tag(index)
                     }
                 }
@@ -79,6 +77,7 @@ struct VehicleImageGallery: View {
                             ThumbnailImageView(
                                 index: index,
                                 currentIndex: currentImageIndex,
+                                imageString: images[index],
                                 onTap: {
                                     withAnimation {
                                         currentImageIndex = index
@@ -117,6 +116,7 @@ struct VehicleImageGallery: View {
                                     ThumbnailImageView(
                                         index: index,
                                         currentIndex: currentImageIndex,
+                                        imageString: images[index],
                                         onTap: {
                                             withAnimation {
                                                 currentImageIndex = index
@@ -163,13 +163,12 @@ struct VehicleImageGallery: View {
 struct ThumbnailImageView: View {
     let index: Int
     let currentIndex: Int
+    let imageString: String
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
-            Image("bannerImage")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            RemoteOrAssetImage(imageString)
                 .frame(width: 64, height: 48)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -181,6 +180,44 @@ struct ThumbnailImageView: View {
                         )
                 )
         }
+    }
+}
+
+// MARK: - RemoteOrAssetImage helper
+private struct RemoteOrAssetImage: View {
+    private let source: String
+    init(_ source: String) { self.source = source }
+
+    var body: some View {
+        if let url = urlFrom(source) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.gray.opacity(0.15)
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    }
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                case .failure:
+                    Image("bannerImage").resizable().scaledToFill()
+                @unknown default:
+                    Image("bannerImage").resizable().scaledToFill()
+                }
+            }
+        } else {
+            Image(source.isEmpty ? "bannerImage" : source)
+                .resizable()
+                .scaledToFill()
+        }
+    }
+
+    private func urlFrom(_ s: String?) -> URL? {
+        guard let s = s, !s.isEmpty else { return nil }
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
+        if let u = URL(string: s) { return u }
+        return nil
     }
 }
 
