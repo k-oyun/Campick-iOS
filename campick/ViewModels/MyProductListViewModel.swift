@@ -100,7 +100,7 @@ final class MyProductListViewModel: ObservableObject {
         formatter.numberStyle = .decimal
         formatter.locale = Locale(identifier: "ko_KR")
         let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
-        return formatted + "원"
+        return formatted
     }
 
     private func formatMileage(_ value: Int) -> String {
