@@ -130,18 +130,20 @@ final class ProfileService {
         let endpoint = Endpoint.memberImage
         let url = endpoint.url
 
-        // 이미지 압축 (ImageUploadService의 로직 사용)
-        guard let compressedImageData = compressImage(image) else {
+        // 기존 압축/리사이징 유틸 사용 (최대 1MB로 압축)
+        guard let payload = compressImage(image, maxSizeInMB: 1.0) else {
             throw ProfileUpdateError.imageCompressionFailed
         }
+        let mimeType = "image/jpeg"
+        let fileName = "profile.jpg"
 
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.upload(multipartFormData: { multipartFormData in
                 multipartFormData.append(
-                    compressedImageData,
-                    withName: "profileImage",
-                    fileName: "profile.jpg",
-                    mimeType: "image/jpeg"
+                    payload,
+                    withName: "file",
+                    fileName: fileName,
+                    mimeType: mimeType
                 )
             }, to: url, method: .put, headers: [
                 "Accept": "application/json"
@@ -150,8 +152,8 @@ final class ProfileService {
             .responseDecodable(of: ProfileImageUpdateResponse.self) { response in
                 switch response.result {
                 case .success(let updateResponse):
-                    if updateResponse.success, let profileImageUrl = updateResponse.data {
-                        continuation.resume(returning: profileImageUrl)
+                    if updateResponse.success, let link = updateResponse.data?.profileImageUrl {
+                        continuation.resume(returning: link)
                     } else {
                         continuation.resume(throwing: ProfileUpdateError.uploadFailed(updateResponse.message))
                     }
@@ -197,7 +199,12 @@ struct ProfileImageUpdateResponse: Codable {
     let status: Int
     let success: Bool
     let message: String
-    let data: String?
+    let data: ProfileImageUpdateData?
+}
+
+struct ProfileImageUpdateData: Codable {
+    let profileImageUrl: String?
+    let profileThumbnailUrl: String?
 }
 
 // MARK: - Error Types
