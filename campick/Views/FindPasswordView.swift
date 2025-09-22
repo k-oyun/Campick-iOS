@@ -37,13 +37,13 @@ struct FindPasswordView: View {
             }
             .navigationBarBackButtonHidden(true)
             .toolbar { toolbarContent }
-            .alert("임시 비밀번호 발급", isPresented: $vm.showSuccessAlert) {
+            // 코드 불일치 안내 모달
+            .alert("인증번호가 일치하지 않습니다.", isPresented: $vm.showCodeMismatchAlert) {
                 Button("확인") {
-                    vm.showSuccessAlert = false
-                    dismiss()
+                    vm.showCodeMismatchAlert = false
                 }
             } message: {
-                Text(vm.successMessage ?? "발급된 임시 비밀번호로 로그인한 뒤, 비밀번호를 변경해 주세요.")
+                Text("받으신 인증번호를 다시 확인한 뒤 입력해주세요.")
             }
             .alert("오류", isPresented: Binding(
                 get: { vm.errorMessage != nil && !vm.showSuccessAlert },
@@ -52,6 +52,15 @@ struct FindPasswordView: View {
                 Button("확인", role: .cancel) { vm.errorMessage = nil }
             } message: {
                 Text(vm.errorMessage ?? "일시적인 오류가 발생했습니다.")
+            }
+            // 초기화 성공 안내 모달 → 확인 시 로그인 화면으로 복귀
+            .alert("비밀번호가 초기화되었습니다.", isPresented: $vm.showResetSuccessModal) {
+                Button("로그인 하러 가기") {
+                    vm.showResetSuccessModal = false
+                    dismiss()
+                }
+            } message: {
+                Text("이메일로 전송된 임시 비밀번호로 로그인해 주세요.")
             }
             .onReceive(ticker) { _ in
                 guard vm.codeSent else { return }
@@ -70,6 +79,7 @@ struct FindPasswordView: View {
             .onChange(of: vm.verificationCode) { _, newValue in
                 vm.verificationCode = newValue.filter { $0.isNumber }
             }
+            // 별도 네비게이션 푸시는 하지 않음(뒤로가기 제거 목적)
         }
     }
 
@@ -153,7 +163,7 @@ struct FindPasswordView: View {
             }
 
             PrimaryActionButton(
-                title: "임시 비밀번호 발급 받기",
+                title: "새 비밀번호 이메일로 받기",
                 titleFont: .system(size: 18, weight: .bold),
                 isDisabled: !vm.canIssuePassword || vm.isIssuingPassword || timerVM.remainingSeconds == 0
             ) {
