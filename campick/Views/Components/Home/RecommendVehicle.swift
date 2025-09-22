@@ -26,7 +26,9 @@ struct RecommendVehicle: View {
                         .fontWeight(.heavy)
                 }
                 Spacer()
-                NavigationLink(destination: FindVehicleView()) {
+                NavigationLink {
+                    FindVehicleView()
+                } label: {
                     HStack {
                         Text("전체보기")
                             .foregroundColor(AppColors.brandLightOrange)
@@ -183,3 +185,4 @@ struct VehicleCard: View {
         )
     }
 }
+

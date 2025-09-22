@@ -163,6 +163,6 @@ struct VehicleDetailView: View {
 
 #Preview {
     NavigationView {
-        VehicleDetailView(vehicleId: "1")
+        VehicleDetailView(vehicleId: "104")
     }
 }

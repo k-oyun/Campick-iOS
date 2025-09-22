@@ -109,7 +109,7 @@ class ProfileDataViewModel: ObservableObject {
 
     func loadMoreSellingProducts(memberId: String? = nil) async {
         guard let sellingPage = sellingProductsPage,
-              !sellingPage.last else { return }
+              !(sellingPage.last ?? true) else { return }
 
         let targetMemberId = memberId ?? UserState.shared.memberId
         guard !targetMemberId.isEmpty else { return }
@@ -133,7 +133,7 @@ class ProfileDataViewModel: ObservableObject {
 
     func loadMoreSoldProducts(memberId: String? = nil) async {
         guard let soldPage = soldProductsPage,
-              !soldPage.last else { return }
+              !(soldPage.last ?? true) else { return }
 
         let targetMemberId = memberId ?? UserState.shared.memberId
         guard !targetMemberId.isEmpty else { return }
@@ -197,3 +197,4 @@ class ProfileDataViewModel: ObservableObject {
         )
     }
 }
+

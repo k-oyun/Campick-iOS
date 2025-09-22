@@ -10,6 +10,8 @@ import SwiftUI
 struct HomeView: View {
     @Binding var showSlideMenu : Bool
     @StateObject private var viewModel = HomeChatViewModel()
+    @State private var navigateToFind = false
+    @State private var selectedType: String? = nil
     
     
     var body: some View {
@@ -28,7 +30,10 @@ struct HomeView: View {
                             // 매물 찾기
                             FindVehicle()
                             // 차량 종류
-                            VehicleCategory()
+                            VehicleCategory { type in
+                                selectedType = type
+                                navigateToFind = true
+                            }
                             // 추천 매물
                             RecommendVehicle()
                             // 하단 배너
@@ -48,6 +53,9 @@ struct HomeView: View {
             .onAppear {
                 viewModel.connectWebSocket(userId: "1")
             }
+            .navigationDestination(isPresented: $navigateToFind) {
+                FindVehicleView()
+            }
         }
         
     }
@@ -58,4 +66,3 @@ struct HomeView_Previews: PreviewProvider {
 //        HomeView(showSlideMenu: $show)
     }
 }
-
