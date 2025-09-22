@@ -219,8 +219,9 @@ private struct RemoteOrAssetImage: View {
 
     private func urlFrom(_ s: String?) -> URL? {
         guard let s = s, !s.isEmpty else { return nil }
-        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
+        // Prefer original (Firebase download URLs include encoded path), then decoded as fallback
         if let u = URL(string: s) { return u }
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
         return nil
     }
 }
