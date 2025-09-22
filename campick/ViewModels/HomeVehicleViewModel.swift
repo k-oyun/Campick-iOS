@@ -75,8 +75,7 @@ final class HomeVehicleViewModel: ObservableObject {
         if let value = Int(price) {
             let formatter = NumberFormatter()
             formatter.numberStyle = .decimal
-            
-            let formatted = formatter.string(from: NSNumber(value: value / 10_000)) ?? "\(value / 10_000)"
+            let formatted = formatter.string(from: NSNumber(value: value)) ?? price
             return "\(formatted)만원"
         }
         return price
