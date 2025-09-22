@@ -63,6 +63,7 @@ struct VehicleImageUploadSection: View {
                 }
                 showingCamera = false
             }
+            .ignoresSafeArea()
         }
         .sheet(isPresented: $showingMainImagePicker) {
             CropEnabledImagePickerView { croppedImage in
