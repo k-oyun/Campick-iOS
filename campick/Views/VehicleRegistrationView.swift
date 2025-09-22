@@ -11,13 +11,15 @@ import UIKit
 
 struct VehicleRegistrationView: View {
     let showBackButton: Bool // 뒤로가기 버튼 표시 여부
+    let editingProductId: String?
 
     @StateObject private var vm = VehicleRegistrationViewModel()
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var tabRouter: TabRouter
 
-    init(showBackButton: Bool = true) {
+    init(showBackButton: Bool = true, editingProductId: String? = nil) {
         self.showBackButton = showBackButton
+        self.editingProductId = editingProductId
     }
 
     var body: some View {
@@ -28,7 +30,7 @@ struct VehicleRegistrationView: View {
             VStack(spacing: 0) {
                 // 뒤로가기 버튼이 필요한 경우에만 TopBarView 표시
                 if showBackButton {
-                    TopBarView(title: "차량매물등록") {
+                    TopBarView(title: vm.isEditing ? "매물 정보 수정" : "차량매물등록") {
                         dismiss()
                     }
                 }
@@ -139,7 +141,12 @@ struct VehicleRegistrationView: View {
                             ErrorText(message: vm.errors["description"]) 
                         }
 
-                        VehicleSubmitButton(action: { vm.validateAndSubmit() }, isLoading: vm.isSubmitting)
+                        VehicleSubmitButton(
+                            action: { vm.validateAndSubmit() },
+                            isLoading: vm.isSubmitting,
+                            label: vm.isEditing ? "수정하기" : "매물 등록하기",
+                            loadingLabel: vm.isEditing ? "수정 중..." : "등록 중..."
+                        )
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 120) // 하단 탭바(~80px) + 여유공간(40px)
@@ -171,16 +178,21 @@ struct VehicleRegistrationView: View {
                 availableModels: vm.availableModels
             )
         }
-        .alert("등록 완료", isPresented: $vm.showingSuccessAlert) {
+        .alert(vm.isEditing ? "수정 완료" : "등록 완료", isPresented: $vm.showingSuccessAlert) {
             Button("확인") {
-                // 성공 시 홈으로 이동
-                tabRouter.current = .home
-                if showBackButton { dismiss() }
+                if vm.isEditing {
+                    // 편집 성공 시 이전 화면으로 복귀
+                    if showBackButton { dismiss() }
+                } else {
+                    // 등록 성공 시 홈으로 이동
+                    tabRouter.current = .home
+                    if showBackButton { dismiss() }
+                }
             }
         } message: {
             Text(vm.alertMessage)
         }
-        .alert("등록 실패", isPresented: $vm.showingErrorAlert) {
+        .alert(vm.isEditing ? "수정 실패" : "등록 실패", isPresented: $vm.showingErrorAlert) {
             Button("확인") { }
         } message: {
             Text(vm.alertMessage)
@@ -189,6 +201,9 @@ struct VehicleRegistrationView: View {
         .toolbar(.hidden, for: .navigationBar)
         .task {
             await vm.loadProductInfo()
+            if let productId = editingProductId {
+                await vm.loadForEdit(productId: productId)
+            }
         }
     }
 
