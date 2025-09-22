@@ -46,9 +46,19 @@ struct ProfileView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                TopBarView(title: "내 프로필", showsBackButton: false)
-                    .padding(.top, 6)
-                    .padding(.bottom, 12)
+                if showBackButton { // 뒤로가기 버튼이 필요한 경우
+                    TopBarView(title: "내 프로필", showsBackButton: true) {
+                        dismiss()
+                    }
+                        .padding(.top, 6)
+                        .padding(.bottom, 12)
+                } else {
+                    TopBarView(title: "내 프로필", showsBackButton: false)
+                        .padding(.top, 6)
+                        .padding(.bottom, 12)
+                    
+                }
+                
 
                 if profileDataViewModel.isLoading {
                     Spacer()
