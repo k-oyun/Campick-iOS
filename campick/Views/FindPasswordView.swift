@@ -27,8 +27,17 @@ struct FindPasswordView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
                             headerSection
-                            emailSection
-                            if vm.codeSent { verificationSection }
+                            
+                            SignupProgress(progress: vm.step == .verify ? 0.5 : 1.0)
+                                .padding(.trailing, 8)
+                            
+                            
+                            if vm.step == .verify {
+                                emailSection
+                                if vm.codeSent { verifyCodeSection }
+                            } else {
+                                newPasswordSection
+                            }
                             Spacer(minLength: 0)
                         }
                         .padding(.horizontal, 24)
@@ -142,7 +151,7 @@ struct FindPasswordView: View {
         }
     }
 
-    private var verificationSection: some View {
+    private var verifyCodeSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("인증번호 입력")
                 .font(.headline)
@@ -175,29 +184,37 @@ struct FindPasswordView: View {
                     .foregroundStyle(.red)
             }
 
-            // 새 비밀번호 입력
-            Text("새 비밀번호")
+            PrimaryActionButton(
+                title: "인증하기",
+                titleFont: .system(size: 18, weight: .bold),
+                isDisabled: vm.verificationCode.isEmpty || vm.isIssuingPassword || timerVM.remainingSeconds == 0
+            ) {
+                Task { await vm.verifyCode() }
+            }
+
+            // 임시 비밀번호 표시 UI 제거 (재설정 방식 변경)
+        }
+    }
+
+    private var newPasswordSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("새 비밀번호 입력")
                 .font(.headline)
                 .foregroundStyle(.white)
 
-            OutlinedInputField(
+            NoPasteSecureField(
                 text: $vm.newPassword,
                 placeholder: "새 비밀번호 (6자 이상)",
-                systemImage: "lock",
-                isSecure: true,
-                keyboardType: .default
+                systemImage: "lock"
             )
-            .id("newPasswordField")
 
             PrimaryActionButton(
                 title: "비밀번호 변경",
                 titleFont: .system(size: 18, weight: .bold),
-                isDisabled: !vm.canIssuePassword || vm.isIssuingPassword || timerVM.remainingSeconds == 0
+                isDisabled: !vm.canIssuePassword || vm.isIssuingPassword
             ) {
-                Task { await vm.issueTemporaryPassword() }
+                Task { await vm.changePassword() }
             }
-
-            // 임시 비밀번호 표시 UI 제거 (재설정 방식 변경)
         }
     }
 

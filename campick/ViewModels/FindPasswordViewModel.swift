@@ -3,6 +3,7 @@ import Foundation
 /// 비밀번호 찾기 화면과 비즈니스 로직을 연결하는 뷰모델
 @MainActor
 final class FindPasswordViewModel: ObservableObject {
+    private let testEmail = "frontTest@email.com"
     @Published var email: String = ""
     @Published var verificationCode: String = ""
     @Published var newPassword: String = ""
@@ -19,12 +20,18 @@ final class FindPasswordViewModel: ObservableObject {
     @Published var showCodeMismatchAlert: Bool = false
     @Published var showResetSuccessModal: Bool = false
 
+    enum Step { case verify, newPassword }
+    @Published var step: Step = .verify
+
     var canSendCode: Bool {
         emailIsValid
     }
 
     var canIssuePassword: Bool {
-        codeSent && !verificationCode.isEmpty && newPassword.count >= 6
+        if email == testEmail {
+            return !newPassword.isEmpty
+        }
+        return newPassword.count >= 6
     }
 
     func sendVerificationCode() async {
@@ -39,6 +46,14 @@ final class FindPasswordViewModel: ObservableObject {
         temporaryPassword = nil
         codeSent = false
 
+        // 테스트 계정: 서버 요청 없이 바로 코드 입력 단계로 전환
+        if email == testEmail {
+            infoMessage = "테스트 계정입니다. 인증번호 0000을 입력하세요."
+            codeSent = true
+            isSendingCode = false
+            return
+        }
+
         do {
             try await AuthAPI.sendPasswordResetLink(email: email)
             infoMessage = "인증번호(재설정 코드)를 발송했습니다. 메일함을 확인하세요."
@@ -51,18 +66,26 @@ final class FindPasswordViewModel: ObservableObject {
         isSendingCode = false
     }
 
-    func issueTemporaryPassword() async {
-        // 2단계: 코드 검증 → 비밀번호 변경
-        guard canIssuePassword else {
-            errorMessage = "인증번호를 입력한 후 다시 시도해주세요."
-            return
-        }
+    func verifyCode() async {
+        // 코드 검증만 수행 후 다음 단계로 이동
         isIssuingPassword = true
         errorMessage = nil
         infoMessage = nil
         showCodeMismatchAlert = false
 
-        // 1) 코드 검증
+        // 테스트 계정: 코드 0000이면 통과
+        if email == testEmail {
+            defer { isIssuingPassword = false }
+            guard verificationCode == "0000" else {
+                showCodeMismatchAlert = true
+                return
+            }
+            step = .newPassword
+            timerStop()
+            codeSent = false
+            return
+        }
+
         do {
             try await AuthAPI.passwordResetVerify(code: verificationCode)
         } catch {
@@ -71,16 +94,46 @@ final class FindPasswordViewModel: ObservableObject {
             return
         }
 
-        // 2) 비밀번호 변경
+        step = .newPassword
+        timerStop()
+
+        isIssuingPassword = false
+    }
+
+    func changePassword() async {
+        // 새 비밀번호 설정 단계에서 호출
+        guard !newPassword.isEmpty else {
+            errorMessage = "새 비밀번호를 입력해 주세요."
+            return
+        }
+        isIssuingPassword = true
+        errorMessage = nil
+        infoMessage = nil
+
+        // 테스트 계정: 비밀번호 0000이면 통과
+        if email == testEmail {
+            defer { isIssuingPassword = false }
+            guard newPassword == "0000" else {
+                errorMessage = "테스트 모드: 비밀번호는 0000만 허용됩니다."
+                return
+            }
+            showResetSuccessModal = true
+            return
+        }
+
         do {
             _ = try await AuthAPI.passwordResetChange(email: email, password: newPassword)
             showResetSuccessModal = true
-            codeSent = false
         } catch {
             errorMessage = map(error)
         }
 
         isIssuingPassword = false
+    }
+
+    private func timerStop() {
+        // 별도 타이머 VM을 사용하는 뷰에서 stopTimer를 호출하므로 여기서는 상태 플래그만
+        codeSent = false
     }
 
     private func map(_ error: Error) -> String {
