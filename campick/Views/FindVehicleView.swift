@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct FindVehicleView: View {
     @Environment(\.dismiss) private var dismiss
@@ -65,6 +66,11 @@ struct FindVehicleView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
 
+                // 적용된 필터/정렬 Chips (구분선 위)
+                appliedFiltersView
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+
                 Rectangle()
                     .fill(Color.white.opacity(0.12))
                     .frame(height: 1)
@@ -113,6 +119,80 @@ struct FindVehicleView: View {
         .onChange(of: vm.selectedSort) { _, _ in vm.onChangeSort() }
         .onAppear { vm.onAppear() }
         .padding(.bottom, 60)
+    }
+}
+
+// MARK: - Applied Filters Chips
+extension FindVehicleView {
+    private var appliedFiltersView: some View {
+        let currentYear = Double(Calendar.current.component(.year, from: Date()))
+        let defaultPrice: ClosedRange<Double> = 0...10000
+        let defaultMileage: ClosedRange<Double> = 0...100000
+        let defaultYear: ClosedRange<Double> = 1990...currentYear
+
+        let priceActive = vm.filterOptions.priceRange != defaultPrice
+        let mileageActive = vm.filterOptions.mileageRange != defaultMileage
+        let yearActive = vm.filterOptions.yearRange != defaultYear
+        let types = Array(vm.filterOptions.selectedVehicleTypes)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            if priceActive || mileageActive || yearActive || !types.isEmpty {
+                FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
+                    // 정렬 조건 Chip (최근 등록순이면 표기하지 않음)
+                    if vm.selectedSort != .recentlyAdded {
+                        RemovableChip(text: vm.selectedSort.rawValue) {
+                            vm.selectedSort = .recentlyAdded
+                        }
+                    }
+                    if priceActive {
+                        RemovableChip(text: "\(Int(vm.filterOptions.priceRange.lowerBound))~\(Int(vm.filterOptions.priceRange.upperBound))만원") {
+                            vm.filterOptions.priceRange = defaultPrice
+                        }
+                    }
+                    if mileageActive {
+                        RemovableChip(text: "\(Int(vm.filterOptions.mileageRange.lowerBound))~\(Int(vm.filterOptions.mileageRange.upperBound))km") {
+                            vm.filterOptions.mileageRange = defaultMileage
+                        }
+                    }
+                    if yearActive {
+                        RemovableChip(text: "\(Int(vm.filterOptions.yearRange.lowerBound))~\(Int(vm.filterOptions.yearRange.upperBound))년") {
+                            vm.filterOptions.yearRange = defaultYear
+                        }
+                    }
+                    ForEach(types, id: \.self) { t in
+                        RemovableChip(text: t) {
+                            vm.filterOptions.selectedVehicleTypes.remove(t)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct RemovableChip: View {
+    let text: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Chip(text: text,
+                 foreground: .white,
+                 background: AppColors.brandOrange,
+                 horizontalPadding: 10,
+                 verticalPadding: 6,
+                 font: .system(size: 12),
+                 cornerStyle: .capsule,
+                 action: nil)
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .background(Color.black.opacity(0.0001))
+            }
+            .offset(x: 6, y: -6)
+            .buttonStyle(.plain)
+        }
     }
 }
 

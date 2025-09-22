@@ -6,14 +6,32 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct FilterOptions: Equatable {
-    var priceRange: ClosedRange<Double> = 0...10000
-    var mileageRange: ClosedRange<Double> = 0...100000
-    var yearRange: ClosedRange<Double> = 2010...2024
-    var selectedVehicleTypes: Set<String> = []
-    var selectedFuelTypes: Set<String> = []
-    var selectedTransmissions: Set<String> = []
+    var priceRange: ClosedRange<Double>
+    var mileageRange: ClosedRange<Double>
+    var yearRange: ClosedRange<Double>
+    var selectedVehicleTypes: Set<String>
+    var selectedFuelTypes: Set<String>
+    var selectedTransmissions: Set<String>
+
+    init(
+        priceRange: ClosedRange<Double> = 0...10000,
+        mileageRange: ClosedRange<Double> = 0...100000,
+        yearRange: ClosedRange<Double>? = nil,
+        selectedVehicleTypes: Set<String> = [],
+        selectedFuelTypes: Set<String> = [],
+        selectedTransmissions: Set<String> = []
+    ) {
+        self.priceRange = priceRange
+        self.mileageRange = mileageRange
+        let currentYear = Double(Calendar.current.component(.year, from: Date()))
+        self.yearRange = yearRange ?? 1990...currentYear
+        self.selectedVehicleTypes = selectedVehicleTypes
+        self.selectedFuelTypes = selectedFuelTypes
+        self.selectedTransmissions = selectedTransmissions
+    }
 }
 
 struct FilterView: View {
@@ -169,9 +187,10 @@ struct FilterView: View {
                 .foregroundColor(.white)
 
             VStack(spacing: 12) {
+                let currentYear = Double(Calendar.current.component(.year, from: Date()))
                 RangeSlider(
                     range: $tempFilters.yearRange,
-                    bounds: 2010...2024,
+                    bounds: 1990...currentYear,
                     step: 1
                 )
 
