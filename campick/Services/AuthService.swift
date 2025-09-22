@@ -13,13 +13,17 @@ class AuthService: ObservableObject {
 
     private init() {}
 
-    // 로그아웃 API 호출 (Alamofire 사용)
+    // 로그아웃 API 호출: AuthAPI 사용해 토큰 포함 POST /api/member/logout 요청
     func logout() async throws {
-        let url = "http://localhost:8080/api/member/logout"
-        let request = APIService.shared
-            .request(url, method: .post)
-            .validate()
-        _ = try await request.serializingData().value
+        do {
+            AppLog.info("Requesting logout", category: "AUTH")
+            try await AuthAPI.logout()
+            AppLog.info("Logout success", category: "AUTH")
+        } catch {
+            let appError = ErrorMapper.map(error)
+            AppLog.error("Logout failed: \(appError.message)", category: "AUTH")
+            throw appError
+        }
     }
 
     // 회원탈퇴 API 미구현: 현재는 사용하지 않음

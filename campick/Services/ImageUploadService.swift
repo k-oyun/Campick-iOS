@@ -62,7 +62,7 @@ class ImageUploadService {
 
         // 디버깅: 토큰 확인
         let currentToken = TokenManager.shared.accessToken
-        print("🔑 Current access token: \(!currentToken.isEmpty ? "present (length: \(currentToken.count))" : "EMPTY")")
+        AppLog.debug("Access token present: \(!currentToken.isEmpty)", category: "UPLOAD")
 
         // 전역 APIService를 사용하여 업로드
         APIService.shared.upload(multipartFormData: { multipartFormData in
@@ -81,14 +81,18 @@ class ImageUploadService {
         .responseDecodable(of: ImageUploadResponse.self) { response in
             switch response.result {
             case .success(let uploadResponse):
-                if uploadResponse.success, let data = uploadResponse.data {
-                    completion(.success(data))
+                if uploadResponse.success, let items = uploadResponse.data {
+                    let urls = items.map { $0.productImageUrl }
+                    AppLog.info("Uploaded \(urls.count) images", category: "UPLOAD")
+                    completion(.success(urls))
                 } else {
+                    AppLog.warn("Upload API responded failure: \(uploadResponse.message)", category: "UPLOAD")
                     completion(.failure(ImageUploadError.uploadFailed(uploadResponse.message)))
                 }
             case .failure(let error):
-                print("Image upload error: \(error)")
-                completion(.failure(error))
+                let appError = ErrorMapper.map(error)
+                AppLog.error("Image upload error: \(appError.message)", category: "UPLOAD")
+                completion(.failure(appError))
             }
         }
     }
@@ -115,7 +119,11 @@ struct ImageUploadResponse: Codable {
     let status: Int
     let success: Bool
     let message: String
-    let data: [String]?
+    let data: [ImageUploadItem]?
+}
+
+struct ImageUploadItem: Codable {
+    let productImageUrl: String
 }
 
 // MARK: - Error Types
