@@ -85,6 +85,19 @@ enum ProductAPI {
         }
     }
 
+    // 내가 찜한 차량 목록 조회 (GET /api/favorite)
+    static func fetchFavorites() async throws -> [ProductItemDTO] {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.favorites.url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ApiResponse<[ProductItemDTO]>.self).value
+            return wrapped.data ?? []
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
     // 매물 등록 요청: VehicleRegistrationRequest를 서버로 전송
     // 서버 응답 예시: {"status":201,"success":true,"message":"매물 생성 성공","data":106}
     static func createProduct(_ requestBody: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
