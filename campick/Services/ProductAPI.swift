@@ -124,4 +124,20 @@ enum ProductAPI {
             throw ErrorMapper.map(error)
         }
     }
+
+    // 매물 수정 (PATCH /api/product/{productId})
+    static func updateProduct(productId: String, body: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
+        do {
+            AppLog.info("Updating product (id: \(productId), title: \(body.title))", category: "PRODUCT")
+            let request = APIService.shared
+                .request(Endpoint.productDetail(productId: productId).url,
+                         method: .patch,
+                         parameters: body,
+                         encoder: JSONParameterEncoder.default)
+                .validate()
+            return try await request.serializingDecodable(ApiResponse<Int>.self).value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
 }
