@@ -52,40 +52,40 @@ struct EventDetailView: View {
                         VStack(alignment: .leading){
                             VStack(alignment: .leading){
                                 Text("수수료 50% 할인 쿠폰 응모")
-                                    .font(.title).bold()
-                                    .padding(.top,10)
+                                    .font(.system(size: 20,weight: .bold))
+                                    .padding(.top,20)
                                     .padding(.bottom,1)
                                 Text("응모하고 수수료 50% 할인 쿠폰을 받아보세요")
-                                    .font(.headline)
+                                    .font(.system(size: 17,weight: .bold))
                                     .foregroundStyle(.secondary)
                                     .padding(.bottom,30)
                                 
                                 
                                 Text("혜택")
-                                    .font(.system(size: 22,weight: .bold))
+                                    .font(.system(size: 18,weight: .bold))
                                     .padding(.bottom,1)
                                 Text("· 수수료 50% 할인 쿠폰 1매 제공\n· 쿠폰은 지정 카테고리에서 사용 가능 \n· 다른 할인과 중복 적용 불가 (프로모션 코드 포함)\n· 쿠폰 지급 시점: 응모 즉시 계정에 자동 지급\n· 사용 기한: 발급일로부터 7일 이내")
-                                    .font(.body)
-                                    .padding(.bottom,15)
+                                    .font(.system(size: 15,weight: .light))
+                                    .padding(.bottom,20)
                                 
                                 
                                 Text("기간")
-                                    .font(.system(size: 20,weight: .bold))
+                                    .font(.system(size: 18,weight: .bold))
                                     .padding(.bottom,1)
                                 Text("응모 기간: 2025.09.01 ~ 2025.10.31")
-                                    .font(.body)
-                                    .padding(.bottom,15)
+                                    .font(.system(size: 15,weight: .bold))
+                                    .padding(.bottom,20)
                                 
                                 
                                 Text("유의사항")
-                                    .font(.system(size: 19,weight: .bold))
+                                    .font(.system(size: 18, weight: .bold))
                                     .padding(.bottom,1)
                                 Text("· 응모는 계정당 1회만 가능합니다.\n· 쿠폰은 발급일로부터 7일 이내 사용해야 합니다.\n· 부정 응모가 확인될 경우 쿠폰이 회수될 수 있습니다.\n· 자세한 내용은 고객센터 공지사항을 확인해 주세요.")
-                                    .font(.body)
+                                    .font(.system(size: 15,weight: .bold))
                                     .foregroundStyle(.secondary)
                                 Spacer()
                             }
-                            .padding(.leading, 10)
+                            .padding(.leading, -45)
                             .foregroundStyle(.white)
                             
                             
