@@ -76,18 +76,20 @@ final class ProfileService {
     }
 
     static func deleteMemberAccount() async throws {
-        let endpoint = Endpoint.memberSignout
-        let url = endpoint.url
-
+        let url = Endpoint.memberSignout.url
+        AppLog.info("Requesting account deletion", category: "PROFILE")
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.request(url, method: .delete)
                 .validate()
                 .response { response in
                     switch response.result {
                     case .success:
+                        AppLog.info("Account deletion success", category: "PROFILE")
                         continuation.resume()
                     case .failure(let error):
-                        continuation.resume(throwing: error)
+                        let app = ErrorMapper.map(error)
+                        AppLog.error("Account deletion failed: \(app.message)", category: "PROFILE")
+                        continuation.resume(throwing: app)
                     }
                 }
         }
