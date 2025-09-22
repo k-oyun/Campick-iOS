@@ -52,7 +52,8 @@ struct SellerModalView: View {
                 }
             }
             .navigationDestination(isPresented: $showSellerProfile) {
-                ProfileView(memberId: viewModel.seller.id, isOwnProfile: false, showBackButton: true)
+                // 판매자 프로필 상세에서는 TopBar 미노출
+                ProfileView(memberId: viewModel.seller.id, isOwnProfile: false, showBackButton: true, showTopBar: false)
             }
         }
     }

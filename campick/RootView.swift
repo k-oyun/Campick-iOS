@@ -30,7 +30,7 @@ struct RootView: View {
                                 case .favorites:
                                     FavoritesView()
                                 case .profile:
-                                    ProfileView(memberId: userState.memberId.isEmpty ? nil : userState.memberId, isOwnProfile: true, showBackButton: false)
+                                    ProfileView(memberId: userState.memberId.isEmpty ? nil : userState.memberId, isOwnProfile: true, showBackButton: false, showTopBar: true)
                                 }
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)

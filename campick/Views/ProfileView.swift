@@ -11,6 +11,7 @@ struct ProfileView: View {
     let memberId: String?
     let isOwnProfile: Bool
     let showBackButton: Bool // 뒤로가기 버튼 표시 여부
+    let showTopBar: Bool // 상단 TopBar 노출 여부
 
     @StateObject private var profileDataViewModel = ProfileDataViewModel()
     @StateObject private var userState = UserState.shared
@@ -35,10 +36,11 @@ struct ProfileView: View {
         }
     }
 
-    init(memberId: String? = nil, isOwnProfile: Bool, showBackButton: Bool = true) {
+    init(memberId: String? = nil, isOwnProfile: Bool, showBackButton: Bool = true, showTopBar: Bool = true) {
         self.memberId = memberId
         self.isOwnProfile = isOwnProfile
         self.showBackButton = showBackButton
+        self.showTopBar = showTopBar
     }
 
     var body: some View {
@@ -47,17 +49,18 @@ struct ProfileView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                if showBackButton { // 뒤로가기 버튼이 필요한 경우
-                    TopBarView(title: "내 프로필", showsBackButton: true) {
-                        dismiss()
+                if showTopBar {
+                    if showBackButton { // 뒤로가기 버튼이 필요한 경우
+                        TopBarView(title: "내 프로필", showsBackButton: true) {
+                            dismiss()
+                        }
+                        .padding(.top, 6)
+                        .padding(.bottom, 12)
+                    } else {
+                        TopBarView(title: "내 프로필", showsBackButton: false)
+                            .padding(.top, 6)
+                            .padding(.bottom, 12)
                     }
-                        .padding(.top, 6)
-                        .padding(.bottom, 12)
-                } else {
-                    TopBarView(title: "내 프로필", showsBackButton: false)
-                        .padding(.top, 6)
-                        .padding(.bottom, 12)
-                    
                 }
                 
 
@@ -130,6 +133,7 @@ struct ProfileView: View {
                     }
                 }
             }
+            .padding(.top, showTopBar ? 0 : 30)
         }
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .navigationBar)
