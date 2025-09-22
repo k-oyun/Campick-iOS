@@ -13,8 +13,21 @@ struct BottomBanner: View {
     @State private var player: AVPlayer? = {
         if let path = Bundle.main.path(forResource: "bottomBanner", ofType: "mov") {
             let url = URL(fileURLWithPath: path)
-            return AVPlayer(url: url)}
-        return nil} ()
+            let asset = AVURLAsset(url: url)
+            let item = AVPlayerItem(asset: asset)
+            
+            
+            item.tracks.forEach { track in
+                if track.assetTrack?.mediaType == .audio {
+                    track.isEnabled = false
+                }
+            }
+
+            return AVPlayer(playerItem: item)
+        }
+        return nil
+    }()
+    
     @State private var endObserver: NSObjectProtocol? = nil
     
     var body: some View {
