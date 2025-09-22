@@ -17,6 +17,8 @@ struct MyProductListItem: Decodable, Identifiable {
     let generation: Int
     let mileage: Int
     let location: String
+    let fuelType: String?
+    let transmission: String?
     let thumbnailUrls: [String]
     let status: String
     let createdAt: String
@@ -25,6 +27,7 @@ struct MyProductListItem: Decodable, Identifiable {
 
     private enum CodingKeys: String, CodingKey {
         case memberId, productId, title, cost, generation, mileage, location, status, createdAt
+        case fuelType, transmission
         case productImageUrl
         case thumbnailUrls
     }
@@ -38,6 +41,8 @@ struct MyProductListItem: Decodable, Identifiable {
         generation = (try? c.decode(Int.self, forKey: .generation)) ?? 0
         mileage = (try? c.decode(Int.self, forKey: .mileage)) ?? 0
         location = (try? c.decode(String.self, forKey: .location)) ?? ""
+        fuelType = try? c.decode(String.self, forKey: .fuelType)
+        transmission = try? c.decode(String.self, forKey: .transmission)
         status = (try? c.decode(String.self, forKey: .status)) ?? ""
         createdAt = (try? c.decode(String.self, forKey: .createdAt)) ?? ""
 
