@@ -5,6 +5,7 @@ import Foundation
 final class FindPasswordViewModel: ObservableObject {
     @Published var email: String = ""
     @Published var verificationCode: String = ""
+    @Published var newPassword: String = ""
 
     @Published var isSendingCode: Bool = false
     @Published var isIssuingPassword: Bool = false
@@ -23,7 +24,7 @@ final class FindPasswordViewModel: ObservableObject {
     }
 
     var canIssuePassword: Bool {
-        codeSent && !verificationCode.isEmpty
+        codeSent && !verificationCode.isEmpty && newPassword.count >= 6
     }
 
     func sendVerificationCode() async {
@@ -62,7 +63,7 @@ final class FindPasswordViewModel: ObservableObject {
         showCodeMismatchAlert = false
 
         do {
-            _ = try await AuthAPI.resetPassword(withCode: verificationCode)
+            _ = try await AuthAPI.resetPassword(code: verificationCode, newPassword: newPassword)
             // 200 응답 수신 시 성공 모달 표시
             showResetSuccessModal = true
             codeSent = false
