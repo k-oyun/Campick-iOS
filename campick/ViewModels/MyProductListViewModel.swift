@@ -61,7 +61,7 @@ final class MyProductListViewModel: ObservableObject {
         let yearText = item.generation > 0 ? "\(item.generation)년" : "-"
         let mileageText = formatMileage(item.mileage)
         let status = mapStatus(item.status)
-        let thumbnailURL = item.thumbnailUrls.first.flatMap { URL(string: $0) }
+        let thumbnailURL = urlFrom(item.thumbnailUrls.first)
 
         return Vehicle(
             id: String(item.productId),
@@ -119,5 +119,16 @@ final class MyProductListViewModel: ObservableObject {
         formatter.locale = Locale(identifier: "ko_KR")
         let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
         return formatted + "km"
+    }
+}
+
+extension MyProductListViewModel {
+    // Prefer original URL string (Firebase download URLs include encoded path),
+    // then fall back to percent-decoded if needed.
+    fileprivate func urlFrom(_ s: String?) -> URL? {
+        guard let s = s, !s.isEmpty else { return nil }
+        if let u = URL(string: s) { return u }
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
+        return nil
     }
 }
