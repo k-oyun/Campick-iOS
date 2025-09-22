@@ -10,7 +10,7 @@ import SwiftUI
 struct HomeView: View {
     @Binding var showSlideMenu: Bool
     @StateObject private var viewModel = HomeChatViewModel()
-    @State private var navigateToFind = false
+    @EnvironmentObject private var tabRouter: TabRouter
     @State private var selectedType: String? = nil
 
     var body: some View {
@@ -32,7 +32,7 @@ struct HomeView: View {
                         // 차량 종류
                         VehicleCategory { type in
                             selectedType = type
-                            navigateToFind = true
+                            tabRouter.navigateToVehicles(with: [type])
                         }
                         // 추천 매물
                         RecommendVehicle()
@@ -47,13 +47,7 @@ struct HomeView: View {
                 // }
             }
 
-            // Hidden navigation link trigger
-            NavigationLink(isActive: $navigateToFind) {
-                FindVehicleView()
-            } label: {
-                EmptyView()
-            }
-            .hidden()
+            // 네비게이션은 탭 전환(TabRouter)로 처리하므로 별도 NavigationLink 불필요
         }
         .onAppear {
             viewModel.connectWebSocket(userId: "1")
@@ -65,5 +59,6 @@ struct HomeView_Previews: PreviewProvider {
     @State static var show = false
     static var previews: some View {
         HomeView(showSlideMenu: $show)
+            .environmentObject(TabRouter())
     }
 }
