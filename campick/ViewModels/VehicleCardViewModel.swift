@@ -11,6 +11,7 @@ import SwiftUI
 @MainActor
 final class VehicleCardViewModel: ObservableObject {
     // Display properties
+    let productId: String?
     let imageName: String?
     let thumbnailURL: URL?
     let title: String
@@ -27,6 +28,7 @@ final class VehicleCardViewModel: ObservableObject {
 
     // Initializers
     init(vehicle: Vehicle) {
+        self.productId = vehicle.id
         self.imageName = vehicle.imageName
         self.thumbnailURL = vehicle.thumbnailURL
         self.title = vehicle.title
@@ -53,6 +55,7 @@ final class VehicleCardViewModel: ObservableObject {
         isOnSale: Bool = true,
         isFavorite: Bool = false
     ) {
+        self.productId = nil
         self.imageName = imageName
         self.thumbnailURL = thumbnailURL
         self.title = title
@@ -67,8 +70,18 @@ final class VehicleCardViewModel: ObservableObject {
     }
 
     func toggleFavorite() {
-        isFavorite.toggle()
-        // TODO: Hook to persistence or API if needed
+        let newValue = !isFavorite
+        isFavorite = newValue // optimistic update
+        guard let productId else { return }
+        Task {
+            do {
+                try await ProductAPI.likeProduct(productId: productId)
+            } catch {
+                let app = ErrorMapper.map(error)
+                AppLog.error("Like failed (\(productId)): \(app.message)", category: "PRODUCT")
+                // rollback on failure
+                await MainActor.run { self.isFavorite = !newValue }
+            }
+        }
     }
 }
-

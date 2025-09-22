@@ -98,4 +98,17 @@ enum ProductAPI {
             throw ErrorMapper.map(error)
         }
     }
+
+    // 좋아요 토글 (PATCH /api/product/{productId}/like)
+    static func likeProduct(productId: String) async throws {
+        do {
+            AppLog.info("Like product: \(productId)", category: "PRODUCT")
+            let request = APIService.shared
+                .request(Endpoint.productLike(productId: productId).url, method: .patch)
+                .validate()
+            _ = try await request.serializingData().value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
 }
