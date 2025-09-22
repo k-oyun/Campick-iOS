@@ -49,11 +49,12 @@ struct VehicleTypeSection: View {
     }
 
     private func getIconForType(_ type: String) -> String {
-        switch type.lowercased() {
-        case "모터홈": return "house.circle"
-        case "픽업트럭": return "truck.box"
+        let t = type.lowercased()
+        switch t {
+        case "모터홈", "motorhome": return "house.circle"
+        case "픽업트럭", "pickup": return "truck.box"
         case "suv": return "car.side"
-        case "밴": return "bus"
+        case "밴", "van": return "bus"
         default: return "car"
         }
     }

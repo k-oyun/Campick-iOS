@@ -20,7 +20,7 @@ struct VehicleModelSection: View {
             Button(action: { showingModelPicker = true }) {
                 StyledInputContainer(hasError: errors["vehicleModel"] != nil) {
                     HStack {
-                        if !vehicleModel.isEmpty && availableModels.contains(vehicleModel) {
+                        if !vehicleModel.isEmpty {
                             Image(systemName: "car.side")
                                 .foregroundColor(AppColors.brandOrange)
                                 .font(.system(size: 14))
