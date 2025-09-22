@@ -56,20 +56,34 @@ struct ProductCard: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            AsyncImage(url: URL(string: product.thumbNailUrl)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
-                    .overlay(
-                        Image(systemName: "car.fill")
-                            .foregroundColor(.gray)
-                    )
+            ZStack(alignment: .topLeading) {
+                AsyncImage(url: URL(string: product.thumbNailUrl)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay(
+                            Image(systemName: "car.fill")
+                                .foregroundColor(.gray)
+                        )
+                }
+                .frame(width: 100, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                // 상태 칩을 이미지 위 상단에 오버레이 (공용 Chip 컴포넌트 사용)
+                Chip(
+                    text: statusText(product.status),
+                    foreground: .white,
+                    background: statusColor(product.status),
+                    horizontalPadding: 6,
+                    verticalPadding: 2,
+                    font: .system(size: 10, weight: .semibold),
+                    cornerStyle: .rounded(6)
+                )
+                .padding(4)
             }
-            .frame(width: 80, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.title)
@@ -77,12 +91,12 @@ struct ProductCard: View {
                     .foregroundColor(.white)
                     .lineLimit(1)
 
-                Text(product.cost)
+                Text(formatCost(product.cost))
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(AppColors.brandOrange)
 
-                HStack(spacing: 8) {
-                    Text("\(product.generation)세대")
+                HStack(spacing: 4) {
+                    Text("\(product.generation) 연식")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                     Text("•")
@@ -97,16 +111,12 @@ struct ProductCard: View {
                     Text(product.location)
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
-                }
-
-                HStack {
+                    Text("•")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
                     Text(formattedDate(product.createdAt))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
-
-                    Spacer()
-
-                    StatusChip(status: product.status)
                 }
             }
 
@@ -123,36 +133,33 @@ struct ProductCard: View {
         formatter.dateFormat = "MM.dd"
         return formatter.string(from: date)
     }
+
+    private func formatCost(_ cost: String) -> String {
+        if let value = Int(cost) {
+            let f = NumberFormatter()
+            f.numberStyle = .decimal
+            let s = f.string(from: NSNumber(value: value)) ?? cost
+            return s + "만원"
+        }
+        return cost
+    }
 }
 
-struct StatusChip: View {
-    let status: String
-
-    var body: some View {
-        Text(statusText)
-            .font(.caption)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(statusColor.opacity(0.1))
-            .foregroundColor(statusColor)
-            .cornerRadius(4)
+// MARK: - Status helpers
+private func statusText(_ raw: String) -> String {
+    switch raw.lowercased() {
+    case "active", "available": return "판매중"
+    case "reserved": return "예약중"
+    case "sold": return "판매완료"
+    default: return raw
     }
+}
 
-    private var statusText: String {
-        switch status.lowercased() {
-        case "active": return "판매중"
-        case "reserved": return "예약중"
-        case "sold": return "판매완료"
-        default: return status
-        }
-    }
-
-    private var statusColor: Color {
-        switch status.lowercased() {
-        case "active": return .green
-        case "reserved": return AppColors.brandOrange
-        case "sold": return .white.opacity(0.6)
-        default: return AppColors.brandOrange
-        }
+private func statusColor(_ raw: String) -> Color {
+    switch raw.lowercased() {
+    case "active", "available": return .green
+    case "reserved": return AppColors.brandOrange
+    case "sold": return .white.opacity(0.9)
+    default: return AppColors.brandOrange
     }
 }
