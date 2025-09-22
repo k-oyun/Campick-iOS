@@ -52,7 +52,7 @@ final class FindPasswordViewModel: ObservableObject {
     }
 
     func issueTemporaryPassword() async {
-        // 이메일 인증번호를 서버로 전송하여 새 비밀번호 발송 요청
+        // 2단계: 코드 검증 → 비밀번호 변경
         guard canIssuePassword else {
             errorMessage = "인증번호를 입력한 후 다시 시도해주세요."
             return
@@ -62,14 +62,22 @@ final class FindPasswordViewModel: ObservableObject {
         infoMessage = nil
         showCodeMismatchAlert = false
 
+        // 1) 코드 검증
         do {
-            _ = try await AuthAPI.resetPassword(code: verificationCode, newPassword: newPassword)
-            // 200 응답 수신 시 성공 모달 표시
+            try await AuthAPI.passwordResetVerify(code: verificationCode)
+        } catch {
+            showCodeMismatchAlert = true
+            isIssuingPassword = false
+            return
+        }
+
+        // 2) 비밀번호 변경
+        do {
+            _ = try await AuthAPI.passwordResetChange(email: email, password: newPassword)
             showResetSuccessModal = true
             codeSent = false
         } catch {
-            // 200 이외 응답은 코드 불일치 팝업
-            showCodeMismatchAlert = true
+            errorMessage = map(error)
         }
 
         isIssuingPassword = false

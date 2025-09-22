@@ -166,10 +166,23 @@ enum AuthAPI {
         }
     }
 
-    // 비밀번호 찾기: 이메일 인증코드 + 새 비밀번호로 재설정 (PATCH /api/password-reset)
-    static func resetPassword(code: String, newPassword: String) async throws -> ApiResponse<String> {
+    // 비밀번호 찾기: 인증코드 검증 (POST /api/password-reset/verify)
+    static func passwordResetVerify(code: String) async throws {
         do {
-            let body = PasswordResetRequest(code: code, newPassword: newPassword)
+            let body = EmailVerifyCodeRequest(code: code)
+            let request = APIService.shared
+                .request(Endpoint.passwordResetVerify.url, method: .post, parameters: body, encoder: JSONParameterEncoder.default)
+                .validate()
+            _ = try await request.serializingData().value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    // 비밀번호 찾기: 비밀번호 변경 (PATCH /api/password-reset)
+    static func passwordResetChange(email: String, password: String) async throws -> ApiResponse<String> {
+        do {
+            let body = PasswordResetChangeRequest(email: email, password: password)
             let request = APIService.shared
                 .request(Endpoint.passwordReset.url, method: .patch, parameters: body, encoder: JSONParameterEncoder.default)
                 .validate()

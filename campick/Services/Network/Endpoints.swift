@@ -15,6 +15,7 @@ enum Endpoint {
     case emailVerify
     case passwordReset
     case passwordResetSendLink
+    case passwordResetVerify
     case uploadImage
     case registerProduct
     case carRecommend
@@ -44,6 +45,7 @@ enum Endpoint {
         case .emailVerify: return "/api/member/email/verify"
         case .passwordReset: return "/api/password-reset"
         case .passwordResetSendLink: return "/api/password-reset/send-link"
+        case .passwordResetVerify: return "/api/password-reset/verify"
         case .uploadImage: return "/api/product/image"
         case .registerProduct: return "/api/product"
         case .carRecommend: return "/api/product/recommend"
