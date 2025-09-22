@@ -119,17 +119,12 @@ final class FindVehicleViewModel: ObservableObject {
         )
     }
 
-    // Try both raw and percent-decoded strings to build a URL
+    // Build URL from string, preferring original; fall back to percent-decoded
     private func urlFrom(_ s: String?) -> URL? {
         guard let s = s, !s.isEmpty else { return nil }
-        // 1) 우선 percent-decoded 시도 (storage.googleapis.com 경로형 URL이 %2F 포함 시 404 방지)
-        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) {
-            return u
-        }
-        // 2) 원본 문자열로 시도
-        if let u = URL(string: s) {
-            return u
-        }
+        // Firebase download URLs expect encoded path (%2F). Use original first.
+        if let u = URL(string: s) { return u }
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
         return nil
     }
 
