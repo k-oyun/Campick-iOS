@@ -20,6 +20,7 @@ final class TokenManager {
     // 현재 저장된 Access Token 반환
     // 없으면 ""(빈 문자열) 리턴
     private let tokenKey = "accessToken"
+    private let refreshTokenKey = "refreshToken"
     private let issuedAtKey = "accessTokenIssuedAt"
     private let refreshInterval: TimeInterval = 25 * 60 // 토큰 발급 후 25분이 지나면 재발급
     
@@ -34,6 +35,10 @@ final class TokenManager {
     }
 
     var hasValidAccessToken: Bool { !accessToken.isEmpty }
+
+    var refreshToken: String? {
+        KeychainManager.getToken(forKey: refreshTokenKey)
+    }
 
     // MARK: - Issue date helpers
     private var lastIssuedAt: Date? {
@@ -58,10 +63,17 @@ final class TokenManager {
         scheduleAutoRefresh() // 발급 직후 타이머 재설정
     }
 
+    func saveRefreshToken(_ token: String?) {
+        guard let token, !token.isEmpty else { return }
+        KeychainManager.saveToken(token, forKey: refreshTokenKey)
+        AppLog.info("리프레시 토큰 저장 완료 (length=\(token.count))", category: "AUTH")
+    }
+
     func clearAll() {
         cancelAutoRefresh()
         resetIssueDate()
         KeychainManager.deleteToken(forKey: tokenKey)
+        KeychainManager.deleteToken(forKey: refreshTokenKey)
     }
 
     // MARK: - Timer Handling

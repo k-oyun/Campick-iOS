@@ -153,7 +153,6 @@ struct ProfileMenu: View {
             }
         }
         .zIndex(300)
-        .onAppear { UserState.shared.loadUserData() }
         
     }
 }

@@ -49,9 +49,9 @@ class ProfileDataViewModel: ObservableObject {
         print("[ProfileDataViewModel] loadProfile targetMemberId: \(targetMemberId.isEmpty ? "<empty>" : targetMemberId)")
 
         guard !targetMemberId.isEmpty else {
+            // 로그인 화면으로 즉시 이동하지 않고, 에러 메시지만 표시
             errorMessage = "사용자 정보를 찾을 수 없습니다."
             isLoading = false
-            shouldRedirectToLogin = true
             return
         }
 
@@ -161,10 +161,16 @@ class ProfileDataViewModel: ObservableObject {
 
     private func handleError(_ error: Error) {
         print("[ProfileDataViewModel] handleError: \(error)")
-        if isAuthError(error) {
-            // 401 Unauthorized 또는 403 Forbidden - 로그인 필요
-            shouldRedirectToLogin = true
-            UserState.shared.logout() // 로컬 세션 정리
+        if let code = httpStatusCode(from: error) {
+            if code == 401 {
+                // 인증 만료 → 전역 로그아웃. 화면 전환은 RootView가 담당.
+                UserState.shared.logout()
+            } else if code == 403 {
+                // 권한 부족 → 재로그인 유도하지 않고 안내만 표시
+                errorMessage = "이 프로필에 접근할 권한이 없습니다."
+            } else {
+                errorMessage = "프로필 데이터를 불러오는데 실패했습니다: (코드: \(code))"
+            }
         } else {
             errorMessage = "프로필 데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
         }
@@ -179,6 +185,15 @@ class ProfileDataViewModel: ObservableObject {
             return true
         }
         return false
+    }
+
+    private func httpStatusCode(from error: Error) -> Int? {
+        if let afError = error as? AFError,
+           case let .responseValidationFailed(reason) = afError,
+           case let .unacceptableStatusCode(code) = reason {
+            return code
+        }
+        return nil
     }
 
     private func createEmptyPage() -> Page<ProfileProduct> {
@@ -197,4 +212,3 @@ class ProfileDataViewModel: ObservableObject {
         )
     }
 }
-

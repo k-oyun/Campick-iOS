@@ -40,23 +40,9 @@ struct LoginView: View {
                             FormLabel(text: "비밀번호")
                             NoPasteSecureField(text: $vm.password, placeholder: "비밀번호를 입력하세요")
 
-                            // 로그인 유지 체크박스
+                            // 자동 로그인 토글 숨김 (보류)
                             HStack {
-                                Button(action: { vm.keepLoggedIn.toggle() }) {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: vm.keepLoggedIn ? "checkmark.square.fill" : "square")
-                                            .font(.system(size: 20, weight: .semibold))
-                                            .foregroundStyle(vm.keepLoggedIn ? AppColors.brandOrange : .white.opacity(0.9))
-                                        Text("로그인 유지")
-                                            .foregroundStyle(.white)
-                                            .font(.subheadline)
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("로그인 유지")
-                                .accessibilityValue(vm.keepLoggedIn ? "선택됨" : "선택 안 됨")
                                 Spacer()
-                                
                                 // 비밀번호 찾기
                                 NavigationLink {
                                     FindPasswordView()
@@ -146,6 +132,10 @@ struct LoginView: View {
         .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $vm.showServerAlert) {
             Button("확인", role: .cancel) {}
         }
+        // .onAppear {
+        //     // Auto-login preference currently disabled
+        //     vm.keepLoggedIn = AuthPreferences.keepLoggedIn
+        // }
     }
 }
 
