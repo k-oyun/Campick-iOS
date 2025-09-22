@@ -10,7 +10,7 @@ import SwiftUI
 struct RootView: View {
     @StateObject private var userState = UserState.shared
     @StateObject private var network = NetworkMonitor.shared
-    @State private var currentTab: Tab = .home
+    @StateObject private var tabRouter = TabRouter()
     @State private var showSlideMenu = false
     var body: some View {
         NavigationStack {
@@ -20,7 +20,7 @@ struct RootView: View {
                         // 로그인 된 경우 → 탭바 포함 메인 화면
                         ZStack(alignment: .bottom) {
                             Group {
-                                switch currentTab {
+                                switch tabRouter.current {
                                 case .home:
                                     HomeView(showSlideMenu: $showSlideMenu)
                                 case .vehicles:
@@ -37,9 +37,9 @@ struct RootView: View {
                             .ignoresSafeArea(.keyboard)
                             
                             BottomTabBarView(
-                                currentSelection: currentTab,
+                                currentSelection: tabRouter.current,
                                 onTabSelected: { selectedTab in
-                                    currentTab = selectedTab
+                                    tabRouter.current = selectedTab
                                 }
                             )
                             .zIndex(1)
@@ -73,11 +73,10 @@ struct RootView: View {
             }
             .animation(.easeInOut(duration: 0.25), value: network.isConnected)
         }
-        
+        .environmentObject(tabRouter)
     }
 }
 
 #Preview {
     RootView()
 }
-
