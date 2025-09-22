@@ -14,6 +14,7 @@ struct VehicleRegistrationView: View {
 
     @StateObject private var vm = VehicleRegistrationViewModel()
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var tabRouter: TabRouter
 
     init(showBackButton: Bool = true) {
         self.showBackButton = showBackButton
@@ -172,7 +173,9 @@ struct VehicleRegistrationView: View {
         }
         .alert("등록 완료", isPresented: $vm.showingSuccessAlert) {
             Button("확인") {
-                dismiss()
+                // 성공 시 홈으로 이동
+                tabRouter.current = .home
+                if showBackButton { dismiss() }
             }
         } message: {
             Text(vm.alertMessage)
@@ -212,4 +215,5 @@ struct VehicleRegistrationView: View {
 
 #Preview {
     VehicleRegistrationView()
+        .environmentObject(TabRouter())
 }
