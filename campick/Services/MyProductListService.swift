@@ -3,7 +3,7 @@ import Alamofire
 
 enum MyProductListService {
     static func fetchMyProductList(memberId: String, page: Int = 0, size: Int = 20) async throws -> MyProductListPageData {
-        let endpoint = Endpoint.memberMyProductList(memberId: memberId)
+        let endpoint = Endpoint.memberProducts(memberId: memberId)
         let parameters: [String: Any] = [
             "page": page,
             "size": size

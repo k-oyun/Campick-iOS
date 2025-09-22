@@ -22,4 +22,31 @@ struct MyProductListItem: Decodable, Identifiable {
     let createdAt: String
 
     var id: Int { productId }
+
+    private enum CodingKeys: String, CodingKey {
+        case memberId, productId, title, cost, generation, mileage, location, status, createdAt
+        case productImageUrl
+        case thumbnailUrls
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        memberId = (try? c.decode(Int.self, forKey: .memberId)) ?? 0
+        productId = (try? c.decode(Int.self, forKey: .productId)) ?? 0
+        title = (try? c.decode(String.self, forKey: .title)) ?? ""
+        cost = (try? c.decode(Int.self, forKey: .cost)) ?? 0
+        generation = (try? c.decode(Int.self, forKey: .generation)) ?? 0
+        mileage = (try? c.decode(Int.self, forKey: .mileage)) ?? 0
+        location = (try? c.decode(String.self, forKey: .location)) ?? ""
+        status = (try? c.decode(String.self, forKey: .status)) ?? ""
+        createdAt = (try? c.decode(String.self, forKey: .createdAt)) ?? ""
+
+        if let urls = try? c.decode([String].self, forKey: .thumbnailUrls) {
+            thumbnailUrls = urls
+        } else if let single = try? c.decode(String.self, forKey: .productImageUrl), !single.isEmpty {
+            thumbnailUrls = [single]
+        } else {
+            thumbnailUrls = []
+        }
+    }
 }

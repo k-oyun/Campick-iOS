@@ -21,6 +21,7 @@ struct ProfileView: View {
     @State private var showLogoutModal = false
     @State private var showWithdrawalModal = false
     @State private var showPasswordChangeView = false
+    @State private var navigateToMyProducts = false
 
     enum TabType: String, CaseIterable {
         case selling = "selling"
@@ -109,14 +110,8 @@ struct ProfileView: View {
                                 products: currentProducts,
                                 hasMore: hasMoreProducts,
                                 onLoadMore: {
-                                    Task {
-                                        switch activeTab {
-                                        case .selling:
-                                            await profileDataViewModel.loadMoreSellingProducts(memberId: memberId)
-                                        case .sold:
-                                            await profileDataViewModel.loadMoreSoldProducts(memberId: memberId)
-                                        }
-                                    }
+                                    // 더보기 버튼을 누르면 내 매물 페이지로 이동
+                                    navigateToMyProducts = true
                                 }
                             )
                             .padding(.horizontal, 16)
@@ -143,6 +138,9 @@ struct ProfileView: View {
         }
         .fullScreenCover(isPresented: $profileDataViewModel.shouldRedirectToLogin) {
             LoginView()
+        }
+        .navigationDestination(isPresented: $navigateToMyProducts) {
+            MyProductListView(memberId: memberId ?? UserState.shared.memberId)
         }
         .sheet(isPresented: $showEditModal) {
             if let profile = profileDataViewModel.profileResponse {
