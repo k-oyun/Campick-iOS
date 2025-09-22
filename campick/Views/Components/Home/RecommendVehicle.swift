@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RecommendVehicle: View {
+    @EnvironmentObject private var tabRouter: TabRouter
     
 //    let vehicles: [VehicleViewModel]
     @StateObject private var viewModel =  HomeVehicleViewModel()
@@ -26,9 +27,7 @@ struct RecommendVehicle: View {
                         .fontWeight(.heavy)
                 }
                 Spacer()
-                NavigationLink {
-                    FindVehicleView()
-                } label: {
+                Button(action: { tabRouter.current = .vehicles }) {
                     HStack {
                         Text("전체보기")
                             .foregroundColor(AppColors.brandLightOrange)
