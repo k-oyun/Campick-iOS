@@ -96,6 +96,29 @@ struct VehicleCardView: View {
             Image(imageName)
                 .resizable()
                 .scaledToFill()
+        } else if let url = vm.thumbnailURL {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.gray.opacity(0.15)
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    }
+                case .success(let image):
+                    image
+                        .resizable()
+                        .scaledToFill()
+                case .failure:
+                    Image("testImage3")
+                        .resizable()
+                        .scaledToFill()
+                @unknown default:
+                    Image("testImage3")
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
         } else {
             // 이미지가 없을 경우, 기본 차량 이미지가 나온다.
             Image("testImage3")
@@ -117,7 +140,7 @@ struct VehicleCardView: View {
                         .foregroundColor(.white)
                 
                     // 가격
-                    Text(vm.price)
+                    Text("\(vm.price)만원")
                         .font(.title2)
                         .bold()
                         .foregroundColor(AppColors.brandOrange)
@@ -157,10 +180,10 @@ struct VehicleCardView: View {
                         VStack {
                             Text(spec.label)
                                 .foregroundColor(AppColors.brandWhite70)
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
                             Text(spec.value)
                                 .foregroundColor(.white)
-                                .font(.system(size: 16))
+                                .font(.system(size: 14))
                                 .bold()
                         }
                         .padding(.vertical, idx == 0 ? 7 : 0)
@@ -191,11 +214,9 @@ struct VehicleCardView: View {
             Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            if vm.imageName != nil || vm.thumbnailURL != nil {
-                vehicleImage
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
-            }
+            vehicleImage
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
         }
     }
 }
