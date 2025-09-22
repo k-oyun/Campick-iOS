@@ -31,6 +31,7 @@ struct MediaPickerSheet: View {
             case .camera:
                 if cameraPermissionChecked && cameraAuthorized {
                     ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
+                        .ignoresSafeArea()
                 } else if cameraPermissionChecked && !cameraAuthorized {
                     PermissionDeniedView(
                         title: "카메라 접근 권한 필요",
