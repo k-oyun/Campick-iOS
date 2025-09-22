@@ -46,29 +46,9 @@ struct ProfileView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // 뒤로가기 버튼이 필요한 경우에만 TopBarView 표시
-                if showBackButton {
-                    if isOwnProfile {
-                        TopBarView(title: "내 프로필") {
-                            dismiss()
-                        }
-                    } else {
-                        TopBarView(title: "판매자 프로필") {
-                            dismiss()
-                        }
-                    }
-                } else {
-                    // 하단 탭바에서 온 경우 타이틀만 표시
-                    HStack {
-                        Spacer()
-                        Text(isOwnProfile ? "내 프로필" : "판매자 프로필")
-                            .foregroundColor(.white)
-                            .font(.system(size: 18, weight: .semibold))
-                        Spacer()
-                    }
-                    .padding(.vertical, 16)
-                    .background(AppColors.background)
-                }
+                TopBarView(title: "내 프로필", showsBackButton: false)
+                    .padding(.top, 6)
+                    .padding(.bottom, 12)
 
                 if profileDataViewModel.isLoading {
                     Spacer()
