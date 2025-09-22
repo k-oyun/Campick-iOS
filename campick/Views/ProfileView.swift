@@ -204,9 +204,12 @@ struct ProfileView: View {
     private func logout() {
         Task {
             do {
+                AppLog.info("Requesting logout", category: "AUTH")
                 try await AuthService.shared.logout()
+                AppLog.info("Logout success", category: "AUTH")
             } catch {
-                // 서버 실패 시에도 로컬 세션은 종료
+                let appError = ErrorMapper.map(error)
+                AppLog.error("Logout failed: \(appError.message)", category: "AUTH")
             }
             await MainActor.run { UserState.shared.logout() }
         }
