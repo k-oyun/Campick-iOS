@@ -227,15 +227,25 @@ struct ProfileEditModal: View {
             }
 
         } catch {
-            // 401/403 오류 처리
+            // 상태 코드 기반 분기: 401만 재로그인 유도, 403은 알림만 표시
             if let afError = error as? AFError,
                case let .responseValidationFailed(reason) = afError,
-               case let .unacceptableStatusCode(code) = reason,
-               (code == 401 || code == 403) {
-                // 401 Unauthorized 또는 403 Forbidden - 로그인 필요
-                await MainActor.run {
-                    shouldRedirectToLogin = true
-                    UserState.shared.logout()
+               case let .unacceptableStatusCode(code) = reason {
+                if code == 401 {
+                    await MainActor.run {
+                        shouldRedirectToLogin = true
+                        UserState.shared.logout()
+                    }
+                } else if code == 403 {
+                    await MainActor.run {
+                        errorMessage = "프로필 이미지를 변경할 권한이 없습니다. 잠시 후 다시 시도하거나 로그인 상태를 확인해주세요."
+                        showErrorAlert = true
+                    }
+                } else {
+                    await MainActor.run {
+                        errorMessage = "요청 처리 중 오류가 발생했습니다. (코드: \(code))"
+                        showErrorAlert = true
+                    }
                 }
             } else {
                 // 기타 에러 처리
