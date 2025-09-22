@@ -45,6 +45,7 @@ struct VehicleDetailView: View {
                             showsEditButton: isOwner,
                             onEditTap: { navigateToEdit = true }
                         )
+                        .ignoresSafeArea(edges: .top)
                     }
                     
                     VStack(spacing: 20) {
@@ -179,6 +180,6 @@ struct VehicleDetailView: View {
 
 #Preview {
     NavigationView {
-        VehicleDetailView(vehicleId: "104")
+        VehicleDetailView(vehicleId: "1")
     }
 }
