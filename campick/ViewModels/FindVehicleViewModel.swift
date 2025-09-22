@@ -39,45 +39,42 @@ final class FindVehicleViewModel: ObservableObject {
     func fetchVehicles() {
         Task {
             do {
-                let response = try await ProductAPI.fetchProducts(page: 0, size: 30)
-                var mapped = response.content.map(mapToVehicle)
+                let allowedTypes = Set(["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]) // 서버 허용 값
+                let selectedTypes = vmSafeTypes()
+                let validTypes = Array(selectedTypes.intersection(allowedTypes))
 
-                // 클라이언트 단 검색 필터
-                let q = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                if !q.isEmpty {
-                    mapped = mapped.filter { v in
-                        v.title.lowercased().contains(q) || v.location.lowercased().contains(q)
-                    }
-                }
+                let filter = ProductFilterRequest(
+                    mileageFrom: Int(filterOptions.mileageRange.lowerBound),
+                    mileageTo: Int(filterOptions.mileageRange.upperBound),
+                    costFrom: Int(filterOptions.priceRange.lowerBound) * 10_000,
+                    costTo: Int(filterOptions.priceRange.upperBound) * 10_000,
+                    generationFrom: Int(filterOptions.yearRange.lowerBound),
+                    generationTo: Int(filterOptions.yearRange.upperBound),
+                    types: validTypes.isEmpty ? nil : validTypes
+                )
 
-                // 필터 옵션 적용 (가격/주행거리/연식)
-                mapped = mapped.filter { v in
-                    let p = priceValue(v.price)
-                    let m = mileageValue(v.mileage)
-                    let y = yearValue(v.year)
-                    let priceOK = Int(filterOptions.priceRange.lowerBound) <= p && p <= Int(filterOptions.priceRange.upperBound)
-                    let mileageOK = Int(filterOptions.mileageRange.lowerBound) <= m && m <= Int(filterOptions.mileageRange.upperBound)
-                    let yearOK = Int(filterOptions.yearRange.lowerBound) <= y && y <= Int(filterOptions.yearRange.upperBound)
-                    return priceOK && mileageOK && yearOK
-                }
-
-                // 정렬 적용
-                switch selectedSort {
-                case .recentlyAdded:
-                    vehicles = mapped
-                case .lowPrice:
-                    vehicles = mapped.sorted { priceValue($0.price) < priceValue($1.price) }
-                case .highPrice:
-                    vehicles = mapped.sorted { priceValue($0.price) > priceValue($1.price) }
-                case .lowMileage:
-                    vehicles = mapped.sorted { mileageValue($0.mileage) < mileageValue($1.mileage) }
-                case .newestYear:
-                    vehicles = mapped.sorted { yearValue($0.year) > yearValue($1.year) }
-                }
+                let sort = mapSort(selectedSort)
+                let page = try await ProductAPI.fetchProducts(page: 0, size: 30, filter: filter, sort: sort)
+                let mapped = page.content.map(mapToVehicle)
+                vehicles = mapped
             } catch {
                 // 네트워크 실패 시 현재 리스트 유지 또는 비우기 선택
                 vehicles = []
             }
+        }
+    }
+
+    private func vmSafeTypes() -> Set<String> {
+        return filterOptions.selectedVehicleTypes
+    }
+
+    private func mapSort(_ option: SortOption) -> ProductSort? {
+        switch option {
+        case .recentlyAdded: return .createdAtDesc
+        case .lowPrice: return .costAsc
+        case .highPrice: return .costDesc
+        case .lowMileage: return .mileageAsc
+        case .newestYear: return .generationDesc
         }
     }
 

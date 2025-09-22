@@ -25,11 +25,30 @@ enum ProductAPI {
         }
     }
 
-    static func fetchProducts(page: Int? = nil, size: Int? = nil) async throws -> Page<ProductItemDTO> {
+    static func fetchProducts(
+        page: Int? = nil,
+        size: Int? = nil,
+        filter: ProductFilterRequest? = nil,
+        sort: ProductSort? = nil
+    ) async throws -> Page<ProductItemDTO> {
         do {
             var params: [String: Any] = [:]
             if let page = page { params["page"] = page }
             if let size = size { params["size"] = size }
+            if let f = filter {
+                if let v = f.mileageFrom { params["mileageFrom"] = v }
+                if let v = f.mileageTo { params["mileageTo"] = v }
+                if let v = f.costFrom { params["costFrom"] = v }
+                if let v = f.costTo { params["costTo"] = v }
+                if let v = f.generationFrom { params["generationFrom"] = v }
+                if let v = f.generationTo { params["generationTo"] = v }
+                if let types = f.types, !types.isEmpty {
+                    params["types"] = types // encode as repeated keys
+                }
+            }
+            if let sort = sort {
+                params["sort"] = sort.queryValue
+            }
 
             let parameters: [String: Any]? = params.isEmpty ? nil : params
 
@@ -38,7 +57,7 @@ enum ProductAPI {
                     Endpoint.products.url,
                     method: .get,
                     parameters: parameters,
-                    encoding: URLEncoding.default
+                    encoding: URLEncoding(destination: .methodDependent, arrayEncoding: .noBrackets, boolEncoding: .literal)
                 )
                 .validate()
             // 서버 응답: ApiResponse<Page<ProductItemDTO>>
