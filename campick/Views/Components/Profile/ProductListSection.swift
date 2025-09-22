@@ -29,7 +29,12 @@ struct ProductListSection: View {
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(products, id: \.productId) { product in
-                        ProductCard(product: product)
+                        NavigationLink {
+                            VehicleDetailView(vehicleId: product.productId)
+                        } label: {
+                            ProductCard(product: product)
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
 
                     if hasMore {
