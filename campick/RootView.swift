@@ -24,7 +24,7 @@ struct RootView: View {
                                 case .home:
                                     HomeView(showSlideMenu: $showSlideMenu)
                                 case .vehicles:
-                                    FindVehicleView()
+                                    FindVehicleView(initialTypes: tabRouter.initialVehicleTypes)
                                 case .register:
                                     VehicleRegistrationView(showBackButton: false)
                                 case .favorites:

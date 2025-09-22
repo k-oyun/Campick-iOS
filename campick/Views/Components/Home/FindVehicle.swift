@@ -8,8 +8,10 @@
 import SwiftUI
 
 struct FindVehicle: View {
+    @EnvironmentObject private var tabRouter: TabRouter
+
     var body: some View {
-        NavigationLink(destination: FindVehicleView()) {
+        Button(action: { tabRouter.current = .vehicles }) {
             HStack {
                 HStack {
                     ZStack {
@@ -53,4 +55,3 @@ struct FindVehicle: View {
         }
     }
 }
-
