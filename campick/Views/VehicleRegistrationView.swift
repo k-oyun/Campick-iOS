@@ -314,57 +314,32 @@ struct VehicleRegistrationView: View {
     }
 
     private func submitToAPI(request: VehicleRegistrationRequest) {
-        guard let url = URL(string: Endpoint.registerProduct.url) else {
-            print("Invalid URL")
-            isSubmitting = false
-            return
-        }
-
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "POST"
-        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        do {
-            let jsonData = try JSONEncoder().encode(request)
-            urlRequest.httpBody = jsonData
-
-            URLSession.shared.dataTask(with: urlRequest) { data, response, error in
-                DispatchQueue.main.async {
+        isSubmitting = true
+        Task {
+            do {
+                let res = try await ProductAPI.createProduct(request)
+                await MainActor.run {
                     self.isSubmitting = false
-
-                    if let error = error {
-                        self.alertMessage = "네트워크 오류가 발생했습니다: \(error.localizedDescription)"
-                        self.showingErrorAlert = true
-                        return
-                    }
-
-                    guard let data = data else {
-                        self.alertMessage = "서버로부터 응답을 받지 못했습니다."
-                        self.showingErrorAlert = true
-                        return
-                    }
-
-                    do {
-                        let apiResponse = try JSONDecoder().decode(APIResponse<[String: String]>.self, from: data)
-
-                        if apiResponse.success {
-                            self.alertMessage = apiResponse.message
-                            self.showingSuccessAlert = true
-                        } else {
-                            self.alertMessage = apiResponse.message
-                            self.showingErrorAlert = true
-                        }
-                    } catch {
-                        self.alertMessage = "응답 처리 중 오류가 발생했습니다."
+                    let message = res.message ?? "등록이 완료되었습니다."
+                    if res.success == true || res.status == 200 {
+                        AppLog.info("Product created successfully", category: "PRODUCT")
+                        self.alertMessage = message
+                        self.showingSuccessAlert = true
+                    } else {
+                        AppLog.warn("Product create responded with failure: \(message)", category: "PRODUCT")
+                        self.alertMessage = message
                         self.showingErrorAlert = true
                     }
                 }
-            }.resume()
-
-        } catch {
-            alertMessage = "데이터 처리 중 오류가 발생했습니다."
-            showingErrorAlert = true
-            isSubmitting = false
+            } catch {
+                let appError = ErrorMapper.map(error)
+                await MainActor.run {
+                    self.isSubmitting = false
+                    AppLog.error("Product create failed: \(appError.message)", category: "PRODUCT")
+                    self.alertMessage = appError.message
+                    self.showingErrorAlert = true
+                }
+            }
         }
     }
 
