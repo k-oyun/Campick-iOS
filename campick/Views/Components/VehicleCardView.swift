@@ -180,10 +180,10 @@ struct VehicleCardView: View {
                         VStack {
                             Text(spec.label)
                                 .foregroundColor(AppColors.brandWhite70)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                             Text(spec.value)
                                 .foregroundColor(.white)
-                                .font(.system(size: 14))
+                                .font(.system(size: 18))
                                 .bold()
                         }
                         .padding(.vertical, idx == 0 ? 7 : 0)
