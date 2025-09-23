@@ -93,6 +93,25 @@ struct ChatRoomView: View {
                 }
             )
         }
+        .confirmationDialog("첨부", isPresented: $showAttachmentMenu, titleVisibility: .visible) {
+                    Button("사진 보관함에서 선택") {
+                        showImagePicker = true
+                    }
+                    Button("카메라로 촬영") {
+                        showCamera = true
+                    }
+                    Button("취소", role: .cancel) {}
+                }
+                
+        .sheet(isPresented: $showImagePicker) {
+            ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+        }
+
+        .sheet(isPresented: $showCamera) {
+            ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
+                .ignoresSafeArea()
+        }
+                
         .onAppear {
             let initPayload = InitChat(
                 type: "start_room",
