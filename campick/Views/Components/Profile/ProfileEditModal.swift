@@ -116,6 +116,14 @@ struct ProfileEditModal: View {
                             }
                             .foregroundColor(.white.opacity(0.8))
                             .font(.system(size: 12))
+                        } else if imageUploadComplete && selectedImage != nil {
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(.green)
+                                Text("업로드 완료")
+                            }
+                            .foregroundColor(.white.opacity(0.8))
+                            .font(.system(size: 12))
                         } else {
                             Text("프로필 사진 변경")
                                 .foregroundColor(.white.opacity(0.8))
@@ -181,6 +189,15 @@ struct ProfileEditModal: View {
         .sheet(isPresented: $showImagePicker) {
             MediaPickerSheet(source: .photoLibrary, selectedImage: $selectedImage)
         }
+        .onChange(of: selectedImage) { _, newImage in
+            // 이미지가 선택되면 업로드 상태 리셋 후 즉시 업로드
+            if newImage != nil {
+                imageUploadComplete = false
+                Task {
+                    await uploadProfileImage()
+                }
+            }
+        }
         // 로그인 전환은 RootView의 isLoggedIn 변화로 일원화
         .alert("오류", isPresented: $showErrorAlert) {
             Button("확인") { }
@@ -198,19 +215,49 @@ struct ProfileEditModal: View {
         let message: String
     }
 
+    private func uploadProfileImage() async {
+        guard let selectedImage = selectedImage else { return }
+
+        isImageUploading = true
+
+        do {
+            let imageData = try await ProfileService.updateMemberProfileImage(selectedImage)
+
+            await MainActor.run {
+                // UserState 업데이트 (썸네일 이미지 사용)
+                UserState.shared.updateProfileImage(url: imageData.profileThumbnailUrl)
+
+                // 업로드 완료 표시
+                imageUploadComplete = true
+
+                // 상위 뷰 새로고침
+                onSave()
+            }
+
+        } catch {
+            await MainActor.run {
+                // 401/403 오류 처리
+                if let afError = error as? AFError,
+                   case let .responseValidationFailed(reason) = afError,
+                   case let .unacceptableStatusCode(code) = reason,
+                   (code == 401 || code == 403) {
+                    shouldRedirectToLogin = true
+                    UserState.shared.logout()
+                } else {
+                    errorMessage = "이미지 업로드에 실패했습니다. 다시 시도해주세요."
+                    showErrorAlert = true
+                }
+            }
+        }
+
+        isImageUploading = false
+    }
+
     private func saveProfileChanges() async {
         isUpdating = true
 
         do {
-            // 1. 이미지가 변경된 경우 먼저 이미지 업로드
-            if let selectedImage = selectedImage {
-                isImageUploading = true
-                _ = try await ProfileService.updateMemberProfileImage(selectedImage)
-                isImageUploading = false
-            }
-
-            // 2. 프로필 정보 업데이트
-            // 전화번호에서 하이픈 제거
+            // 프로필 정보 업데이트 (텍스트 정보만)
             let cleanMobileNumber = mobileNumber.replacingOccurrences(of: "-", with: "")
             try await ProfileService.updateMemberProfile(
                 nickname: nickName,
@@ -218,7 +265,7 @@ struct ProfileEditModal: View {
                 mobileNumber: cleanMobileNumber
             )
 
-            // 3. 성공 시 완료 처리
+            // 성공 시 완료 처리
             await MainActor.run {
                 onSave()
                 dismiss()
@@ -256,7 +303,6 @@ struct ProfileEditModal: View {
         }
 
         isUpdating = false
-        isImageUploading = false
     }
 }
 

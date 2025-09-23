@@ -126,12 +126,12 @@ final class ProfileService {
         }
     }
 
-    static func updateMemberProfileImage(_ image: UIImage) async throws -> String {
+    static func updateMemberProfileImage(_ image: UIImage) async throws -> ProfileImageData {
         let endpoint = Endpoint.memberImage
         let url = endpoint.url
 
-        // 기존 압축/리사이징 유틸 사용 (최대 1MB로 압축)
-        guard let payload = compressImage(image, maxSizeInMB: 1.0) else {
+        // 이미지 압축 (5KB 이하로)
+        guard let compressedImageData = compressImage(image, maxSizeInMB: 0.005) else {
             throw ProfileUpdateError.imageCompressionFailed
         }
         let mimeType = "image/jpeg"
@@ -165,7 +165,7 @@ final class ProfileService {
     }
 
     // 이미지 압축 함수 (ImageUploadService에서 가져옴)
-    private static func compressImage(_ image: UIImage, maxSizeInMB: Double = 1.0) -> Data? {
+    private static func compressImage(_ image: UIImage, maxSizeInMB: Double = 0.005) -> Data? {
         let maxBytes = maxSizeInMB * 1024 * 1024
 
         var compression: CGFloat = 1.0
