@@ -64,7 +64,10 @@ struct ProfileMenu: View {
                                             .fill(Color.white.opacity(0.2))
                                             .overlay(
                                                 Image(systemName: "person.fill")
+                                                    .resizable()
+                                                    .scaledToFit()
                                                     .foregroundColor(.white.opacity(0.6))
+                                                    .frame(width: 25, height:25)
                                             )
                                     }
                                     .frame(width: 44, height: 44)
