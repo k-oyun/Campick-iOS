@@ -173,11 +173,27 @@ struct ChatRoomRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                Image(room.profileImage ?? "testImage1")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 48, height: 48)
-                    .clipShape(Circle())
+                AsyncImage(url: URL(string: room.profileImage ?? "")) { phase in
+                    if let image = phase.image {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } else if phase.error != nil {
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(0.3))
+                            Image(systemName: "person.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                    } else {
+                        ProgressView()
+                    }
+                }
+                .frame(width: 48, height: 48) // 전체 원 크기
+                .clipShape(Circle())
                 
 //                if room.isOnline {
 //                    Circle()
@@ -215,10 +231,25 @@ struct ChatRoomRow: View {
                 }
                 
                 HStack {
-                    Image(room.productThumbnail ?? "testImage1")
-                        .resizable()
-                        .frame(width: 30, height: 20)
-                        .cornerRadius(4)
+                    AsyncImage(url: URL(string: room.productThumbnail ?? "")) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 30, height: 20)
+                                .cornerRadius(4)
+                                .clipped()
+                        } else if phase.error != nil {
+                            Image("testImage1")
+                                .resizable()
+                                .frame(width: 30, height: 20)
+                                .cornerRadius(4)
+                                .clipped()
+                        } else {
+                            ProgressView()
+                                .frame(width: 30, height: 20)
+                        }
+                    }
                     Text(room.productName)
                         .foregroundColor(.white.opacity(0.8))
                         .font(.caption)
