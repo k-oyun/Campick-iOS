@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
     @StateObject private var userState = UserState.shared
     @State private var navigateToSignup = false
+    @FocusState private var isEmailFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -34,7 +36,12 @@ struct LoginView: View {
                             VStack(spacing: 8) {
                                 // 이메일
                                 FormLabel(text: "이메일")
-                                OutlinedInputField(text: $vm.email, placeholder: "이메일을 입력하세요", systemImage: "envelope")
+                                OutlinedInputField(
+                                    text: $vm.email,
+                                    placeholder: "이메일을 입력하세요",
+                                    systemImage: "envelope",
+                                    focus: $isEmailFocused
+                                )
                                     .padding(.bottom, 16)
 
                                 // 비밀번호 (복사/붙여넣기 방지)
@@ -115,6 +122,9 @@ struct LoginView: View {
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)
+                .simultaneousGesture(DragGesture().onChanged { _ in
+                    dismissKeyboard()
+                })
             }
         }
         .alert(
@@ -141,6 +151,11 @@ struct LoginView: View {
         //     // Auto-login preference currently disabled
         //     vm.keepLoggedIn = AuthPreferences.keepLoggedIn
         // }
+    }
+
+    private func dismissKeyboard() {
+        isEmailFocused = false
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
