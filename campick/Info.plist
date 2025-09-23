@@ -7,19 +7,9 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>차량 이미지를 촬영하기 위해 카메라 권한이 필요합니다.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>차량 이미지를 선택하기 위해 사진 라이브러리 접근 권한이 필요합니다.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Pacifico-Regular.ttf</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>프로필 사진 촬영을 위해 카메라 접근이 필요합니다.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>프로필 사진을 선택하기 위해 사진 보관함 접근이 필요합니다.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>촬영한 사진을 저장하기 위해 사진 보관함에 추가 권한이 필요합니다.</string>
 </dict>
 </plist>

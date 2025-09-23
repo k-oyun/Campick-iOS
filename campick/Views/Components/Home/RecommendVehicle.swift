@@ -10,7 +10,7 @@ import SwiftUI
 struct RecommendVehicle: View {
     @EnvironmentObject private var tabRouter: TabRouter
     
-//    let vehicles: [VehicleViewModel]
+    
     @StateObject private var viewModel =  HomeVehicleViewModel()
     init() {
         print("로딩 완")
