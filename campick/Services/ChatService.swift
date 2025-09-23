@@ -39,4 +39,54 @@ class ChatService: ObservableObject {
                 }
             }
     }
+    
+    
+    
+    func startChat(productId: Int, completion: @escaping (Result<Int, AFError>) -> Void) {
+        let request = ChatStartRequest(productId: productId)
+        
+        APIService.shared
+            .request(
+                Endpoint.chatStart.url,
+                method: .post,
+                parameters: request,
+                encoder: JSONParameterEncoder.default
+            )
+            .validate()
+            .responseDecodable(of: ApiResponse<Int>.self, decoder: decoder) { response in
+                switch response.result {
+                case .success(let apiResponse):
+                    if let chatId = apiResponse.data {
+                        print("채팅방 생성 성공: chatId = \(chatId)")
+                        completion(.success(chatId))
+                    } else {
+                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
+                    }
+                case .failure(let error):
+                    print("채팅방 생성 실패: \(error.localizedDescription)")
+                    completion(.failure(error))
+                }
+            }
+    }
+    
+    func getChatMessages(chatRoomId: Int, completion: @escaping (Result<ChatResponse, AFError>) -> Void) {
+        APIService.shared
+            .request(Endpoint.chatGet(chatRoomId: String(chatRoomId)).url)
+            .validate()
+            .responseDecodable(of: ApiResponse<ChatResponse>.self, decoder: decoder) { response in
+                switch response.result {
+                case .success(let apiResponse):
+                    if let data = apiResponse.data {
+                        print("채팅방(\(chatRoomId)) 메시지 조회 성공: \(data.chatData.count)개 메시지")
+                        completion(.success(data))
+                    } else {
+                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
 }
+
+

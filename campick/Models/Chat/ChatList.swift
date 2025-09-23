@@ -8,7 +8,7 @@
 import Foundation
 
 
-struct ChatList: Decodable, Identifiable {
+struct ChatList: Decodable, Identifiable, Hashable {
     let id: Int
     let productName: String
     let productThumbnail: String?

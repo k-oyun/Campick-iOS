@@ -11,61 +11,7 @@ import SwiftUI
 struct ChatRoomListView: View {
     
     @State private var selectedRoom: ChatList?
-    @State private var rooms: [ChatList] =
-    [
-//        ChatList(
-//            id: 1,
-//            sellerId: "seller1",
-//            sellerName: "티파니 갱",
-//            sellerAvatar: "tiffany",
-//            vehicleId: "1",
-//            vehicleTitle: "현대 포레스트 프리미엄",
-//            vehicleImage: "testImage1",
-//            lastMessage: "Fuck u bitch",
-//            lastMessageTime: Date(),
-//            unreadCount: 2,
-//            isOnline: true
-//        ),
-//        ChatList(
-//            id: 2,
-//            sellerId: "seller2",
-//            sellerName: "느창우",
-//            sellerAvatar: "mrchu",
-//            vehicleId: "2",
-//            vehicleTitle: "기아 봉고 캠퍼",
-//            vehicleImage: "testImage2",
-//            lastMessage: "야시장에서 뵙겠습니다.",
-//            lastMessageTime: Date().addingTimeInterval(-3600),
-//            unreadCount: 0,
-//            isOnline: false
-//        ),
-//        ChatList(
-//            id: 3,
-//            sellerId: "seller3",
-//            sellerName: "박우진",
-//            sellerAvatar: "park",
-//            vehicleId: "3",
-//            vehicleTitle: "기아 봉고 캠퍼",
-//            vehicleImage: "testImage2",
-//            lastMessage: "창우 가면 가!",
-//            lastMessageTime: Date().addingTimeInterval(-1800),
-//            unreadCount: 1,
-//            isOnline: true
-//        ),
-//        ChatList(
-//            id: 4,
-//            sellerId: "seller4",
-//            sellerName: "崔东进",
-//            sellerAvatar: "choi",
-//            vehicleId: "4",
-//            vehicleTitle: "현대 포레스트 프리미엄",
-//            vehicleImage: "testImage1",
-//            lastMessage: "这辆车多少钱",
-//            lastMessageTime: Date().addingTimeInterval(-2400),
-//            unreadCount: 3,
-//            isOnline: false
-//        )
-    ]
+    @State private var rooms: [ChatList] = []
     @State private var showFindVehicle = false
     @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var viewModel = ChatListViewModel()
@@ -105,7 +51,22 @@ struct ChatRoomListView: View {
                             .frame(maxWidth: .infinity)
                             .background(AppColors.brandOrange)
                             .foregroundColor(.white)
-                            .cornerRadius(16)
+                            .font(.headline)
+                        Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
+                            .foregroundColor(.white.opacity(0.6))
+                            .font(.caption)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                            .padding(.bottom, 16)
+                        Button(action: { showFindVehicle = true }) {
+                            Text("매물 찾아보기")
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                                .background(AppColors.brandOrange)
+                                .foregroundColor(.white)
+                                .cornerRadius(16)
+                        }
+                        .padding(.horizontal, 20)
                     }
                     .padding(.horizontal, 20)
                 }
@@ -139,30 +100,41 @@ struct ChatRoomListView: View {
                             .listRowBackground(Color.clear)
                             .padding(.bottom,10)
                     }
-                    .onDelete { indexSet in
-                        viewModel.chats.remove(atOffsets: indexSet)
+                } else {
+                    List {
+                        ForEach(viewModel.chats) { room in
+                            ChatRoomRow(room: room)
+                                .onTapGesture {
+                                    selectedRoom = room
+                                }
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                                .padding(.bottom,10)
+                        }
+                        .onDelete { indexSet in
+                            viewModel.chats.remove(atOffsets: indexSet)
+                        }
+                        
+                    }
+                    .padding()
+                    .listStyle(.plain)
+                    .navigationDestination(item: $selectedRoom) { room in
+                        ChatRoomView(chatRoomId: room.id, chatMessage: "")
+                            .navigationBarHidden(true)
+                            .toolbar(.hidden, for: .navigationBar)
                     }
                 }
-                .padding()
-                .listStyle(.plain)
-//                .navigationDestination(item: $selectedRoom) { room in
-//                    ChatRoomView(
-//                        seller: ChatSeller(id: "1", name: "박우진", avatar: "tiffany", isOnline: true, lastSeen: Date(),phoneNumber: "010-1234-1234"),
-//                        vehicle: ChatVehicle(id: "1", title: "현대 포레스트 프리미엄", price: 8900, status: "판매중", image: "https://picsum.photos/200/120?random=3")
-//                    )
-//                    .navigationBarHidden(true)   // 네비게이션 바 숨김
-//                    .toolbar(.hidden, for: .navigationBar) // iOS 16 이상
-//                }
                 
             }
-        }
-        .background(AppColors.brandBackground)
-        .navigationBarHidden(true)
-        .navigationBarTitleDisplayMode(.inline)
-        .onAppear{
-            viewModel.loadChats()
-            rooms = viewModel.chats
-            print(rooms)
+            .background(AppColors.brandBackground)
+            .navigationBarHidden(true)
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear{
+                viewModel.loadChats()
+                rooms = viewModel.chats
+                print(rooms)
+            }
         }
     }
     
@@ -175,11 +147,27 @@ struct ChatRoomRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
-                Image(room.profileImage ?? "testImage1")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 48, height: 48)
-                    .clipShape(Circle())
+                AsyncImage(url: URL(string: room.profileImage ?? "")) { phase in
+                    if let image = phase.image {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    } else if phase.error != nil {
+                        ZStack {
+                            Circle()
+                                .fill(Color.gray.opacity(0.3))
+                            Image(systemName: "person.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                    } else {
+                        ProgressView()
+                    }
+                }
+                .frame(width: 48, height: 48)
+                .clipShape(Circle())
                 
 //                if room.isOnline {
 //                    Circle()
@@ -198,7 +186,6 @@ struct ChatRoomRow: View {
                     
                     Spacer()
                     HStack{
-//                        Text(formatTime(room.lastMessageCreatedAt))
                         Text(room.lastMessageCreatedAt)
                             .foregroundColor(.white.opacity(0.6))
                             .font(.caption)
@@ -217,10 +204,25 @@ struct ChatRoomRow: View {
                 }
                 
                 HStack {
-                    Image(room.productThumbnail ?? "testImage1")
-                        .resizable()
-                        .frame(width: 30, height: 20)
-                        .cornerRadius(4)
+                    AsyncImage(url: URL(string: room.productThumbnail ?? "")) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 30, height: 20)
+                                .cornerRadius(4)
+                                .clipped()
+                        } else if phase.error != nil {
+                            Image("testImage1")
+                                .resizable()
+                                .frame(width: 30, height: 20)
+                                .cornerRadius(4)
+                                .clipped()
+                        } else {
+                            ProgressView()
+                                .frame(width: 30, height: 20)
+                        }
+                    }
                     Text(room.productName)
                         .foregroundColor(.white.opacity(0.8))
                         .font(.caption)
@@ -244,13 +246,6 @@ struct ChatRoomRow: View {
                 .stroke(Color.gray.opacity(0.4), lineWidth: 1)
         )
         
-    }
-    
-    private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "a h:mm"
-        formatter.locale = Locale(identifier: "ko_KR")
-        return formatter.string(from: date)
     }
 }
 

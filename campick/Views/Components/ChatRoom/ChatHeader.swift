@@ -8,13 +8,11 @@
 import SwiftUI
 
 struct ChatHeader: View {
-    
+    @ObservedObject var viewModel: ChatViewModel
     @Binding var showCallAlert: Bool
-    
-    let seller: ChatSeller
     var onBack: () -> Void
-    var onCall: () -> Void
-    let vehicle: ChatVehicle
+//    var onCall: () -> Void
+    
     
     var body: some View {
         HStack {
@@ -32,14 +30,14 @@ struct ChatHeader: View {
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(seller.name)
+                Text(viewModel.sellerName() ?? "알 수 없음")
                     .foregroundColor(.white)
                     .font(.headline)
                 HStack {
                     Circle()
-                        .fill(seller.isOnline ? Color.green : Color.gray)
+                        .fill(viewModel.isSellerOnline() ? Color.green : Color.gray)
                         .frame(width: 8, height: 8)
-                    Text(seller.isOnline ? "온라인" : formatTime(seller.lastSeen ?? Date()))
+                    Text(viewModel.isSellerOnline() ? "온라인" : "오프라인")
                         .foregroundColor(.white.opacity(0.6))
                         .font(.caption)
                 }
@@ -48,14 +46,14 @@ struct ChatHeader: View {
             Spacer()
             
             HStack(spacing: 12) {
-                Button { onCall() } label: {
+                Button { /*onCall()*/ } label: {
                     Image(systemName: "phone")
                         .foregroundColor(.white)
                         .padding(10)
                         .background(Color.white.opacity(0.1))
                         .clipShape(Circle())
                 }
-                .disabled(URL(string: "tel://\(seller.phoneNumber)") == nil)
+                .disabled(URL(string: "tel://\(viewModel.sellerPhoneNumber() ?? "")") == nil)
             }
         }
         .padding()
@@ -67,7 +65,7 @@ struct ChatHeader: View {
                 .cornerRadius(8)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(vehicle.status)
+                Text(viewModel.vehicleStatus())
                     .font(.system(size: 11, weight: .heavy))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -75,12 +73,12 @@ struct ChatHeader: View {
                     .foregroundColor(.white)
                     .cornerRadius(8)
                 
-                Text(vehicle.title)
+                Text(viewModel.vehicleTitle() ?? "")
                     .foregroundColor(.white)
                     .font(.system(size: 16, weight: .heavy))
                     .lineLimit(1)
                 
-                Text("\(vehicle.price)만원")
+                Text(viewModel.vehiclePrice() ?? "")
                     .foregroundColor(.orange)
                     .font(.system(size: 12, weight: .bold))
                     .bold()
