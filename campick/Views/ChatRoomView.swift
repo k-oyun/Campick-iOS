@@ -37,7 +37,7 @@ struct ChatRoomView: View {
             
             MessageList(
                 viewModel: viewModel,
-//                isTyping: $isTyping
+                //                isTyping: $isTyping
             )
             
             ChatBottomBar(
@@ -45,27 +45,33 @@ struct ChatRoomView: View {
                 pendingImage: $pendingImage,
                 showAttachmentMenu: $showAttachmentMenu,
                 onSend: { message in
-                        print("onSend called with:", message)
-                        let payload = ChatMessagePayload(
-                            type: "chat_message",
-                            data: ChatMessageData(
-                                chatId: chatRoomId,
-                                content: message,
-                                senderId: Int(userState.memberId) ?? 0
-                            )
+                    print("onSend called with:", message)
+                    
+                    let initPayload = InitChat(
+                        type:"join_room",
+                        data: InitChatData(
+                            chatId: chatRoomId
+                        ))
+                    let payload = ChatMessagePayload(
+                        type: "chat_message",
+                        data: ChatMessageData(
+                            chatId: chatRoomId,
+                            content: message,
+                            senderId: Int(userState.memberId) ?? 0
                         )
-                           WebSocket.shared.send(payload)
-
-                           // 2. 로컬에서도 바로 추가 → 화면에 메시지 버블 표시
-                           let newChat = Chat(
-                               message: message,
-                               senderId: Int(userState.memberId) ?? 0,
-                               sendAt: ISO8601DateFormatter().string(from: Date()),
-                               isRead: false
-                           )
-                           viewModel.messages.append(newChat)
-                        newMessage = ""
-                    }
+                    )
+                    WebSocket.shared.send(payload)
+                    
+                    // 2. 로컬에서도 바로 추가 → 화면에 메시지 버블 표시
+                    let newChat = Chat(
+                        message: message,
+                        senderId: Int(userState.memberId) ?? 0,
+                        sendAt: ISO8601DateFormatter().string(from: Date()),
+                        isRead: false
+                    )
+                    viewModel.messages.append(newChat)
+                    newMessage = ""
+                }
             )
             .background(
                 AppColors.brandBackground
@@ -81,7 +87,7 @@ struct ChatRoomView: View {
         .background(AppColors.brandBackground)
         .onAppear {
             if WebSocket.shared.isConnected == false {
-                        WebSocket.shared.connect(userId: userState.memberId)
+                WebSocket.shared.connect(userId: userState.memberId)
             }
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)

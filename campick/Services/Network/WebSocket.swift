@@ -75,6 +75,12 @@ class WebSocket {
         }
     }
     
+    func sendChatInit() {
+        print("setChatRoom전송")
+        let payload = ChatInit(type: "set_chat_room")
+        send(payload)
+    }
+    
     
     func send<T: Encodable>(_ data: T) {
         let encoder = JSONEncoder()
@@ -119,6 +125,15 @@ struct ChatMessageData: Encodable {
     let senderId: Int
 }
 
+struct InitChat: Encodable {
+    let type: String
+    let data : InitChatData
+}
+
+struct InitChatData: Encodable{
+    let chatId: Int
+}
+
 struct ReceivedChatMessagePayload: Decodable {
     let type: String
     let data: ReceivedChatMessageData
@@ -129,6 +144,10 @@ struct ReceivedChatMessageData: Decodable {
     let senderId: Int
     let sendAt: Date
     let isRead: Bool
+}
+
+struct ChatInit: Encodable {
+    let type: String
 }
 
 
