@@ -14,15 +14,24 @@ struct VehicleInfoCard: View {
     let mileageText: String
     let typeText: String
     let location: String
+    // 상단에 배치될 보조 뷰(예: 상태 변경 메뉴)
+    var headerAccessory: AnyView? = nil
 
     var body: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading) {
-                Text(title)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
+                HStack {
+                    Text(title)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.leading)
+                    if let headerAccessory {
+                        Spacer()
+                        headerAccessory
+                    }
+                }
+                
 
                 HStack {
                 Text(priceText)
@@ -30,22 +39,9 @@ struct VehicleInfoCard: View {
                     .foregroundColor(AppColors.brandOrange)
 
                     Spacer()
-
-                    VStack(alignment: .trailing) {
-                        Text(location)
-                            .font(.body)
-                            .foregroundColor(.white.opacity(0.6))
-
-                        HStack(spacing: 4) {
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                                .font(.caption)
-                            Text("4.8")
-                                .font(.body)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                        }
-                    }
+                    Text(location)
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.6))
                 }
             }
 
@@ -110,11 +106,9 @@ struct VehicleDetailItem: View {
     }
 }
 
-#Preview {
+#Preview("Default") {
     ZStack {
-        AppColors.background
-            .ignoresSafeArea()
-
+        AppColors.background.ignoresSafeArea()
         VehicleInfoCard(
             title: "현대 포레스트 프리미엄",
             priceText: "8,900만원",
@@ -123,5 +117,43 @@ struct VehicleDetailItem: View {
             typeText: "모터홈",
             location: "서울 강남구"
         )
+        .padding()
+    }
+}
+
+#Preview("With Status Menu") {
+    ZStack {
+        AppColors.background.ignoresSafeArea()
+        VehicleInfoCard(
+            title: "포터 캠핑카",
+            priceText: "3,250만원",
+            yearText: "2021년",
+            mileageText: "42,300km",
+            typeText: "캠핑카라반",
+            location: "경기 용인시",
+            headerAccessory: AnyView(
+                Menu {
+                    Button("판매중", action: {})
+                    Button("예약중", action: {})
+                    Button("판매완료", action: {})
+                } label: {
+                    HStack(spacing: 6) {
+                        Circle().fill(Color.green).frame(width: 8, height: 8)
+                        Text("판매중").font(.system(size: 12, weight: .semibold))
+                        Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                    )
+                    .cornerRadius(8)
+                    .foregroundColor(.white)
+                }
+            )
+        )
+        .padding()
     }
 }

@@ -16,7 +16,7 @@ struct FilterOptions: Equatable {
 
     init(
         priceRange: ClosedRange<Double> = 0...10000,
-        mileageRange: ClosedRange<Double> = 0...100000,
+        mileageRange: ClosedRange<Double> = 0...300000,
         yearRange: ClosedRange<Double>? = nil,
         selectedVehicleTypes: Set<VehicleType> = []
     ) {
@@ -153,7 +153,7 @@ struct FilterView: View {
             VStack(spacing: 12) {
                 RangeSlider(
                     range: $tempFilters.mileageRange,
-                    bounds: 0...100000,
+                    bounds: 0...300000,
                     step: 5000
                 )
 

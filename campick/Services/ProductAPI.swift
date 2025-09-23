@@ -144,4 +144,34 @@ enum ProductAPI {
             throw ErrorMapper.map(error)
         }
     }
+
+    // 매물 상태 변경 (PATCH /api/product/status)
+    // 요청: { "productId": 0, "status": "AVAILABLE|RESERVED|SOLD" }
+    // 응답: ApiResponse<String>
+    static func updateProductStatus(productId: String, status: VehicleStatus) async throws -> ApiResponse<String> {
+        do {
+            AppLog.info("Update product status (id: \(productId), to: \(status))", category: "PRODUCT")
+            let body: [String: Any] = [
+                "productId": Int(productId) ?? 0,
+                "status": status.apiValue
+            ]
+            let request = APIService.shared
+                .request(Endpoint.productStatus.url, method: .patch, parameters: body, encoding: JSONEncoding.default)
+                .validate()
+            let res = try await request.serializingDecodable(ApiResponse<String>.self).value
+            return res
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+}
+
+private extension VehicleStatus {
+    var apiValue: String {
+        switch self {
+        case .active: return "AVAILABLE"
+        case .reserved: return "RESERVED"
+        case .sold: return "SOLD"
+        }
+    }
 }

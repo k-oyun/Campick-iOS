@@ -140,7 +140,7 @@ extension FindVehicleView {
     private var appliedFiltersView: some View {
         let currentYear = Double(Calendar.current.component(.year, from: Date()))
         let defaultPrice: ClosedRange<Double> = 0...10000
-        let defaultMileage: ClosedRange<Double> = 0...100000
+        let defaultMileage: ClosedRange<Double> = 0...300000
         let defaultYear: ClosedRange<Double> = 1990...currentYear
 
         let priceActive = vm.filterOptions.priceRange != defaultPrice

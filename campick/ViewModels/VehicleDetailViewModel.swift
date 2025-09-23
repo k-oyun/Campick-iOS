@@ -19,6 +19,27 @@ final class VehicleDetailViewModel: ObservableObject {
             errorMessage = error.localizedDescription
         }
     }
+
+    func changeStatus(productId: String, to newStatus: VehicleStatus) async {
+        guard var current = detail else { return }
+        let oldStatus = current.status
+        // optimistic update
+        current.status = newStatus
+        detail = current
+        do {
+            let res = try await ProductAPI.updateProductStatus(productId: productId, status: newStatus)
+            let ok = (res.success == true) || ((res.status ?? 0) >= 200 && (res.status ?? 0) < 300)
+            if !ok {
+                throw NSError(domain: "ProductStatus", code: res.status ?? -1, userInfo: [NSLocalizedDescriptionKey: res.message ?? "상태 변경에 실패했습니다."])
+            }
+        } catch {
+            // rollback on failure
+            var rollback = detail
+            rollback?.status = oldStatus
+            detail = rollback
+            errorMessage = ErrorMapper.map(error).localizedDescription
+        }
+    }
 }
 
 struct VehicleDetailViewData {
@@ -35,6 +56,7 @@ struct VehicleDetailViewData {
     let seller: Seller
     let isLiked: Bool
     let likeCount: Int
+    var status: VehicleStatus
 
     init(dto: ProductDetailDTO) {
         let formatter = DetailFormatter()
@@ -51,6 +73,7 @@ struct VehicleDetailViewData {
         seller = formatter.seller(from: dto.user)
         isLiked = dto.isLiked ?? false
         likeCount = dto.likeCount ?? 0
+        status = DetailFormatter.mapStatus(dto.status)
     }
 }
 
@@ -107,6 +130,16 @@ private struct DetailFormatter {
             rating: dto?.rating ?? 0,
             isDealer: (dto?.role ?? "").uppercased() == "DEALER"
         )
+    }
+
+    static func mapStatus(_ raw: String?) -> VehicleStatus {
+        let val = (raw ?? "").uppercased()
+        switch val {
+        case "AVAILABLE", "ACTIVE": return .active
+        case "RESERVED": return .reserved
+        case "SOLD", "COMPLETED", "SOLD_OUT": return .sold
+        default: return .active
+        }
     }
 }
 
