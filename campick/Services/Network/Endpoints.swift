@@ -27,7 +27,6 @@ enum Endpoint {
     case memberProducts(memberId: String)
     case memberSellOrReserveProducts(memberId: String)
     case memberSoldProducts(memberId: String)
-    case memberMyProductList(memberId: String)
     case memberSignout
     case memberUpdate
     case memberImage
@@ -35,9 +34,9 @@ enum Endpoint {
     case productInfo
     case productDetail(productId: String)
     case productLike(productId: String)
-    case favorites
     case chatStart
     case chatGet(chatRoomId: String)
+    case favorites(memberId: String)
 
     static let baseURL = "https://campick.shop"
 
@@ -60,8 +59,7 @@ enum Endpoint {
         case .memberInfo(let memberId): return "/api/member/info/\(memberId)"
         case .memberProducts(let memberId): return "/api/member/product/all/\(memberId)"
         case .memberSellOrReserveProducts(let memberId): return "/api/member/product/sell-or-reserve/\(memberId)"
-        case .memberSoldProducts(let memberId): return "/api/member/sold/\(memberId)"
-        case .memberMyProductList(let memberId): return "/api/member/product/sold/\(memberId)"
+        case .memberSoldProducts(let memberId): return "/api/member/product/sold/\(memberId)"
         case .memberSignout: return "/api/member"
         case .memberUpdate: return "/api/member/update"
         case .memberImage: return "/api/member/image"
@@ -72,6 +70,7 @@ enum Endpoint {
         case .favorites: return "/api/favorite"
         case .chatStart: return "/api/chat/start"
         case .chatGet(let chatRoomId): return "/api/chat/\(chatRoomId)"
+        case .favorites(let memberId): return "/api/member/favorite/\(memberId)"
         }
     }
 

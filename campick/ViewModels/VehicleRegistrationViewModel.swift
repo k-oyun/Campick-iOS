@@ -136,9 +136,12 @@ final class VehicleRegistrationViewModel: ObservableObject {
         let localizedType = vehicleType
         let localizedModel = vehicleModel
         // 이미지 정책: 메인 이미지를 배열 첫번째로 위치시키기
-        var productUrls = Array(uploadedImageUrls.dropFirst())
-        let mainUrl = uploadedImageUrls.first ?? ""
-        if !mainUrl.isEmpty { productUrls.insert(mainUrl, at: 0) }
+        let mainImage = vehicleImages.first { $0.isMain }
+        let mainUrl = mainImage?.uploadedUrl ?? ""
+        var productUrls = uploadedImageUrls.filter { $0 != mainUrl }
+        if !mainUrl.isEmpty {
+            productUrls.insert(mainUrl, at: 0)
+        }
 
         let request = VehicleRegistrationRequest(
             generation: Int(generation) ?? 0,

@@ -24,7 +24,7 @@ struct ProfileHeaderSection: View {
                 VStack(spacing: 16) {
                     // 아바타와 기본 정보
                     HStack(spacing: 16) {
-                        AsyncImage(url: URL(string: profile.profileImage ?? "")) { image in
+                        CachedAsyncImage(url: URL(string: profile.profileImage ?? "")) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)

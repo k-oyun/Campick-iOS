@@ -13,16 +13,10 @@ struct ProfileView: View {
     let showBackButton: Bool // 뒤로가기 버튼 표시 여부
     let showTopBar: Bool // 상단 TopBar 노출 여부
 
-    @StateObject private var profileDataViewModel = ProfileDataViewModel()
-    @StateObject private var userState = UserState.shared
+    @StateObject private var screenVM: ProfileScreenViewModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var activeTab: TabType = .selling
-    @State private var showEditModal = false
-    @State private var showLogoutModal = false
-    @State private var showWithdrawalModal = false
-    @State private var showPasswordChangeView = false
-    @State private var navigateToMyProducts = false
 
     enum TabType: String, CaseIterable {
         case selling = "selling"
@@ -41,6 +35,7 @@ struct ProfileView: View {
         self.isOwnProfile = isOwnProfile
         self.showBackButton = showBackButton
         self.showTopBar = showTopBar
+        self._screenVM = StateObject(wrappedValue: ProfileScreenViewModel(memberId: memberId, isOwnProfile: isOwnProfile))
     }
 
     var body: some View {
@@ -64,12 +59,12 @@ struct ProfileView: View {
                 }
                 
 
-                if profileDataViewModel.isLoading {
+                if screenVM.isLoading {
                     Spacer()
                     ProgressView("로딩 중...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     Spacer()
-                } else if let errorMessage = profileDataViewModel.errorMessage {
+                } else if let errorMessage = screenVM.errorMessage {
                     Spacer()
                     VStack(spacing: 16) {
                         Text("오류가 발생했습니다")
@@ -79,8 +74,7 @@ struct ProfileView: View {
                             .multilineTextAlignment(.center)
                         Button("다시 시도") {
                             Task {
-                                profileDataViewModel.errorMessage = nil
-                                await profileDataViewModel.loadProfile(memberId: memberId)
+                                await screenVM.retry()
                             }
                         }
                         .buttonStyle(.borderedProminent)
@@ -91,15 +85,15 @@ struct ProfileView: View {
                     ScrollView {
                         VStack(spacing: 16) {
                             // ProfileHeaderSection 사용
-                            if let profile = profileDataViewModel.profileResponse {
+                            if let profile = screenVM.profile {
                                 ProfileHeaderSection(
                                     profile: profile,
-                                    totalListings: profileDataViewModel.totalListings,
-                                    sellingCount: profileDataViewModel.sellingCount,
-                                    soldCount: profileDataViewModel.soldCount,
+                                    totalListings: screenVM.totalListings,
+                                    sellingCount: screenVM.sellingCount,
+                                    soldCount: screenVM.soldCount,
                                     isOwnProfile: isOwnProfile,
                                     onEditTapped: {
-                                        showEditModal = true
+                                        screenVM.openEdit()
                                     }
                                 )
                             }
@@ -114,16 +108,16 @@ struct ProfileView: View {
                                 hasMore: hasMoreProducts,
                                 onLoadMore: {
                                     // 더보기 버튼을 누르면 내 매물 페이지로 이동
-                                    navigateToMyProducts = true
+                                    screenVM.goToMyProducts()
                                 }
                             )
                             .padding(.horizontal, 16)
 
                             if isOwnProfile {
                                 SettingsSection(
-                                    onChangePassword: { showPasswordChangeView = true },
-                                    onLogout: { showLogoutModal = true },
-                                    onDeleteAccount: { showWithdrawalModal = true }
+                                    onChangePassword: { screenVM.showPasswordChangeView = true },
+                                    onLogout: { screenVM.showLogoutModal = true },
+                                    onDeleteAccount: { screenVM.showWithdrawalModal = true }
                                 )
                                 .padding(.horizontal, 16)
                                 .padding(.top, 8)
@@ -138,47 +132,47 @@ struct ProfileView: View {
         .navigationBarHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .task {
-            await profileDataViewModel.loadProfile(memberId: memberId)
+            await screenVM.load(memberId: memberId)
         }
         // 로그인 전환은 RootView의 isLoggedIn 변화로 일원화
-        .navigationDestination(isPresented: $navigateToMyProducts) {
+        .navigationDestination(isPresented: $screenVM.navigateToMyProducts) {
             MyProductListView(memberId: memberId ?? UserState.shared.memberId)
         }
-        .sheet(isPresented: $showEditModal) {
-            if let profile = profileDataViewModel.profileResponse {
+        .sheet(isPresented: $screenVM.showEditModal) {
+            if let profile = screenVM.profile {
                 ProfileEditModal(profile: profile) {
                     Task {
-                        await profileDataViewModel.refreshProfile(memberId: memberId)
+                        await screenVM.refresh(memberId: memberId)
                     }
                 }
             }
         }
-        .sheet(isPresented: $showPasswordChangeView) {
+        .sheet(isPresented: $screenVM.showPasswordChangeView) {
             PasswordChangeView()
         }
         .overlay(
             ZStack {
-                if showLogoutModal {
+                if screenVM.showLogoutModal {
                     LogoutModal(
                         onConfirm: {
-                            showLogoutModal = false
-                            logout()
+                            screenVM.showLogoutModal = false
+                            Task { await screenVM.logout() }
                         },
                         onCancel: {
-                            showLogoutModal = false
+                            screenVM.showLogoutModal = false
                         }
                     )
                     .zIndex(1)
                 }
 
-                if showWithdrawalModal {
+                if screenVM.showWithdrawalModal {
                     WithdrawalModal(
                         onConfirm: {
-                            showWithdrawalModal = false
-                            confirmDeleteAccount()
+                            screenVM.showWithdrawalModal = false
+                            Task { await screenVM.confirmDeleteAccount() }
                         },
                         onCancel: {
-                            showWithdrawalModal = false
+                            screenVM.showWithdrawalModal = false
                         }
                     )
                     .zIndex(1)
@@ -190,9 +184,9 @@ struct ProfileView: View {
     private var currentProducts: [ProfileProduct] {
         switch activeTab {
         case .selling:
-            return profileDataViewModel.sellingProducts
+            return screenVM.sellingProducts
         case .sold:
-            return profileDataViewModel.soldProducts
+            return screenVM.soldProducts
         }
     }
 
@@ -201,30 +195,6 @@ struct ProfileView: View {
         return currentProducts.count > 0
     }
 
-    private func logout() {
-        Task {
-            do {
-                AppLog.info("Requesting logout", category: "AUTH")
-                try await AuthService.shared.logout()
-                AppLog.info("Logout success", category: "AUTH")
-            } catch {
-                let appError = ErrorMapper.map(error)
-                AppLog.error("Logout failed: \(appError.message)", category: "AUTH")
-            }
-            await MainActor.run { UserState.shared.logout() }
-        }
-    }
-
-    private func confirmDeleteAccount() {
-        Task {
-            do {
-                try await ProfileService.deleteMemberAccount()
-            } catch {
-                // 서버 실패 시에도 로컬 세션은 종료
-            }
-            await MainActor.run { UserState.shared.logout() }
-        }
-    }
 }
 
 

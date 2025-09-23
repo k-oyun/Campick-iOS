@@ -75,7 +75,7 @@ struct ProductCard: View {
                 // 상태 칩을 이미지 위 상단에 오버레이 (공용 Chip 컴포넌트 사용)
                 Chip(
                     text: statusText(product.status),
-                    foreground: .white,
+                    foreground: statusForegroundColor(product.status),
                     background: statusColor(product.status),
                     horizontalPadding: 6,
                     verticalPadding: 2,
@@ -159,7 +159,14 @@ private func statusColor(_ raw: String) -> Color {
     switch raw.lowercased() {
     case "active", "available": return .green
     case "reserved": return AppColors.brandOrange
-    case "sold": return .white.opacity(0.9)
+    case "sold": return .white.opacity(0.4)
     default: return AppColors.brandOrange
+    }
+}
+
+private func statusForegroundColor(_ raw: String) -> Color {
+    switch raw.lowercased() {
+    case "sold": return .black
+    default: return .white
     }
 }

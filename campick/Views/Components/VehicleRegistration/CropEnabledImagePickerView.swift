@@ -247,7 +247,7 @@ struct AspectRatioCropView: View {
             // 크롭 영역으로 클리핑
             context.cgContext.clip(to: CGRect(origin: .zero, size: outputSize))
 
-            // 이미지 그리기
+            // 이미지 그리기@
             image.draw(in: drawRect)
         }
     }

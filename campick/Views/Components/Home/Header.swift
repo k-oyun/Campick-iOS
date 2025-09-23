@@ -25,7 +25,7 @@ struct Header: View {
                     showSlideMenu = true
                 }
             }) {
-                AsyncImage(url: URL(string: userState.profileImageUrl)) { image in
+                CachedAsyncImage(url: URL(string: userState.profileImageUrl)) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)

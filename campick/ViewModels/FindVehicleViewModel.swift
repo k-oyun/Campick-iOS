@@ -39,7 +39,7 @@ final class FindVehicleViewModel: ObservableObject {
     func fetchVehicles() {
         Task {
             do {
-                let allowedTypes = Set(["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]) // 서버 허용 값
+                let allowedTypes = Set(VehicleType.allCases) // 서버 허용 값
                 let selectedTypes = vmSafeTypes()
                 let validTypes = Array(selectedTypes.intersection(allowedTypes))
 
@@ -50,7 +50,7 @@ final class FindVehicleViewModel: ObservableObject {
                     costTo: Int(filterOptions.priceRange.upperBound) * 10_000,
                     generationFrom: Int(filterOptions.yearRange.lowerBound),
                     generationTo: Int(filterOptions.yearRange.upperBound),
-                    types: validTypes.isEmpty ? nil : validTypes
+                    types: validTypes.isEmpty ? nil : validTypes.map { $0.apiValue }
                 )
 
                 let sort = mapSort(selectedSort)
@@ -64,7 +64,7 @@ final class FindVehicleViewModel: ObservableObject {
         }
     }
 
-    private func vmSafeTypes() -> Set<String> {
+    private func vmSafeTypes() -> Set<VehicleType> {
         return filterOptions.selectedVehicleTypes
     }
 
