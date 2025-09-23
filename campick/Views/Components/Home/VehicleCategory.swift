@@ -9,7 +9,7 @@ import SwiftUI
 
 
 struct VehicleCategory: View {
-    var onSelectType: (String) -> Void = { _ in }
+    var onSelectType: (VehicleType) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -24,14 +24,9 @@ struct VehicleCategory: View {
             }
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 16) {
-                ForEach([
-                    ("motorhome", "모터홈"),
-                    ("trailer", "트레일러"),
-                    ("category", "픽업캠퍼"),
-                    ("campingVan", "캠핑밴")
-                ], id: \.1) { img, title in
-                    Button { onSelectType(title) } label: {
-                        VehicleCategoryItem(image: img, title: title)
+                ForEach(VehicleType.allCases, id: \.displayName) { vt in
+                    Button { onSelectType(vt) } label: {
+                        VehicleCategoryItem(image: vt.imageAsset, title: vt.displayName)
                     }
                     .buttonStyle(.plain)
                 }
