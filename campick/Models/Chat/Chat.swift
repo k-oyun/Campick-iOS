@@ -17,5 +17,5 @@ struct Chat: Decodable, Identifiable {
     let sendAt: String
     let isRead: Bool
 
-    var id: String { "\(senderId)_\(sendAt)" } // 고유 ID 생성
+    var id: String { "\(senderId)_\(sendAt)" } 
 }

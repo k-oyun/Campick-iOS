@@ -96,8 +96,17 @@ final class ChatViewModel: ObservableObject {
     }
     
     
-    func vehicleStatus() -> String? {
-        return vehicle?.status
+    func vehicleStatus() -> String {
+        switch vehicle?.status {
+        case "AVAILABLE":
+            return "판매중"
+        case "RESERVED":
+            return "예약중"
+        case "SOLD":
+            return "판매완료"
+        default:
+            return "알 수 없음"
+        }
     }
     
     func vehicleTitle() -> String? {

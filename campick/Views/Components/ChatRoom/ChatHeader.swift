@@ -37,9 +37,9 @@ struct ChatHeader: View {
                     Circle()
                         .fill(viewModel.isSellerOnline() ? Color.green : Color.gray)
                         .frame(width: 8, height: 8)
-//                    Text(viewModel.isSellerOnline() ? "온라인" : viewModel.sellerLastSeen() ?? "")
-//                        .foregroundColor(.white.opacity(0.6))
-//                        .font(.caption)
+                    Text(viewModel.isSellerOnline() ? "온라인" : "오프라인")
+                        .foregroundColor(.white.opacity(0.6))
+                        .font(.caption)
                 }
             }
             
@@ -65,7 +65,7 @@ struct ChatHeader: View {
                 .cornerRadius(8)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(viewModel.vehicleStatus() ?? "판매중")
+                Text(viewModel.vehicleStatus())
                     .font(.system(size: 11, weight: .heavy))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)

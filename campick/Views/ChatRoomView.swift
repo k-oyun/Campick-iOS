@@ -19,6 +19,8 @@ struct ChatRoomView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var permissionAlert: PermissionAlert?
     
+    let chatRoomId: Int
+    
     var body: some View {
         VStack(spacing: 0) {
             if let seller = viewModel.seller,
@@ -54,6 +56,7 @@ struct ChatRoomView: View {
                     )
             )
         }
+        .background(AppColors.brandBackground)
         .onAppear {
             viewModel.loadChatRoom(chatRoomId: 1)  // 예: chatRoomId 1
         }
@@ -76,9 +79,9 @@ private struct PermissionAlert: Identifiable {
     let message: String
 }
 // MARK: - Preview
-#Preview {
-    ChatRoomView()
-}
+//#Preview {
+//    ChatRoomView()
+//}
 
 
 extension Notification.Name {
