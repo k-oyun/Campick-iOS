@@ -12,6 +12,9 @@ struct VehicleLocationMileageSection: View {
     @Binding var location: String
     @Binding var errors: [String: String]
     @State private var showingLocationPicker = false
+    var focusedField: FocusState<VehicleRegistrationView.Field?>.Binding
+    let onMileageNext: () -> Void
+    let onLocationNext: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -19,23 +22,43 @@ struct VehicleLocationMileageSection: View {
                 // 판매지역
                 VStack(alignment: .leading, spacing: 4) {
                     FieldLabel(text: "판매지역")
-                    Button(action: {
-                        showingLocationPicker = true
-                    }) {
-                        StyledInputContainer(hasError: errors["location"] != nil) {
-                            HStack {
-                                Text(location.isEmpty ? "지역선택" : location)
-                                    .foregroundColor(location.isEmpty ? .white.opacity(0.5) : .white)
-                                    .font(.system(size: 14))
-                                    .padding(.horizontal, 12)
-
-                                Spacer()
-
-                                Image(systemName: "chevron.down")
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .font(.system(size: 12))
-                                    .padding(.trailing, 12)
+                    ZStack {
+                        // 숨겨진 TextField (포커스용)
+                        TextField("", text: .constant(""))
+                            .opacity(0)
+                            .focused(focusedField, equals: .location)
+                            .onChange(of: focusedField.wrappedValue) { _, newValue in
+                                if newValue == .location && !showingLocationPicker {
+                                    showingLocationPicker = true
+                                }
                             }
+                            .submitLabel(.next)
+                            .onSubmit {
+                                onLocationNext()
+                            }
+
+                        // 실제 UI
+                        Button(action: {
+                            showingLocationPicker = true
+                        }) {
+                            StyledInputContainer(hasError: errors["location"] != nil) {
+                                HStack {
+                                    Text(location.isEmpty ? "지역선택" : location)
+                                        .foregroundColor(location.isEmpty ? .white.opacity(0.5) : .white)
+                                        .font(.system(size: 14))
+                                        .padding(.horizontal, 12)
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(.white.opacity(0.6))
+                                        .font(.system(size: 12))
+                                        .padding(.trailing, 12)
+                                }
+                            }
+                        }
+                        .onTapGesture {
+                            focusedField.wrappedValue = .location
                         }
                     }
                     ErrorText(message: errors["location"])
@@ -52,6 +75,11 @@ struct VehicleLocationMileageSection: View {
                                 .font(.system(size: 14))
                                 .keyboardType(.numberPad)
                                 .padding(.horizontal, 12)
+                                .focused(focusedField, equals: .mileage)
+                                .submitLabel(.next)
+                                .onSubmit {
+                                    onMileageNext()
+                                }
                                 .onChange(of: mileage) { _, newValue in
                                     mileage = formatNumber(newValue)
                                 }

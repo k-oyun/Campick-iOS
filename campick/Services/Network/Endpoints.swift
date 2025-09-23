@@ -35,6 +35,7 @@ enum Endpoint {
     case productDetail(productId: String)
     case productLike(productId: String)
     case favorites(memberId: String)
+    case categoryType(typeName: String)
 
     static let baseURL = "https://campick.shop"
 
@@ -66,6 +67,7 @@ enum Endpoint {
         case .productDetail(let productId): return "/api/product/\(productId)"
         case .productLike(let productId): return "/api/product/\(productId)/like"
         case .favorites(let memberId): return "/api/member/favorite/\(memberId)"
+        case .categoryType(let typeName): return "/api/category/type/\(typeName)"
         }
     }
 

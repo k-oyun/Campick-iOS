@@ -11,23 +11,43 @@ struct VehicleNumberPriceSection: View {
     @Binding var plateHash: String
     @Binding var price: String
     @Binding var errors: [String: String]
+    var focusedField: FocusState<VehicleRegistrationView.Field?>.Binding
+    let onPlateNext: () -> Void
+    let onPriceNext: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+            HStack(alignment: .top, spacing: 8) {
                 // 차량 번호
                 VStack(alignment: .leading, spacing: 4) {
                     FieldLabel(text: "차량 번호")
                     StyledInputContainer(hasError: errors["plateHash"] != nil) {
-                        TextField("123가4567", text: $plateHash)
+                        TextField("123가4567", text: $plateHash, onEditingChanged: { isEditing in
+                            if !isEditing {
+                                validatePlateNumber()
+                            }
+                        })
                             .foregroundColor(.white)
                             .font(.system(size: 14))
                             .padding(.horizontal, 12)
-                            .onChange(of: plateHash) { _, newValue in
-                                plateHash = formatPlateNumber(newValue)
+                            .focused(focusedField, equals: .plateNumber)
+                            .submitLabel(.next)
+                            .onSubmit {
+                                onPlateNext()
                             }
                     }
-                    ErrorText(message: errors["plateHash"])
+                    // 에러 메시지 영역 (고정 높이)
+                    VStack {
+                        if let error = errors["plateHash"] {
+                            ErrorText(message: error)
+                        } else {
+                            Text("")
+                                .font(.system(size: 12))
+                                .frame(height: 16) // ErrorText와 동일한 높이 확보
+                                .opacity(0)
+                        }
+                    }
+                    .frame(minHeight: 16)
                 }
                 .frame(maxWidth: .infinity)
 
@@ -41,6 +61,11 @@ struct VehicleNumberPriceSection: View {
                                 .font(.system(size: 14))
                                 .keyboardType(.numberPad)
                                 .padding(.horizontal, 12)
+                                .focused(focusedField, equals: .price)
+                                .submitLabel(.next)
+                                .onSubmit {
+                                    onPriceNext()
+                                }
                                 .onChange(of: price) { _, newValue in
                                     price = formatNumber(newValue)
                                 }
@@ -51,7 +76,18 @@ struct VehicleNumberPriceSection: View {
                                 .padding(.trailing, 12)
                         }
                     }
-                    ErrorText(message: errors["price"])
+                    // 에러 메시지 영역 (고정 높이)
+                    VStack {
+                        if let error = errors["price"] {
+                            ErrorText(message: error)
+                        } else {
+                            Text("")
+                                .font(.system(size: 12))
+                                .frame(height: 16) // ErrorText와 동일한 높이 확보
+                                .opacity(0)
+                        }
+                    }
+                    .frame(minHeight: 16)
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -68,15 +104,21 @@ struct VehicleNumberPriceSection: View {
         return formatter.string(from: NSNumber(value: number)) ?? filtered
     }
 
-    private func formatPlateNumber(_ input: String) -> String {
-        // 한국 차량번호 형식: 123가4567 (숫자 + 한글 + 숫자)
-        let filtered = input.filter { $0.isNumber || isKoreanCharacter($0) }
-        return String(filtered.prefix(8)) // 최대 8자리로 제한
-    }
+    private func validatePlateNumber() {
+        let trimmedPlate = plateHash.trimmingCharacters(in: .whitespacesAndNewlines)
 
-    private func isKoreanCharacter(_ char: Character) -> Bool {
-        return char.unicodeScalars.allSatisfy { scalar in
-            (0xAC00...0xD7AF).contains(scalar.value) // 한글 유니코드 범위
+        if trimmedPlate.isEmpty {
+            errors["plateHash"] = nil // 빈 값은 에러 없음 (제출 시에만 검증)
+        } else if !isValidKoreanPlate(trimmedPlate) {
+            errors["plateHash"] = "올바른 번호판 형식을 입력하세요 (예: 123가4567)"
+        } else {
+            errors["plateHash"] = nil // 유효한 경우 에러 제거
         }
     }
+
+    private func isValidKoreanPlate(_ plateNumber: String) -> Bool {
+        let koreanPlateRegex = "^\\d{2,3}[가-힣]\\d{4}$"
+        return plateNumber.range(of: koreanPlateRegex, options: .regularExpression) != nil
+    }
+
 }
