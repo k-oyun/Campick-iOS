@@ -31,7 +31,12 @@ struct ChatRoomView: View {
             ChatHeader(
                 viewModel: viewModel, showCallAlert: $showCallAlert,
                 onBack: { dismiss() },
-//                onCall: { callSeller(seller: seller) },
+                onCall: {
+                    if let seller = viewModel.seller {
+                                callSeller(seller: seller)
+                        print(viewModel.seller?.phoneNumber ?? "no seller phone")
+                            }
+                },
             )
             
             
@@ -79,6 +84,15 @@ struct ChatRoomView: View {
             )
         }
         .background(AppColors.brandBackground)
+        .alert(isPresented: $showCallAlert) {
+            Alert(
+                title: Text("전화 연결"),
+                message: Text("시뮬레이터에서는 전화를 걸 수 없습니다."),
+                dismissButton: .default(Text("확인")) {
+                    showCallAlert = false
+                }
+            )
+        }
         .onAppear {
             let initPayload = InitChat(
                 type: "start_room",
@@ -104,17 +118,18 @@ struct ChatRoomView: View {
                     )
                 )
             }
+                
         }
     }
     
     private func callSeller(seller: ChatSeller) {
         let rawNumber = seller.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: "tel://\(rawNumber)") else { return }
-#if targetEnvironment(simulator)
-        showCallAlert = true
-#else
-        openURL(url)
-#endif
+        #if targetEnvironment(simulator)
+                showCallAlert = true
+        #else
+                openURL(url)
+        #endif
     }
 }
 
