@@ -95,7 +95,7 @@ struct ProductCard: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(AppColors.brandOrange)
 
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Text("\(product.generation) 연식")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
@@ -108,13 +108,7 @@ struct ProductCard: View {
                     Text("•")
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
-                    Text(product.location)
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    Text(formattedDate(product.createdAt))
+                    Text(shortLocation(product.location))
                         .font(.caption)
                         .foregroundColor(.white.opacity(0.7))
                 }
@@ -169,4 +163,11 @@ private func statusForegroundColor(_ raw: String) -> Color {
     case "sold": return .black
     default: return .white
     }
+}
+
+// MARK: - Location helper
+private func shortLocation(_ full: String) -> String {
+    // Extract the last administrative part (e.g., "경상북도 구미시" -> "구미시", "서울특별시 강남구" -> "강남구")
+    let parts = full.split{ $0.isWhitespace }.map(String.init).filter{ !$0.isEmpty }
+    return parts.last ?? full
 }
