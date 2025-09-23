@@ -62,65 +62,24 @@ struct VehicleRegistrationView: View {
                             ErrorText(message: vm.errors["title"])
                         }
 
-                        VehicleInputField(
-                            title: "연식",
-                            placeholder: "연식을 입력하세요 (예: 2020)",
-                            text: $vm.generation,
-                            keyboardType: .numberPad,
-                            errors: vm.errors,
-                            errorKey: "generation"
+                        VehicleLocationMileageSection(
+                            mileage: $vm.mileage,
+                            location: $vm.location,
+                            errors: $vm.errors
                         )
 
-                        VehicleInputField(
-                            title: "주행거리",
-                            placeholder: "주행거리를 입력하세요",
-                            text: $vm.mileage,
-                            keyboardType: .numberPad,
-                            suffix: "km",
-                            errors: vm.errors,
-                            errorKey: "mileage",
-                            formatNumber: formatNumber
-                        )
-
-                        VehicleTypeSection(
+                        VehicleTypeModelYearSection(
                             vehicleType: $vm.vehicleType,
-                            showingVehicleTypePicker: $vm.showingVehicleTypePicker,
-                            errors: vm.errors,
+                            vehicleModel: $vm.vehicleModel,
+                            generation: $vm.generation,
+                            errors: $vm.errors,
                             availableTypes: vm.availableTypes
                         )
 
-                        VehicleModelSection(
-                            vehicleModel: $vm.vehicleModel,
-                            showingModelPicker: $vm.showingModelPicker,
-                            errors: vm.errors,
-                            availableModels: vm.availableModels
-                        )
-
-                        VehicleInputField(
-                            title: "판매 가격",
-                            placeholder: "가격을 입력하세요",
-                            text: $vm.price,
-                            keyboardType: .numberPad,
-                            suffix: "만원",
-                            errors: vm.errors,
-                            errorKey: "price",
-                            formatNumber: formatNumber
-                        )
-
-                        VehicleInputField(
-                            title: "판매 지역",
-                            placeholder: "판매 지역을 입력하세요 (예: 서울시 강남구)",
-                            text: $vm.location,
-                            errors: vm.errors,
-                            errorKey: "location"
-                        )
-
-                        PlateNumberInputField(
-                            title: "차량 번호",
-                            placeholder: "123가4567",
-                            text: $vm.plateHash,
-                            errors: vm.errors,
-                            errorKey: "plateHash"
+                        VehicleNumberPriceSection(
+                            plateHash: $vm.plateHash,
+                            price: $vm.price,
+                            errors: $vm.errors
                         )
 
                         VehicleOptionsSection(
@@ -149,7 +108,7 @@ struct VehicleRegistrationView: View {
                         )
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 120) // 하단 탭바(~80px) + 여유공간(40px)
+                    .padding(.bottom, 100) // 하단 탭바(~80px) + 여유공간(20px)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: geometry.size.height)

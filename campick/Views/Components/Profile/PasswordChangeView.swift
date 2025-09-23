@@ -19,6 +19,7 @@ struct PasswordChangeView: View {
     @State private var alertMessage = ""
     @State private var isVerificationSent = false
     @State private var isEmailVerified = false
+    @State private var showConfirmationModal = false
 
     var body: some View {
         ZStack {
@@ -101,7 +102,8 @@ struct PasswordChangeView: View {
                             dismiss()
                         },
                         showAlert: $showAlert,
-                        alertMessage: $alertMessage
+                        alertMessage: $alertMessage,
+                        showConfirmationModal: $showConfirmationModal
                     )
                     .tag(1)
                 }
@@ -238,23 +240,18 @@ struct EmailVerificationStep: View {
     private func sendVerificationCode() {
         guard !email.isEmpty else { return }
 
-        isLoading = true
+        isVerificationSent = true // 즉시 UI 표시
+        alertMessage = "인증번호가 발송되었습니다."
+        showAlert = true // 즉시 성공 모달 표시
 
         Task {
             do {
-                try await AuthAPI.sendEmailCode(email: email)
-                await MainActor.run {
-                    isLoading = false
-                    isVerificationSent = true
-                    alertMessage = "인증번호가 발송되었습니다."
-                    showAlert = true
-                }
+                try await AuthAPI.sendPasswordResetLink(email: email)
+                // 이미 성공 알림 표시됨
             } catch {
-                await MainActor.run {
-                    isLoading = false
-                    alertMessage = "인증번호 발송에 실패했습니다. 다시 시도해주세요."
-                    showAlert = true
-                }
+                isVerificationSent = false // 실패 시 다시 숨김
+                alertMessage = "인증번호 발송에 실패했습니다. 다시 시도해주세요."
+                showAlert = true
             }
         }
     }
@@ -262,23 +259,15 @@ struct EmailVerificationStep: View {
     private func verifyCode() {
         guard !verificationCode.isEmpty else { return }
 
-        isLoading = true
-
         Task {
             do {
-                try await AuthAPI.confirmEmailCode(code: verificationCode)
-                await MainActor.run {
-                    isLoading = false
-                    isEmailVerified = true
-                    alertMessage = "이메일 인증이 완료되었습니다."
-                    showAlert = true
-                }
+                try await AuthAPI.passwordResetVerify(code: verificationCode)
+                isEmailVerified = true
+                alertMessage = "이메일 인증이 완료되었습니다."
+                showAlert = true
             } catch {
-                await MainActor.run {
-                    isLoading = false
-                    alertMessage = "인증번호가 올바르지 않습니다."
-                    showAlert = true
-                }
+                alertMessage = "인증번호가 올바르지 않습니다."
+                showAlert = true
             }
         }
     }
@@ -292,6 +281,7 @@ struct PasswordSetupStep: View {
     let onComplete: () -> Void
     @Binding var showAlert: Bool
     @Binding var alertMessage: String
+    @Binding var showConfirmationModal: Bool
 
     // 비밀번호 유효성 검사
     private var isPasswordValid: Bool {
@@ -384,7 +374,9 @@ struct PasswordSetupStep: View {
 
             Spacer()
 
-            Button(action: changePassword) {
+            Button(action: {
+                showConfirmationModal = true
+            }) {
                 if isLoading {
                     HStack(spacing: 8) {
                         ProgressView()
@@ -413,6 +405,19 @@ struct PasswordSetupStep: View {
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 40)
+        .overlay(
+            showConfirmationModal ?
+            PasswordChangeConfirmationModal(
+                onConfirm: {
+                    showConfirmationModal = false
+                    changePassword()
+                },
+                onCancel: {
+                    showConfirmationModal = false
+                }
+            )
+            .zIndex(1000) : nil
+        )
     }
 
     private func changePassword() {
@@ -420,15 +425,10 @@ struct PasswordSetupStep: View {
 
         isLoading = true
 
-        let request = PasswordChangeRequest(
-            password: newPassword,
-            confirmPassword: confirmPassword
-        )
-
         // API 호출
         Task {
             do {
-                try await AuthAPI.changePassword(request)
+                _ = try await AuthAPI.passwordResetChange(email: email, password: newPassword)
                 await MainActor.run {
                     isLoading = false
                     alertMessage = "비밀번호가 성공적으로 변경되었습니다."
@@ -448,10 +448,56 @@ struct PasswordSetupStep: View {
     }
 }
 
-// MARK: - Models
-struct PasswordChangeRequest: Codable {
-    let password: String
-    let confirmPassword: String
+
+// MARK: - Confirmation Modal
+struct PasswordChangeConfirmationModal: View {
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onCancel()
+                }
+
+            VStack(spacing: 20) {
+                Text("비밀번호 변경")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+
+                Text("정말로 비밀번호를 변경하시겠습니까?")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+
+                HStack(spacing: 12) {
+                    Button(action: onCancel) {
+                        Text("취소")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(Color.gray.opacity(0.6))
+                            .cornerRadius(8)
+                    }
+
+                    Button(action: onConfirm) {
+                        Text("확인")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(AppColors.brandOrange)
+                            .cornerRadius(8)
+                    }
+                }
+            }
+            .padding(24)
+            .background(AppColors.brandBackground)
+            .cornerRadius(12)
+            .padding(.horizontal, 40)
+        }
+    }
 }
 
 #Preview {
