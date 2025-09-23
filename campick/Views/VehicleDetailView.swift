@@ -131,7 +131,15 @@ struct VehicleDetailView: View {
                     }
 
                     Button(action: {
-                        chatMessage = ""
+                        ChatService.shared.startChat(productId: vehicleId) { result in
+                            switch result {
+                            case .success(let chatId):
+                                print("채팅방 생성 완료, chatId: \(chatId)")
+                            case .failure(let error):
+                                print("채팅방 생성 실패: \(error.localizedDescription)")
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }) {
                         Image(systemName: "paperplane.fill")
                             .foregroundColor(.white)
