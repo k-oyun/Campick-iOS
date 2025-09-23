@@ -32,14 +32,14 @@ struct VehicleDetailView: View {
 
             if let detail = viewModel.detail {
                 ScrollView {
+                    let isOwner: Bool = {
+                        if isOwnerHint { return true }
+                        let mine = UserState.shared.memberId.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let seller = detail.seller.id.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if let a = Int(mine), let b = Int(seller) { return a == b }
+                        return !mine.isEmpty && mine == seller
+                    }()
                     VStack {
-                        let isOwner: Bool = {
-                            if isOwnerHint { return true }
-                            let mine = UserState.shared.memberId.trimmingCharacters(in: .whitespacesAndNewlines)
-                            let seller = detail.seller.id.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if let a = Int(mine), let b = Int(seller) { return a == b }
-                            return !mine.isEmpty && mine == seller
-                        }()
                         VehicleImageGallery(
                             currentImageIndex: $currentImageIndex,
                             images: detail.images.isEmpty ? ["bannerImage"] : detail.images,
@@ -57,7 +57,10 @@ struct VehicleDetailView: View {
                             yearText: detail.yearText,
                             mileageText: detail.mileageText,
                             typeText: detail.typeText,
-                            location: detail.location
+                            location: detail.location,
+                            headerAccessory: isOwner ? AnyView(StatusMenuView(currentStatus: detail.status) { newStatus in
+                                Task { await viewModel.changeStatus(productId: vehicleId, to: newStatus) }
+                            }) : nil
                         )
 
                         VehicleSellerCard(
@@ -201,5 +204,52 @@ struct VehicleDetailView: View {
 #Preview {
     NavigationView {
         VehicleDetailView(vehicleId: "1")
+    }
+}
+
+// MARK: - Owner status menu
+private struct StatusMenuView: View {
+    let currentStatus: VehicleStatus
+    let onChange: (VehicleStatus) -> Void
+
+    var body: some View {
+        Menu {
+            Button(action: { onChange(.active) }) {
+                Label("판매중", systemImage: currentStatus == .active ? "checkmark" : "")
+            }
+            Button(action: { onChange(.reserved) }) {
+                Label("예약중", systemImage: currentStatus == .reserved ? "checkmark" : "")
+            }
+            Button(action: { onChange(.sold) }) {
+                Label("판매완료", systemImage: currentStatus == .sold ? "checkmark" : "")
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(color(for: currentStatus))
+                    .frame(width: 8, height: 8)
+                Text(currentStatus.displayText)
+                    .font(.system(size: 12, weight: .semibold))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .bold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
+            .cornerRadius(8)
+            .foregroundColor(.white)
+        }
+    }
+
+    private func color(for status: VehicleStatus) -> Color {
+        switch status {
+        case .active: return .green
+        case .reserved: return .orange
+        case .sold: return .gray
+        }
     }
 }

@@ -34,6 +34,7 @@ enum Endpoint {
     case productInfo
     case productDetail(productId: String)
     case productLike(productId: String)
+    case productStatus
     case chatStart
     case chatGet(chatRoomId: String)
     case favorites(memberId: String)
@@ -68,6 +69,7 @@ enum Endpoint {
         case .productInfo: return "/api/product/info"
         case .productDetail(let productId): return "/api/product/\(productId)"
         case .productLike(let productId): return "/api/product/\(productId)/like"
+        case .productStatus: return "/api/product/status"
         case .chatStart: return "/api/chat/start"
         case .chatGet(let chatRoomId): return "/api/chat/\(chatRoomId)"
         case .favorites(let memberId): return "/api/member/favorite/\(memberId)"
