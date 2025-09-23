@@ -50,7 +50,7 @@ struct VehicleRegistrationView: View {
 
                 GeometryReader { geometry in
                     ScrollView {
-                    VStack(spacing: 24) {
+                        VStack(spacing: 24) {
                         VehicleRegistrationTitleSection()
 
                         VehicleImageUploadSection(
@@ -158,6 +158,10 @@ struct VehicleRegistrationView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(minHeight: geometry.size.height)
+                    .scrollDismissesKeyboard(.interactively)
+                    .simultaneousGesture(DragGesture().onChanged { _ in
+                        dismissKeyboard()
+                    })
                 }
             }
         }
@@ -226,6 +230,12 @@ struct VehicleRegistrationView: View {
     private func isValidKoreanPlate(_ plateNumber: String) -> Bool {
         let koreanPlateRegex = "^\\d{2,3}[가-힣]\\d{4}$"
         return plateNumber.range(of: koreanPlateRegex, options: .regularExpression) != nil
+    }
+
+
+    private func dismissKeyboard() {
+        focusedField = nil
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
 
