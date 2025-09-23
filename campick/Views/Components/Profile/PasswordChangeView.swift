@@ -76,38 +76,42 @@ struct PasswordChangeView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 32)
 
-                TabView(selection: $currentStep) {
-                    EmailVerificationStep(
-                        email: $email,
-                        verificationCode: $verificationCode,
-                        isLoading: $isLoading,
-                        isVerificationSent: $isVerificationSent,
-                        isEmailVerified: $isEmailVerified,
-                        onNext: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                currentStep = 1
-                            }
-                        },
-                        showAlert: $showAlert,
-                        alertMessage: $alertMessage
-                    )
-                    .tag(0)
+                ZStack {
+                    if currentStep == 0 {
+                        EmailVerificationStep(
+                            email: $email,
+                            verificationCode: $verificationCode,
+                            isLoading: $isLoading,
+                            isVerificationSent: $isVerificationSent,
+                            isEmailVerified: $isEmailVerified,
+                            onNext: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    currentStep = 1
+                                }
+                            },
+                            showAlert: $showAlert,
+                            alertMessage: $alertMessage
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    }
 
-                    PasswordSetupStep(
-                        newPassword: $newPassword,
-                        confirmPassword: $confirmPassword,
-                        email: email,
-                        isLoading: $isLoading,
-                        onComplete: {
-                            dismiss()
-                        },
-                        showAlert: $showAlert,
-                        alertMessage: $alertMessage,
-                        showConfirmationModal: $showConfirmationModal
-                    )
-                    .tag(1)
+                    if currentStep == 1 {
+                        PasswordSetupStep(
+                            newPassword: $newPassword,
+                            confirmPassword: $confirmPassword,
+                            email: email,
+                            isLoading: $isLoading,
+                            onComplete: {
+                                dismiss()
+                            },
+                            showAlert: $showAlert,
+                            alertMessage: $alertMessage,
+                            showConfirmationModal: $showConfirmationModal
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
+                    }
                 }
-                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                .animation(.easeInOut(duration: 0.25), value: currentStep)
             }
         }
         .navigationBarHidden(true)

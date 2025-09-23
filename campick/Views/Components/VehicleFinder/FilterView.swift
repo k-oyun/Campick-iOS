@@ -12,13 +12,13 @@ struct FilterOptions: Equatable {
     var priceRange: ClosedRange<Double>
     var mileageRange: ClosedRange<Double>
     var yearRange: ClosedRange<Double>
-    var selectedVehicleTypes: Set<String>
+    var selectedVehicleTypes: Set<VehicleType>
 
     init(
         priceRange: ClosedRange<Double> = 0...10000,
         mileageRange: ClosedRange<Double> = 0...100000,
         yearRange: ClosedRange<Double>? = nil,
-        selectedVehicleTypes: Set<String> = []
+        selectedVehicleTypes: Set<VehicleType> = []
     ) {
         self.priceRange = priceRange
         self.mileageRange = mileageRange
@@ -34,7 +34,7 @@ struct FilterView: View {
 
     @State private var tempFilters: FilterOptions
 
-    let vehicleTypes = ["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]
+    let vehicleTypes = VehicleType.allCases
     // 연료/변속기 필터는 요구사항에 따라 제거되었습니다.
 
     init(filters: Binding<FilterOptions>, isPresented: Binding<Bool>) {
@@ -209,12 +209,12 @@ struct FilterView: View {
 
             // 1 x 4 배열(가로 4열, 한 줄)로 표시
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
-                ForEach(vehicleTypes, id: \.self) { type in
+                ForEach(vehicleTypes, id: \.displayName) { vt in
                     FilterChip(
-                        title: type,
-                        isSelected: tempFilters.selectedVehicleTypes.contains(type)
+                        title: vt.displayName,
+                        isSelected: tempFilters.selectedVehicleTypes.contains(vt)
                     ) {
-                        toggleSelection(in: &tempFilters.selectedVehicleTypes, item: type)
+                        toggleSelection(in: &tempFilters.selectedVehicleTypes, item: vt)
                     }
                 }
             }
@@ -243,7 +243,7 @@ struct FilterView: View {
         }
     }
 
-    private func toggleSelection(in set: inout Set<String>, item: String) {
+    private func toggleSelection(in set: inout Set<VehicleType>, item: VehicleType) {
         if set.contains(item) {
             set.remove(item)
         } else {

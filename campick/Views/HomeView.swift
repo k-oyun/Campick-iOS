@@ -11,7 +11,7 @@ struct HomeView: View {
     @Binding var showSlideMenu: Bool
     @StateObject private var viewModel = HomeChatViewModel()
     @EnvironmentObject private var tabRouter: TabRouter
-    @State private var selectedType: String? = nil
+    @State private var selectedType: VehicleType? = nil
 
     var body: some View {
         ZStack {

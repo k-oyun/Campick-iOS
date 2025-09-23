@@ -13,7 +13,7 @@ struct FindVehicleView: View {
     @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var vm = FindVehicleViewModel()
     // 홈 등에서 진입 시 초기 적용할 차량 종류(옵션)
-    var initialTypes: [String]? = nil
+    var initialTypes: [VehicleType]? = nil
     @State private var didApplyInitial = false
 
     var body: some View {
@@ -120,7 +120,7 @@ struct FindVehicleView: View {
         .onChange(of: vm.selectedSort) { _, _ in vm.onChangeSort() }
         .onAppear {
             if !didApplyInitial, let types = initialTypes, !types.isEmpty {
-                let allowed: Set<String> = ["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]
+                let allowed: Set<VehicleType> = Set(VehicleType.allCases)
                 let valid = types.first(where: { allowed.contains($0) })
                 vm.filterOptions.selectedVehicleTypes = valid.map { Set([$0]) } ?? []
                 didApplyInitial = true
@@ -187,8 +187,8 @@ extension FindVehicleView {
                             vm.selectedSort = .recentlyAdded
                         }
                     }
-                    ForEach(types, id: \.self) { t in
-                        RemovableChip(text: t) {
+                    ForEach(types, id: \.displayName) { t in
+                        RemovableChip(text: t.displayName) {
                             vm.filterOptions.selectedVehicleTypes.remove(t)
                             vm.selectedSort = .recentlyAdded
                         }
