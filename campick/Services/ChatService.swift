@@ -77,7 +77,7 @@ class ChatService: ObservableObject {
                 switch response.result {
                 case .success(let apiResponse):
                     if let data = apiResponse.data {
-                        print("채팅방(\(chatRoomId)) 메시지 조회 성공: \(data.chatData.count)개 메시지")
+//                        print("채팅방(\(chatRoomId)) 메시지 조회 성공: \(data.chatData.count)개 메시지")
                         completion(.success(data))
                     } else {
                         completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))

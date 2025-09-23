@@ -25,13 +25,19 @@ class WebSocket {
         print("웹소켓 연결 시도")
         
         // 연결 후 수신 시작
-        receive()
+        sendChatInit()
         
+        print("📡 receive() 호출 직전")
+        receive()
+        print("📡 receive() 호출 직후")
         startPing()
+        
     }
     
-    private func receive() {
+    func receive() {
+        print("메시지 수신중")
             webSocketTask?.receive { [weak self] result in
+                print(result)
                 switch result {
                 case .failure(let error):
                     print("수신 실패:", error)
@@ -76,9 +82,9 @@ class WebSocket {
     }
     
     func sendChatInit() {
-        print("setChatRoom전송")
-        let payload = ChatInit(type: "set_chat_room")
-        send(payload)
+            print("setChatRoom전송")
+            let payload = ChatInit(type: "set_chat_room")
+            send(payload)
     }
     
     
@@ -142,7 +148,7 @@ struct ReceivedChatMessagePayload: Decodable {
 struct ReceivedChatMessageData: Decodable {
     let content: String
     let senderId: Int
-    let sendAt: Date
+    let sendAt: String
     let isRead: Bool
 }
 

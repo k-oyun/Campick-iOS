@@ -18,6 +18,7 @@ struct ChatResponse: Decodable {
     let productTitle: String
     let productStatus: String
     let productPrice: String
+//    let productImage: String
     let isActive: Bool
     let chatData: [Chat]
 }
