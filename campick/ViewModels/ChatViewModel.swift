@@ -49,8 +49,8 @@ final class ChatViewModel: ObservableObject {
                         id: String(response.productId),
                         title: response.productTitle,
                         price: response.productPrice,
-                        status: response.productStatus,
-                        image: "" // 서버에서 thumbnail 따로 있으면 추가
+                        status: response.productStatus
+//                        image: response.productImage,
                     )
 
                     // 3. 메시지 변환
@@ -128,7 +128,18 @@ final class ChatViewModel: ObservableObject {
     
     
     func vehiclePrice() -> String? {
-        return vehicle?.price
+        guard let priceString = vehicle?.price,
+              let priceInt = Int(priceString) else {
+            return nil
+        }
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        guard let formatted = formatter.string(from: NSNumber(value: priceInt)) else {
+            return priceString
+        }
+        
+        return "\(formatted)만원"
     }
 
 }

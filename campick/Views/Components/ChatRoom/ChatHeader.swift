@@ -11,7 +11,6 @@ struct ChatHeader: View {
     @ObservedObject var viewModel: ChatViewModel
     @Binding var showCallAlert: Bool
     var onBack: () -> Void
-//    var onCall: () -> Void
     
     
     var body: some View {
@@ -24,10 +23,37 @@ struct ChatHeader: View {
                     .clipShape(Circle())
             }
             
-            Image("testImage1")
-                .resizable()
-                .frame(width: 40, height: 40)
-                .clipShape(Circle())
+            AsyncImage(url: URL(string: viewModel.seller?.avatar ?? "")) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } else if phase.error != nil {
+                    ZStack {
+                        Circle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "person.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 25, height: 25)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                } else {
+                    ZStack {
+                        Circle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "person.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 25, height: 25)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                }
+            }
+            .frame(width: 40, height: 40)
+            .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(viewModel.sellerName() ?? "알 수 없음")
@@ -59,11 +85,45 @@ struct ChatHeader: View {
         .padding()
         .background(AppColors.brandBackground)
         HStack {
-            Image("testImage1")
-                .resizable()
-                .frame(width: 60, height: 45)
-                .cornerRadius(8)
-            
+//            AsyncImage(url: URL(string: viewModel.vehicle?.image ?? "")) { phase in
+//                if let image = phase.image {
+//                    image.resizable().scaledToFill()
+//                } else if phase.error != nil {
+//                    ZStack {
+//                        RoundedRectangle(cornerRadius: 8)
+//                            .fill(Color.gray.opacity(0.3))
+//                            .frame(width: 60, height: 45)
+//                        Image(systemName: "car.fill")
+//                            .resizable()
+//                            .scaledToFit()
+//                            .frame(width: 24, height: 24)
+//                            .foregroundColor(.white.opacity(0.6))
+//                    }
+//                } else {
+//                    ZStack {
+//                        RoundedRectangle(cornerRadius: 8)
+//                            .fill(Color.gray.opacity(0.3))
+//                            .frame(width: 60, height: 45)
+//                        Image(systemName: "car.fill")
+//                            .resizable()
+//                            .scaledToFit()
+//                            .frame(width: 24, height: 24)
+//                            .foregroundColor(.white.opacity(0.6))
+//                    }
+//                }
+//            }
+//            .frame(width: 60, height: 45)
+//            .cornerRadius(8)
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 60, height: 45)
+                Image(systemName: "car.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(.white.opacity(0.6))
+            }
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.vehicleStatus())
                     .font(.system(size: 11, weight: .heavy))
@@ -114,6 +174,8 @@ struct ChatHeader: View {
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }
+    
+    
 }
 
 

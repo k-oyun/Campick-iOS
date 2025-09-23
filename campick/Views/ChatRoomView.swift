@@ -86,6 +86,7 @@ struct ChatRoomView: View {
                     chatId: chatRoomId
                 ))
             
+            
             WebSocket.shared.send(initPayload)
             
         
