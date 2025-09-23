@@ -13,6 +13,9 @@ struct VehicleTypeModelYearSection: View {
     @Binding var generation: String
     @Binding var errors: [String: String]
     let availableTypes: [String]
+    var focusedField: FocusState<VehicleRegistrationView.Field?>.Binding
+    let onYearNext: () -> Void
+    let onVehicleTypeNext: () -> Void
     @State private var showingVehicleTypeModelPicker = false
     @State private var showingYearPicker = false
 
@@ -22,23 +25,43 @@ struct VehicleTypeModelYearSection: View {
                 // 연식 (더 좁게 - 약 30%)
                 VStack(alignment: .leading, spacing: 4) {
                     FieldLabel(text: "연식")
-                    Button(action: {
-                        showingYearPicker = true
-                    }) {
-                        StyledInputContainer(hasError: errors["generation"] != nil) {
-                            HStack {
-                                Text(generation.isEmpty ? "연식" : "\(generation)")
-                                    .foregroundColor(generation.isEmpty ? .white.opacity(0.5) : .white)
-                                    .font(.system(size: 14))
-                                    .padding(.horizontal, 12)
-
-                                Spacer()
-
-                                Image(systemName: "chevron.down")
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .font(.system(size: 12))
-                                    .padding(.trailing, 12)
+                    ZStack {
+                        // 숨겨진 TextField (포커스용)
+                        TextField("", text: .constant(""))
+                            .opacity(0)
+                            .focused(focusedField, equals: .year)
+                            .onChange(of: focusedField.wrappedValue) { _, newValue in
+                                if newValue == .year && !showingYearPicker {
+                                    showingYearPicker = true
+                                }
                             }
+                            .submitLabel(.next)
+                            .onSubmit {
+                                onYearNext()
+                            }
+
+                        // 실제 UI
+                        Button(action: {
+                            showingYearPicker = true
+                        }) {
+                            StyledInputContainer(hasError: errors["generation"] != nil) {
+                                HStack {
+                                    Text(generation.isEmpty ? "연식" : "\(generation)")
+                                        .foregroundColor(generation.isEmpty ? .white.opacity(0.5) : .white)
+                                        .font(.system(size: 14))
+                                        .padding(.horizontal, 12)
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(.white.opacity(0.6))
+                                        .font(.system(size: 12))
+                                        .padding(.trailing, 12)
+                                }
+                            }
+                        }
+                        .onTapGesture {
+                            focusedField.wrappedValue = .year
                         }
                     }
                     ErrorText(message: errors["generation"])
@@ -49,24 +72,44 @@ struct VehicleTypeModelYearSection: View {
                 // 차량 종류/모델 (더 넓게 - 약 70%)
                 VStack(alignment: .leading, spacing: 4) {
                     FieldLabel(text: "차량 종류/모델")
-                    Button(action: {
-                        showingVehicleTypeModelPicker = true
-                    }) {
-                        StyledInputContainer(hasError: errors["vehicleType"] != nil || errors["vehicleModel"] != nil) {
-                            HStack {
-                                Text(displayText)
-                                    .foregroundColor(displayText == "차량 종류와 모델을 선택하세요" ? .white.opacity(0.5) : .white)
-                                    .font(.system(size: 14))
-                                    .padding(.horizontal, 12)
-                                    .lineLimit(1)
-
-                                Spacer()
-
-                                Image(systemName: "chevron.down")
-                                    .foregroundColor(.white.opacity(0.6))
-                                    .font(.system(size: 12))
-                                    .padding(.trailing, 12)
+                    ZStack {
+                        // 숨겨진 TextField (포커스용)
+                        TextField("", text: .constant(""))
+                            .opacity(0)
+                            .focused(focusedField, equals: .vehicleType)
+                            .onChange(of: focusedField.wrappedValue) { _, newValue in
+                                if newValue == .vehicleType && !showingVehicleTypeModelPicker {
+                                    showingVehicleTypeModelPicker = true
+                                }
                             }
+                            .submitLabel(.next)
+                            .onSubmit {
+                                onVehicleTypeNext()
+                            }
+
+                        // 실제 UI
+                        Button(action: {
+                            showingVehicleTypeModelPicker = true
+                        }) {
+                            StyledInputContainer(hasError: errors["vehicleType"] != nil || errors["vehicleModel"] != nil) {
+                                HStack {
+                                    Text(displayText)
+                                        .foregroundColor(displayText == "차량 종류와 모델을 선택하세요" ? .white.opacity(0.5) : .white)
+                                        .font(.system(size: 14))
+                                        .padding(.horizontal, 12)
+                                        .lineLimit(1)
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.down")
+                                        .foregroundColor(.white.opacity(0.6))
+                                        .font(.system(size: 12))
+                                        .padding(.trailing, 12)
+                                }
+                            }
+                        }
+                        .onTapGesture {
+                            focusedField.wrappedValue = .vehicleType
                         }
                     }
 
@@ -85,8 +128,18 @@ struct VehicleTypeModelYearSection: View {
                 availableTypes: availableTypes
             )
         }
+        .onChange(of: showingVehicleTypeModelPicker) { _, isShowing in
+            if !isShowing && focusedField.wrappedValue == .vehicleType {
+                focusedField.wrappedValue = nil
+            }
+        }
         .sheet(isPresented: $showingYearPicker) {
             YearPickerModal(selectedYear: $generation)
+        }
+        .onChange(of: showingYearPicker) { _, isShowing in
+            if !isShowing && focusedField.wrappedValue == .year {
+                focusedField.wrappedValue = nil
+            }
         }
     }
 
@@ -254,20 +307,21 @@ struct VehicleTypeModelPickerModal: View {
         isLoadingModels = true
         availableModels = []
 
-        // TODO: 실제 API 호출로 교체 예정
-        // 현재는 임시 데이터 사용
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            switch type {
-            case "모터홈":
-                availableModels = ["현대 포레스트", "기아 봉고", "벤츠 스프린터"]
-            case "픽업트럭":
-                availableModels = ["Toyota Hilux", "Ford Ranger", "현대 포터"]
-            case "SUV":
-                availableModels = ["기아 쏘렌토", "현대 싼타페", "쉐보레 트래버스"]
-            default:
-                availableModels = ["기타 모델1", "기타 모델2"]
+        Task {
+            do {
+                let models = try await CategoryAPI.getModelsForType(type)
+                await MainActor.run {
+                    self.availableModels = models
+                    self.isLoadingModels = false
+                }
+            } catch {
+                await MainActor.run {
+                    // 실패 시 빈 배열로 설정
+                    self.availableModels = []
+                    self.isLoadingModels = false
+                    print("Failed to load models for type \(type): \(error)")
+                }
             }
-            isLoadingModels = false
         }
     }
 }

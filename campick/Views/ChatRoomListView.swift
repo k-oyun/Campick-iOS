@@ -13,27 +13,43 @@ struct ChatRoomListView: View {
     @State private var selectedRoom: ChatList?
     @State private var rooms: [ChatList] = []
     @State private var showFindVehicle = false
+    @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var viewModel = ChatListViewModel()
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        NavigationStack{
-            VStack(alignment: .center) {
-                TopBarView(title: "채팅") {
-                    dismiss()
-                }
-                if viewModel.chats.isEmpty {
-                    VStack {
-                        Circle()
-                            .fill(Color.white.opacity(0.1))
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Image(systemName: "message")
-                                    .foregroundColor(.white.opacity(0.4))
-                                    .font(.system(size: 28))
-                            )
-                            .padding(.bottom, 8)
-                        
-                        Text("진행중인 채팅이 없습니다")
+        VStack(alignment: .center) {
+            TopBarView(title: "채팅") {
+                dismiss()
+            }
+            if viewModel.chats.isEmpty {
+                VStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 80, height: 80)
+                        .overlay(
+                            Image(systemName: "message")
+                                .foregroundColor(.white.opacity(0.4))
+                                .font(.system(size: 28))
+                        )
+                        .padding(.bottom, 8)
+                    
+                    Text("진행중인 채팅이 없습니다")
+                        .foregroundColor(.white)
+                        .font(.headline)
+                    Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
+                        .foregroundColor(.white.opacity(0.6))
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                        .padding(.bottom, 16)
+                    Button(action: {
+                        tabRouter.navigateToVehicles(with: nil)
+                        dismiss()
+                    }) {
+                        Text("매물 찾아보기")
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(AppColors.brandOrange)
                             .foregroundColor(.white)
                             .font(.headline)
                         Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
@@ -52,9 +68,37 @@ struct ChatRoomListView: View {
                         }
                         .padding(.horizontal, 20)
                     }
-                    .frame(maxHeight: .infinity)
-                    .fullScreenCover(isPresented: $showFindVehicle) {
-                        FindVehicleView()
+                    .padding(.horizontal, 20)
+                }
+                .frame(maxHeight: .infinity)
+                
+            } else {
+                //더미
+//                List {
+//                    ForEach(rooms) { room in
+//                        ChatRoomRow(room: room)
+//                            .onTapGesture {
+//                                selectedRoom = room
+//                            }
+//                            .listRowInsets(EdgeInsets())
+//                            .listRowSeparator(.hidden)
+//                            .listRowBackground(Color.clear)
+//                            .padding(.bottom,10)
+//                    }
+//                    .onDelete {indexSet in
+//                        rooms.remove(atOffsets: indexSet)
+//                    }
+//                }
+                List {
+                    ForEach(viewModel.chats) { room in
+                        ChatRoomRow(room: room)
+                            .onTapGesture {
+                                selectedRoom = room
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                            .padding(.bottom,10)
                     }
                 } else {
                     List {
