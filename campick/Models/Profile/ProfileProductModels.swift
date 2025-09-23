@@ -46,7 +46,15 @@ struct ProfileProduct: Decodable, Identifiable {
             cost = (try? c.decode(String.self, forKey: .cost)) ?? ""
         }
 
-        generation = (try? c.decode(Int.self, forKey: .generation)) ?? 0
+        // generation may arrive as Int or as a String with thousands separators (e.g., "2,023")
+        if let genInt = try? c.decode(Int.self, forKey: .generation) {
+            generation = genInt
+        } else if let genStr = try? c.decode(String.self, forKey: .generation) {
+            let digitsOnly = genStr.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
+            generation = Int(digitsOnly) ?? 0
+        } else {
+            generation = 0
+        }
         mileage = (try? c.decode(Int.self, forKey: .mileage)) ?? 0
         location = (try? c.decode(String.self, forKey: .location)) ?? ""
 

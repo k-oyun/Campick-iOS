@@ -220,8 +220,15 @@ enum AuthAPI {
     // 토큰 재발급: 저장된 자격으로 액세스 토큰 재요청
     static func reissueAccessToken() async throws -> String {
         do {
+            // Backend expects Authorization header with refresh token using scheme "String"
+            guard let refresh = TokenManager.shared.refreshToken, !refresh.isEmpty else {
+                throw AppError.unauthorized
+            }
+            var headers = HTTPHeaders()
+            headers.add(name: "Authorization", value: "String \(refresh)")
+
             let request = APIService.shared
-                .request(Endpoint.tokenReissue.url, method: .post)
+                .request(Endpoint.tokenReissue.url, method: .post, headers: headers)
                 .validate()
             let wrapped = try await request.serializingDecodable(ApiResponse<LoginDataDTO>.self).value
             guard let token = wrapped.data?.accessToken else {
