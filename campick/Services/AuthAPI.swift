@@ -9,6 +9,18 @@ import Foundation
 import Alamofire
 
 enum AuthAPI {
+    /// 액세스 토큰 유효성 확인을 위한 가벼운 인증 필요 API 호출
+    /// 성공(2xx)이면 유효, 401/403이면 무효로 간주합니다.
+    static func pingAuth() async throws {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.chatList.url, method: .get)
+                .validate()
+            _ = try await request.serializingData().value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
     // 로그인: 이메일과 비밀번호로 인증 후 토큰/유저 정보 수신
     static func login(email: String, password: String) async throws -> AuthResponse {
         do {

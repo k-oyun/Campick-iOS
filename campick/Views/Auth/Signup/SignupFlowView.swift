@@ -60,7 +60,8 @@ struct SignupFlowView: View {
                             submitError: $vm.submitError
                         ) { vm.nicknameNext() }
                     case .complete:
-                        CompleteStepView(onAutoForward: { Task { await vm.autoLoginAfterSignup() } })
+                        // 회원가입 완료 후 1초 안내 표시 뒤 로그인 화면으로 복귀
+                        CompleteStepView(onAutoForward: { dismiss() })
                     }
                 }
                 .padding(.horizontal, 14)
@@ -73,12 +74,7 @@ struct SignupFlowView: View {
         .alert("서버 연결이 불안정합니다. 잠시후 다시 시도해 주세요", isPresented: $vm.showServerAlert) {
             Button("확인", role: .cancel) {}
         }
-        .onChange(of: vm.shouldNavigateHome) { _, navigate in
-            if navigate {
-                vm.shouldNavigateHome = false
-                dismiss()
-            }
-        }
+        // 회원가입 후 자동 로그인/홈 이동은 사용하지 않습니다.
     }
 
     // Removed inline step views; see fileprivate step structs below
