@@ -17,99 +17,104 @@ struct LoginView: View {
             ZStack {
                 AppColors.background
                     .ignoresSafeArea()
-                VStack(spacing: 4) {
-                    NavigationLink(destination: SignupFlowView(), isActive: $navigateToSignup) {
-                        EmptyView()
-                    }
-                    VStack {
-                        Text("Campick")
-                            .font(.basicFont(size: 40))
-                            .foregroundStyle(.white)
-
-                        Text("프리미엄 캠핑카 플랫폼")
-                            .font(.subheadline)
-                            .foregroundStyle(.white)
-
-                        VStack(spacing: 8) {
-                            // 이메일
-                            FormLabel(text: "이메일")
-                            OutlinedInputField(text: $vm.email, placeholder: "이메일을 입력하세요", systemImage: "envelope")
-                                .padding(.bottom, 16)
-
-                            // 비밀번호 (복사/붙여넣기 방지)
-                            FormLabel(text: "비밀번호")
-                            NoPasteSecureField(text: $vm.password, placeholder: "비밀번호를 입력하세요")
-
-                            // 자동 로그인 토글 숨김 (보류)
-                            HStack {
-                                Spacer()
-                                // 비밀번호 찾기
-                                NavigationLink {
-                                    FindPasswordView()
-                                } label: {
-                                    Text("비밀번호 찾기")
-                                        .font(Font.subheadline.bold())
-                                        .foregroundStyle(AppColors.brandOrange)
-                                }
-                            }
-                            .padding(.top, 12)
-                            .padding(.bottom, 12)
-                            .padding(.horizontal, 2)
-
-                            // 로그인 버튼
-                            PrimaryActionButton(
-                                title: "로그인",
-                                titleFont: .system(size: 18, weight: .bold),
-                                isDisabled: vm.isLoginDisabled,
-                            ) {
-                                vm.login()
-                            }
-                            if let errorMessage = vm.errorMessage {
-                                Text(errorMessage)
-                                    .font(.footnote)
-                                    .foregroundStyle(.red)
-                            }
-                            
-                            // 구분선
-                            HStack(spacing: 16) {
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.28))
-                                    .frame(height: 1)
-                                    .frame(maxWidth: .infinity)
-                                    .accessibilityHidden(true)
-
-                                Text("또는")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.white.opacity(0.6))
-
-                                Rectangle()
-                                    .fill(Color.white.opacity(0.28))
-                                    .frame(height: 1)
-                                    .frame(maxWidth: .infinity)
-                                    .accessibilityHidden(true)
-                            }
-                            .padding(.vertical, 8)
-                            
-                            HStack {
-                                Text("아직 계정이 없으신가요?")
-                                    .font(Font.subheadline.bold())
-                                    .foregroundStyle(Color.gray)
-                                // 회원가입
-                                NavigationLink {
-                                    SignupFlowView()
-                                } label: {
-                                    Text("회원가입")
-                                        .font(Font.subheadline.bold())
-                                        .foregroundStyle(AppColors.brandOrange)
-                                }
-                            }
-                            Spacer()
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 4) {
+                        NavigationLink(destination: SignupFlowView(), isActive: $navigateToSignup) {
+                            EmptyView()
                         }
-                        .padding(.top, 48)
-                        .padding(.horizontal, 24)
+                        VStack {
+                            Text("Campick")
+                                .font(.basicFont(size: 40))
+                                .foregroundStyle(.white)
+
+                            Text("프리미엄 캠핑카 플랫폼")
+                                .font(.subheadline)
+                                .foregroundStyle(.white)
+
+                            VStack(spacing: 8) {
+                                // 이메일
+                                FormLabel(text: "이메일")
+                                OutlinedInputField(text: $vm.email, placeholder: "이메일을 입력하세요", systemImage: "envelope")
+                                    .padding(.bottom, 16)
+
+                                // 비밀번호 (복사/붙여넣기 방지)
+                                FormLabel(text: "비밀번호")
+                                NoPasteSecureField(text: $vm.password, placeholder: "비밀번호를 입력하세요")
+
+                                // 자동 로그인 토글 숨김 (보류)
+                                HStack {
+                                    Spacer()
+                                    // 비밀번호 찾기
+                                    NavigationLink {
+                                        FindPasswordView()
+                                    } label: {
+                                        Text("비밀번호 찾기")
+                                            .font(Font.subheadline.bold())
+                                            .foregroundStyle(AppColors.brandOrange)
+                                    }
+                                }
+                                .padding(.top, 12)
+                                .padding(.bottom, 12)
+                                .padding(.horizontal, 2)
+
+                                // 로그인 버튼
+                                PrimaryActionButton(
+                                    title: "로그인",
+                                    titleFont: .system(size: 18, weight: .bold),
+                                    isDisabled: vm.isLoginDisabled,
+                                ) {
+                                    vm.login()
+                                }
+                                if let errorMessage = vm.errorMessage {
+                                    Text(errorMessage)
+                                        .font(.footnote)
+                                        .foregroundStyle(.red)
+                                }
+                                
+                                // 구분선
+                                HStack(spacing: 16) {
+                                    Rectangle()
+                                        .fill(Color.white.opacity(0.28))
+                                        .frame(height: 1)
+                                        .frame(maxWidth: .infinity)
+                                        .accessibilityHidden(true)
+
+                                    Text("또는")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.white.opacity(0.6))
+
+                                    Rectangle()
+                                        .fill(Color.white.opacity(0.28))
+                                        .frame(height: 1)
+                                        .frame(maxWidth: .infinity)
+                                        .accessibilityHidden(true)
+                                }
+                                .padding(.vertical, 8)
+                                
+                                HStack {
+                                    Text("아직 계정이 없으신가요?")
+                                        .font(Font.subheadline.bold())
+                                        .foregroundStyle(Color.gray)
+                                    // 회원가입
+                                    NavigationLink {
+                                        SignupFlowView()
+                                    } label: {
+                                        Text("회원가입")
+                                            .font(Font.subheadline.bold())
+                                            .foregroundStyle(AppColors.brandOrange)
+                                    }
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.top, 48)
+                            .padding(.horizontal, 24)
+                        }
+                        .padding(.top, 112)
+                        .padding(.bottom, 24)
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(.top, 112)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
         }
         .alert(
