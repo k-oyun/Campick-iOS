@@ -126,7 +126,7 @@ final class ProfileService {
         }
     }
 
-    static func updateMemberProfileImage(_ image: UIImage) async throws -> ProfileImageData {
+    static func updateMemberProfileImage(_ image: UIImage) async throws -> String {
         let endpoint = Endpoint.memberImage
         let url = endpoint.url
 
@@ -140,7 +140,7 @@ final class ProfileService {
         return try await withCheckedThrowingContinuation { continuation in
             APIService.shared.upload(multipartFormData: { multipartFormData in
                 multipartFormData.append(
-                    payload,
+                    compressedImageData,
                     withName: "file",
                     fileName: fileName,
                     mimeType: mimeType

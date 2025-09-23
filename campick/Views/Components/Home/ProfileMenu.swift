@@ -55,7 +55,7 @@ struct ProfileMenu: View {
                         VStack(spacing: 16) {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 12) {
-                                    AsyncImage(url: URL(string: userState.profileImageUrl)) { image in
+                                    CachedAsyncImage(url: URL(string: userState.profileImageUrl)) { image in
                                         image
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)

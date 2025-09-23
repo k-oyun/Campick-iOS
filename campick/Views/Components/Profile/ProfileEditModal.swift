@@ -20,6 +20,7 @@ struct ProfileEditModal: View {
     @State private var mobileNumber: String
     @State private var isUpdating = false
     @State private var isImageUploading = false
+    @State private var imageUploadComplete = false
     // 로그인 전환은 RootView에서 일괄 처리
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
@@ -86,7 +87,7 @@ struct ProfileEditModal: View {
                                         .frame(width: 80, height: 80)
                                         .clipShape(Circle())
                                 } else {
-                                    AsyncImage(url: URL(string: profile.profileImage ?? "")) { image in
+                                    CachedAsyncImage(url: URL(string: profile.profileImage ?? "")) { image in
                                         image
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
@@ -224,8 +225,8 @@ struct ProfileEditModal: View {
             let imageData = try await ProfileService.updateMemberProfileImage(selectedImage)
 
             await MainActor.run {
-                // UserState 업데이트 (썸네일 이미지 사용)
-                UserState.shared.updateProfileImage(url: imageData.profileThumbnailUrl)
+                // UserState 업데이트 (이미지 URL 사용)
+                UserState.shared.updateProfileImage(url: imageData)
 
                 // 업로드 완료 표시
                 imageUploadComplete = true
@@ -241,7 +242,6 @@ struct ProfileEditModal: View {
                    case let .responseValidationFailed(reason) = afError,
                    case let .unacceptableStatusCode(code) = reason,
                    (code == 401 || code == 403) {
-                    shouldRedirectToLogin = true
                     UserState.shared.logout()
                 } else {
                     errorMessage = "이미지 업로드에 실패했습니다. 다시 시도해주세요."
