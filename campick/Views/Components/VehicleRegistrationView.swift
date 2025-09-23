@@ -16,6 +16,19 @@ struct VehicleRegistrationView: View {
     @StateObject private var vm = VehicleRegistrationViewModel()
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var tabRouter: TabRouter
+    @FocusState private var focusedField: Field?
+
+    enum Field: String, CaseIterable {
+        case title = "title"              // 매물제목
+        case year = "year"                // 연식
+        case vehicleType = "vehicleType"  // 차량 종류/모델
+        case location = "location"        // 판매지역
+        case mileage = "mileage"          // 주행거리
+        case plateNumber = "plateNumber"  // 차량번호
+        case price = "price"              // 판매가격
+        case vehicleOptions = "vehicleOptions" // 차량옵션
+        case description = "description"  // 상세설명
+    }
 
     init(showBackButton: Bool = true, editingProductId: String? = nil) {
         self.showBackButton = showBackButton
@@ -57,6 +70,11 @@ struct VehicleRegistrationView: View {
                                     .foregroundColor(.white)
                                     .font(.system(size: 14))
                                     .padding(.horizontal, 12)
+                                    .focused($focusedField, equals: .title)
+                                    .submitLabel(.next)
+                                    .onSubmit {
+                                        focusedField = .mileage
+                                    }
                             }
 
                             ErrorText(message: vm.errors["title"])
@@ -69,25 +87,50 @@ struct VehicleRegistrationView: View {
                             vehicleModel: $vm.vehicleModel,
                             generation: $vm.generation,
                             errors: $vm.errors,
-                            availableTypes: vm.availableTypes
+                            availableTypes: vm.availableTypes,
+                            focusedField: $focusedField,
+                            onYearNext: {
+                                focusedField = .vehicleType
+                            },
+                            onVehicleTypeNext: {
+                                focusedField = .location
+                            }
                         )
                         
                         VehicleLocationMileageSection(
                             mileage: $vm.mileage,
                             location: $vm.location,
-                            errors: $vm.errors
+                            errors: $vm.errors,
+                            focusedField: $focusedField,
+                            onMileageNext: {
+                                focusedField = .plateNumber
+                            },
+                            onLocationNext: {
+                                focusedField = .mileage
+                            }
                         )
 
                         VehicleNumberPriceSection(
                             plateHash: $vm.plateHash,
                             price: $vm.price,
-                            errors: $vm.errors
+                            errors: $vm.errors,
+                            focusedField: $focusedField,
+                            onPlateNext: {
+                                focusedField = .price
+                            },
+                            onPriceNext: {
+                                focusedField = .vehicleOptions
+                            }
                         )
 
                         VehicleOptionsSection(
                             vehicleOptions: $vm.vehicleOptions,
                             showingOptionsPicker: $vm.showingOptionsPicker,
-                            errors: vm.errors
+                            errors: vm.errors,
+                            focusedField: $focusedField,
+                            onVehicleOptionsNext: {
+                                focusedField = .description
+                            }
                         )
 
                         VStack(alignment: .leading, spacing: 4) {
@@ -96,7 +139,8 @@ struct VehicleRegistrationView: View {
                             StyledTextEditorContainer(
                                 hasError: vm.errors["description"] != nil,
                                 placeholder: "차량에 대한 상세한 설명을 입력하세요",
-                                text: $vm.description
+                                text: $vm.description,
+                                focusedField: $focusedField
                             )
 
                             ErrorText(message: vm.errors["description"]) 
@@ -185,6 +229,65 @@ struct VehicleRegistrationView: View {
     }
 
 
+
+    // MARK: - Focus Navigation Helpers
+    private func focusNextField() {
+        switch focusedField {
+        case .title:
+            focusedField = .year
+        case .year:
+            focusedField = .vehicleType
+        case .vehicleType:
+            focusedField = .location
+        case .location:
+            focusedField = .mileage
+        case .mileage:
+            focusedField = .plateNumber
+        case .plateNumber:
+            focusedField = .price
+        case .price:
+            focusedField = .vehicleOptions
+        case .vehicleOptions:
+            focusedField = .description
+        case .description:
+            focusedField = nil // 마지막 필드
+        case .none:
+            focusedField = .title
+        }
+    }
+
+    private func focusPreviousField() {
+        switch focusedField {
+        case .title:
+            focusedField = nil // 첫 번째 필드
+        case .year:
+            focusedField = .title
+        case .vehicleType:
+            focusedField = .year
+        case .location:
+            focusedField = .vehicleType
+        case .mileage:
+            focusedField = .location
+        case .plateNumber:
+            focusedField = .mileage
+        case .price:
+            focusedField = .plateNumber
+        case .vehicleOptions:
+            focusedField = .price
+        case .description:
+            focusedField = .vehicleOptions
+        case .none:
+            focusedField = .description
+        }
+    }
+
+    private func canFocusNext() -> Bool {
+        return focusedField != .description && focusedField != nil
+    }
+
+    private func canFocusPrevious() -> Bool {
+        return focusedField != .title && focusedField != nil
+    }
 
     // Formatting helper remains at View layer
 }

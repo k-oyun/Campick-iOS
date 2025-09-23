@@ -314,12 +314,13 @@ struct VehicleImageUploadSection: View {
     }
 
     private func addImage(_ image: UIImage) {
-        let newImage = VehicleImage(image: image, isMain: vehicleImages.isEmpty)
+        let compressedImage = compressImageToUnder1MB(image)
+        let newImage = VehicleImage(image: compressedImage, isMain: vehicleImages.isEmpty)
         vehicleImages.append(newImage)
         errors["images"] = nil
 
         // 즉시 서버에 업로드
-        uploadImageToServer(image, for: newImage.id)
+        uploadImageToServer(compressedImage, for: newImage.id)
     }
 
     private func addMainImage(_ image: UIImage) {
@@ -329,16 +330,64 @@ struct VehicleImageUploadSection: View {
         }
 
         // 새 메인 이미지를 맨 앞에 추가
-        let newMainImage = VehicleImage(image: image, isMain: true)
+        let compressedImage = compressImageToUnder1MB(image)
+        let newMainImage = VehicleImage(image: compressedImage, isMain: true)
         vehicleImages.insert(newMainImage, at: 0)
         errors["images"] = nil
 
         // 즉시 서버에 업로드
-        uploadImageToServer(image, for: newMainImage.id)
+        uploadImageToServer(compressedImage, for: newMainImage.id)
     }
 
     private func uploadImageToServer(_ image: UIImage, for imageId: UUID) {
         vm.uploadImage(image, for: imageId)
+    }
+
+    private func compressImageToUnder1MB(_ image: UIImage) -> UIImage {
+        let maxSize: CGFloat = 1024 * 1024 // 1MB
+        var compression: CGFloat = 0.8
+
+        // 먼저 이미지 크기를 줄입니다 (최대 1920x1080)
+        let resizedImage = resizeImage(image, to: CGSize(width: 1920, height: 1080))
+
+        // JPEG 압축을 통해 1MB 이하로 만듭니다
+        guard var imageData = resizedImage.jpegData(compressionQuality: compression) else {
+            return resizedImage
+        }
+
+        // 1MB 이하가 될 때까지 압축률을 조정
+        while imageData.count > Int(maxSize) && compression > 0.1 {
+            compression -= 0.1
+            guard let compressedData = resizedImage.jpegData(compressionQuality: compression) else {
+                break
+            }
+            imageData = compressedData
+        }
+
+        // 압축된 데이터로 UIImage 생성
+        return UIImage(data: imageData) ?? resizedImage
+    }
+
+    private func resizeImage(_ image: UIImage, to targetSize: CGSize) -> UIImage {
+        let size = image.size
+
+        // 이미지가 이미 작다면 리사이징하지 않음
+        if size.width <= targetSize.width && size.height <= targetSize.height {
+            return image
+        }
+
+        let widthRatio = targetSize.width / size.width
+        let heightRatio = targetSize.height / size.height
+        let ratio = min(widthRatio, heightRatio)
+
+        let newSize = CGSize(width: size.width * ratio, height: size.height * ratio)
+
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        image.draw(in: CGRect(origin: .zero, size: newSize))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage ?? image
     }
 
     private func loadSelectedPhotos(_ items: [PhotosPickerItem]) {

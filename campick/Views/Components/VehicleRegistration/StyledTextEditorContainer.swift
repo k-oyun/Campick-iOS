@@ -12,17 +12,20 @@ struct StyledTextEditorContainer: View {
     let placeholder: String
     @Binding var text: String
     let height: CGFloat
+    var focusedField: FocusState<VehicleRegistrationView.Field?>.Binding?
 
     init(
         hasError: Bool = false,
         placeholder: String,
         text: Binding<String>,
-        height: CGFloat = 120
+        height: CGFloat = 120,
+        focusedField: FocusState<VehicleRegistrationView.Field?>.Binding? = nil
     ) {
         self.hasError = hasError
         self.placeholder = placeholder
         self._text = text
         self.height = height
+        self.focusedField = focusedField
     }
 
     var body: some View {
@@ -49,7 +52,23 @@ struct StyledTextEditorContainer: View {
                 .scrollContentBackground(.hidden)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
+                .modifier(
+                    FocusedTextEditorModifier(focusedField: focusedField)
+                )
         }
         .frame(height: height)
+    }
+}
+
+struct FocusedTextEditorModifier: ViewModifier {
+    var focusedField: FocusState<VehicleRegistrationView.Field?>.Binding?
+
+    func body(content: Content) -> some View {
+        if let focusedField = focusedField {
+            content
+                .focused(focusedField, equals: .description)
+        } else {
+            content
+        }
     }
 }
