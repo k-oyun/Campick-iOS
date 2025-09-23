@@ -30,8 +30,8 @@ final class LoginViewModel: ObservableObject {
                 // Auto-login preference disabled (pending decision)
                 // AuthPreferences.keepLoggedIn = self.keepLoggedIn
                 TokenManager.shared.saveAccessToken(res.accessToken)
-                // Refresh token persistence disabled (pending auto-login decision)
-                // TokenManager.shared.saveRefreshToken(res.refreshToken)
+                // Save refresh token for access-token reissue
+                TokenManager.shared.saveRefreshToken(res.refreshToken)
 
                 if let user = res.user {
                     AppLog.info("Applying user DTO with memberId: \(user.memberId ?? "nil")", category: "AUTH")
