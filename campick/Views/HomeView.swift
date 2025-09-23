@@ -51,7 +51,9 @@ struct HomeView: View {
         }
         .onAppear {
             viewModel.connectWebSocket(userId: UserState.shared.memberId)
-            WebSocket.shared.sendChatInit()        }
+//            WebSocket.shared.sendChatInit()
+            
+        }
     }
 }
 

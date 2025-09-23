@@ -31,7 +31,12 @@ struct ChatRoomView: View {
             ChatHeader(
                 viewModel: viewModel, showCallAlert: $showCallAlert,
                 onBack: { dismiss() },
-//                onCall: { callSeller(seller: seller) },
+                onCall: {
+                    if let seller = viewModel.seller {
+                                callSeller(seller: seller)
+                        print(viewModel.seller?.phoneNumber ?? "no seller phone")
+                            }
+                },
             )
             
             
@@ -40,18 +45,39 @@ struct ChatRoomView: View {
                 //                isTyping: $isTyping
             )
             
+            // 👇 pendingImage 미리보기 (입력창 바로 위)
+            if let preview = pendingImage {
+                ZStack(alignment: .topTrailing) {
+                    // 어두운 반투명 배경
+                    Color.black.opacity(0.5)
+                        .frame(height: 220) // 배경 높이
+
+                    // 미리보기 이미지
+                    Image(uiImage: preview)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 200) // 크기 줄임
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+
+                    // 닫기 버튼
+                    Button(action: { pendingImage = nil }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .padding()
+                    }
+                }
+                .transition(.move(edge: .bottom))
+                .animation(.easeInOut, value: pendingImage)
+            }
+            
             ChatBottomBar(
                 newMessage: $newMessage,
                 pendingImage: $pendingImage,
                 showAttachmentMenu: $showAttachmentMenu,
                 onSend: { message in
                     print("onSend called with:", message)
-                    
-                    let initPayload = InitChat(
-                        type:"join_room",
-                        data: InitChatData(
-                            chatId: chatRoomId
-                        ))
                     let payload = ChatMessagePayload(
                         type: "chat_message",
                         data: ChatMessageData(
@@ -71,6 +97,7 @@ struct ChatRoomView: View {
                     )
                     viewModel.messages.append(newChat)
                     newMessage = ""
+                    pendingImage=nil
                 }
             )
             .background(
@@ -85,13 +112,54 @@ struct ChatRoomView: View {
             )
         }
         .background(AppColors.brandBackground)
+        .onChange(of: selectedImage) { _, newValue in
+            if let img = newValue {
+                print("✅ 선택된 이미지 있음:", img)
+                pendingImage = img
+            }
+        }
+        .alert(isPresented: $showCallAlert) {
+            Alert(
+                title: Text("전화 연결"),
+                message: Text("시뮬레이터에서는 전화를 걸 수 없습니다."),
+                dismissButton: .default(Text("확인")) {
+                    showCallAlert = false
+                }
+            )
+        }
+        .confirmationDialog("첨부", isPresented: $showAttachmentMenu, titleVisibility: .visible) {
+                    Button("사진 보관함에서 선택") {
+                        showImagePicker = true
+                    }
+                    Button("카메라로 촬영") {
+                        showCamera = true
+                    }
+                    Button("취소", role: .cancel) {}
+                }
+                
+        .sheet(isPresented: $showImagePicker) {
+            ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+        }
+
+        .sheet(isPresented: $showCamera) {
+            ImagePickerView(sourceType: .camera, selectedImage: $selectedImage)
+                .ignoresSafeArea()
+        }
+                
         .onAppear {
+            let initPayload = InitChat(
+                type: "start_room",
+                data: InitChatData(chatId: chatRoomId)
+            )
+            print("🚀 initPayload: \(initPayload)")
+            WebSocket.shared.send(initPayload)
+            
+        
             if WebSocket.shared.isConnected == false {
                 WebSocket.shared.connect(userId: userState.memberId)
             }
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
-            
             
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
                 let payload = ChatMessagePayload(
@@ -102,19 +170,19 @@ struct ChatRoomView: View {
                         senderId: Int(userState.memberId) ?? 0
                     )
                 )
-                WebSocket.shared.send(payload)
             }
+                
         }
     }
     
     private func callSeller(seller: ChatSeller) {
         let rawNumber = seller.phoneNumber.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: "tel://\(rawNumber)") else { return }
-#if targetEnvironment(simulator)
-        showCallAlert = true
-#else
-        openURL(url)
-#endif
+        #if targetEnvironment(simulator)
+                showCallAlert = true
+        #else
+                openURL(url)
+        #endif
     }
 }
 
