@@ -23,7 +23,7 @@ final class ChatViewModel: ObservableObject {
             let chat = Chat(
                 message: newMessage.content,
                 senderId: newMessage.senderId,
-                sendAt: ISO8601DateFormatter().string(from: newMessage.sendAt),
+                sendAt: newMessage.sendAt,
                 isRead: newMessage.isRead
             )
             self?.messages.append(chat)

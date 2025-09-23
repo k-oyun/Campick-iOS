@@ -46,12 +46,6 @@ struct ChatRoomView: View {
                 showAttachmentMenu: $showAttachmentMenu,
                 onSend: { message in
                     print("onSend called with:", message)
-                    
-                    let initPayload = InitChat(
-                        type:"join_room",
-                        data: InitChatData(
-                            chatId: chatRoomId
-                        ))
                     let payload = ChatMessagePayload(
                         type: "chat_message",
                         data: ChatMessageData(
@@ -86,12 +80,21 @@ struct ChatRoomView: View {
         }
         .background(AppColors.brandBackground)
         .onAppear {
+            let initPayload = InitChat(
+                type:"start_room",
+                data: InitChatData(
+                    chatId: chatRoomId
+                ))
+            
+            WebSocket.shared.send(initPayload)
+            
+        
             if WebSocket.shared.isConnected == false {
                 WebSocket.shared.connect(userId: userState.memberId)
             }
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
-            
+           
             
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
                 let payload = ChatMessagePayload(
@@ -102,7 +105,6 @@ struct ChatRoomView: View {
                         senderId: Int(userState.memberId) ?? 0
                     )
                 )
-                WebSocket.shared.send(payload)
             }
         }
     }
