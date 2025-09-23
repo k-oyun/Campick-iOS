@@ -67,6 +67,7 @@ struct ChatRoomListView: View {
 //        )
     ]
     @State private var showFindVehicle = false
+    @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var viewModel = ChatListViewModel()
     @Environment(\.dismiss) private var dismiss
     var body: some View {
@@ -95,7 +96,10 @@ struct ChatRoomListView: View {
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                         .padding(.bottom, 16)
-                    Button(action: { showFindVehicle = true }) {
+                    Button(action: {
+                        tabRouter.navigateToVehicles(with: nil)
+                        dismiss()
+                    }) {
                         Text("매물 찾아보기")
                             .padding()
                             .frame(maxWidth: .infinity)
@@ -106,9 +110,7 @@ struct ChatRoomListView: View {
                     .padding(.horizontal, 20)
                 }
                 .frame(maxHeight: .infinity)
-                .fullScreenCover(isPresented: $showFindVehicle) {
-                    FindVehicleView()
-                }
+                
             } else {
                 //더미
 //                List {
