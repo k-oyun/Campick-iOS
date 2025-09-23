@@ -231,8 +231,9 @@ enum AuthAPI {
     
     
     // 비밀번호 변경: 현재/신규 비밀번호로 변경 요청
-    static func changePassword(_ request: PasswordChangeRequest) async throws {
+    static func changePassword(password: String, confirmPassword: String) async throws {
         do {
+            let request = PasswordChangeRequestBody(password: password, confirmPassword: confirmPassword)
             let apiRequest = APIService.shared
                 .request(Endpoint.changePassword.url, method: .patch, parameters: request, encoder: JSONParameterEncoder.default)
                 .validate()
@@ -243,6 +244,12 @@ enum AuthAPI {
     }
     
     // 회원탈퇴 API는 아직 미구현이므로 연동 제거
-    
-    
+
+
+}
+
+// MARK: - Request Models
+struct PasswordChangeRequestBody: Codable {
+    let password: String
+    let confirmPassword: String
 }
