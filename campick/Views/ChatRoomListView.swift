@@ -11,8 +11,6 @@ import SwiftUI
 struct ChatRoomListView: View {
     
     @State private var selectedRoom: ChatList?
-    @State private var rooms: [ChatList] = []
-    @State private var showFindVehicle = false
     @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var viewModel = ChatListViewModel()
     @Environment(\.dismiss) private var dismiss
@@ -21,6 +19,7 @@ struct ChatRoomListView: View {
             TopBarView(title: "채팅") {
                 dismiss()
             }
+
             if viewModel.chats.isEmpty {
                 VStack {
                     Circle()
@@ -32,16 +31,18 @@ struct ChatRoomListView: View {
                                 .font(.system(size: 28))
                         )
                         .padding(.bottom, 8)
-                    
+
                     Text("진행중인 채팅이 없습니다")
                         .foregroundColor(.white)
                         .font(.headline)
+
                     Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
                         .foregroundColor(.white.opacity(0.6))
                         .font(.caption)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                         .padding(.bottom, 16)
+
                     Button(action: {
                         tabRouter.navigateToVehicles(with: nil)
                         dismiss()
@@ -52,43 +53,13 @@ struct ChatRoomListView: View {
                             .background(AppColors.brandOrange)
                             .foregroundColor(.white)
                             .font(.headline)
-                        Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
-                            .foregroundColor(.white.opacity(0.6))
-                            .font(.caption)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                            .padding(.bottom, 16)
-                        Button(action: { showFindVehicle = true }) {
-                            Text("매물 찾아보기")
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(AppColors.brandOrange)
-                                .foregroundColor(.white)
-                                .cornerRadius(16)
-                        }
-                        .padding(.horizontal, 20)
+                            .cornerRadius(16)
                     }
                     .padding(.horizontal, 20)
                 }
                 .frame(maxHeight: .infinity)
-                
+
             } else {
-                //더미
-//                List {
-//                    ForEach(rooms) { room in
-//                        ChatRoomRow(room: room)
-//                            .onTapGesture {
-//                                selectedRoom = room
-//                            }
-//                            .listRowInsets(EdgeInsets())
-//                            .listRowSeparator(.hidden)
-//                            .listRowBackground(Color.clear)
-//                            .padding(.bottom,10)
-//                    }
-//                    .onDelete {indexSet in
-//                        rooms.remove(atOffsets: indexSet)
-//                    }
-//                }
                 List {
                     ForEach(viewModel.chats) { room in
                         ChatRoomRow(room: room)
@@ -98,43 +69,26 @@ struct ChatRoomListView: View {
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
-                            .padding(.bottom,10)
+                            .padding(.bottom, 10)
                     }
-                } else {
-                    List {
-                        ForEach(viewModel.chats) { room in
-                            ChatRoomRow(room: room)
-                                .onTapGesture {
-                                    selectedRoom = room
-                                }
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                                .padding(.bottom,10)
-                        }
-                        .onDelete { indexSet in
-                            viewModel.chats.remove(atOffsets: indexSet)
-                        }
-                        
-                    }
-                    .padding()
-                    .listStyle(.plain)
-                    .navigationDestination(item: $selectedRoom) { room in
-                        ChatRoomView(chatRoomId: room.id, chatMessage: "")
-                            .navigationBarHidden(true)
-                            .toolbar(.hidden, for: .navigationBar)
+                    .onDelete { indexSet in
+                        viewModel.chats.remove(atOffsets: indexSet)
                     }
                 }
-                
+                .listStyle(.plain)
+                .padding(.horizontal, 20)
             }
-            .background(AppColors.brandBackground)
-            .navigationBarHidden(true)
-            .navigationBarTitleDisplayMode(.inline)
-            .onAppear{
-                viewModel.loadChats()
-                rooms = viewModel.chats
-                print(rooms)
-            }
+        }
+        .background(AppColors.brandBackground)
+        .navigationBarHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(item: $selectedRoom) { room in
+            ChatRoomView(chatRoomId: room.id, chatMessage: "")
+                .navigationBarHidden(true)
+                .toolbar(.hidden, for: .navigationBar)
+        }
+        .onAppear{
+            viewModel.loadChats()
         }
     }
     
