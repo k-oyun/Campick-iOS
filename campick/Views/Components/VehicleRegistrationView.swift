@@ -62,11 +62,7 @@ struct VehicleRegistrationView: View {
                             ErrorText(message: vm.errors["title"])
                         }
 
-                        VehicleLocationMileageSection(
-                            mileage: $vm.mileage,
-                            location: $vm.location,
-                            errors: $vm.errors
-                        )
+                        
 
                         VehicleTypeModelYearSection(
                             vehicleType: $vm.vehicleType,
@@ -74,6 +70,12 @@ struct VehicleRegistrationView: View {
                             generation: $vm.generation,
                             errors: $vm.errors,
                             availableTypes: vm.availableTypes
+                        )
+                        
+                        VehicleLocationMileageSection(
+                            mileage: $vm.mileage,
+                            location: $vm.location,
+                            errors: $vm.errors
                         )
 
                         VehicleNumberPriceSection(
