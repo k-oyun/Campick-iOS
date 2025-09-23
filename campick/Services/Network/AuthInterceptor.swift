@@ -63,7 +63,8 @@ final class AuthInterceptor: RequestInterceptor {
 
         let statusCode: Int = (request.task?.response as? HTTPURLResponse)?.statusCode ?? -1
 
-        guard statusCode == 401, request.retryCount == 0, !isAuthEndpoint else {
+        // 일부 서버는 토큰 만료에 403을 반환하기도 함 → 401/403 모두 재발급 시도
+        guard (statusCode == 401 || statusCode == 403), request.retryCount == 0, !isAuthEndpoint else {
             completion(.doNotRetry)
             return
         }
