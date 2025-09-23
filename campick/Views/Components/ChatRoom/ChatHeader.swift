@@ -11,7 +11,7 @@ struct ChatHeader: View {
     @ObservedObject var viewModel: ChatViewModel
     @Binding var showCallAlert: Bool
     var onBack: () -> Void
-    var onCall: () -> Void
+//    var onCall: () -> Void
     
     
     var body: some View {
@@ -46,7 +46,7 @@ struct ChatHeader: View {
             Spacer()
             
             HStack(spacing: 12) {
-                Button { onCall() } label: {
+                Button { /*onCall()*/ } label: {
                     Image(systemName: "phone")
                         .foregroundColor(.white)
                         .padding(10)

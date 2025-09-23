@@ -20,20 +20,20 @@ struct ChatRoomView: View {
     @State private var permissionAlert: PermissionAlert?
     let userState = UserState.shared
     
+   
+    
     let chatRoomId: Int
     let chatMessage: String?
     
     var body: some View {
         VStack(spacing: 0) {
-            if let seller = viewModel.seller,
-               let vehicle = viewModel.vehicle {
-                
-                ChatHeader(
-                    viewModel: viewModel, showCallAlert: $showCallAlert,
-                    onBack: { dismiss() },
-                    onCall: { callSeller(seller: seller) },
-                )
-            }
+           
+            ChatHeader(
+                viewModel: viewModel, showCallAlert: $showCallAlert,
+                onBack: { dismiss() },
+//                onCall: { callSeller(seller: seller) },
+            )
+            
             
             MessageList(
                 viewModel: viewModel,

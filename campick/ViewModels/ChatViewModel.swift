@@ -39,7 +39,7 @@ final class ChatViewModel: ObservableObject {
                     self?.seller = ChatSeller(
                         id: String(response.sellerId),
                         name: response.sellerNickname,
-                        avatar: response.sellerProfileImage,
+                        avatar: response.sellerProfileImage ?? "default" ,
                         isOnline: response.isActive,
                         phoneNumber: response.sellerPhoneNumber
                     )

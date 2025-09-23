@@ -12,7 +12,7 @@ struct ChatResponse: Decodable {
     let buyerId: Int
     let sellerNickname: String
     let buyerNickname: String
-    let sellerProfileImage: String
+    let sellerProfileImage: String?
     let sellerPhoneNumber: String
     let productId: Int
     let productTitle: String

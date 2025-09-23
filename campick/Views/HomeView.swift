@@ -50,8 +50,8 @@ struct HomeView: View {
             // 네비게이션은 탭 전환(TabRouter)로 처리하므로 별도 NavigationLink 불필요
         }
         .onAppear {
-            viewModel.connectWebSocket(userId: "1")
-        }
+            viewModel.connectWebSocket(userId: UserState.shared.memberId)
+            WebSocket.shared.sendChatInit()        }
     }
 }
 
