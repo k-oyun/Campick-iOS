@@ -84,14 +84,18 @@ enum ProductAPI {
         }
     }
 
-    // 내가 찜한 차량 목록 조회 (GET /api/favorite)
-    static func fetchFavorites() async throws -> [ProductItemDTO] {
+    // 내가 찜한 차량 목록 조회 (GET /api/member/favorite/{memberId})
+    static func fetchFavorites(memberId: String, page: Int = 0, size: Int = 20) async throws -> MyProductListPageData {
         do {
+            let params: [String: Any] = ["page": page, "size": size]
             let request = APIService.shared
-                .request(Endpoint.favorites.url, method: .get)
+                .request(Endpoint.favorites(memberId: memberId).url, method: .get, parameters: params, encoding: URLEncoding.default)
                 .validate()
-            let wrapped = try await request.serializingDecodable(ApiResponse<[ProductItemDTO]>.self).value
-            return wrapped.data ?? []
+            let wrapped = try await request.serializingDecodable(ApiResponse<MyProductListPageData>.self).value
+            if let data = wrapped.data {
+                return data
+            }
+            throw NSError(domain: "FavoritesAPI", code: -1, userInfo: [NSLocalizedDescriptionKey: wrapped.message ?? "찜 목록을 불러오지 못했습니다."])
         } catch {
             throw ErrorMapper.map(error)
         }

@@ -13,8 +13,14 @@ final class FavoritesViewModel: ObservableObject {
         Task {
             defer { isLoading = false }
             do {
-                let items = try await ProductAPI.fetchFavorites()
-                favorites = items.map(mapToVehicle)
+                let memberId = UserState.shared.memberId
+                guard !memberId.isEmpty else {
+                    errorMessage = "로그인이 필요합니다."
+                    favorites = []
+                    return
+                }
+                let page = try await ProductAPI.fetchFavorites(memberId: memberId, page: 0, size: 20)
+                favorites = page.content.map(mapToVehicle)
             } catch {
                 let app = ErrorMapper.map(error)
                 errorMessage = app.message
@@ -23,45 +29,51 @@ final class FavoritesViewModel: ObservableObject {
         }
     }
 
-    private func mapToVehicle(_ dto: ProductItemDTO) -> Vehicle {
-        let id = String(dto.productId)
-        let thumb = dto.thumbNail.flatMap { URL(string: $0) }
-        let status: VehicleStatus
-        switch dto.status.uppercased() {
-        case "AVAILABLE": status = .active
-        case "RESERVED": status = .reserved
-        case "SOLD", "SOLD_OUT": status = .sold
-        default: status = .active
-        }
-        let locationText = dto.location.isEmpty ? "-" : dto.location
-        let extractedYear: String = {
-            if let generation = dto.generation, generation > 0 {
-                return "\(generation)년"
-            }
-            let pattern = "(20[0-4][0-9]|19[0-9]{2})"
-            if let range = dto.title.range(of: pattern, options: .regularExpression) {
-                return String(dto.title[range]) + "년"
-            }
-            return "-"
-        }()
-        let formattedMileage = formatMileage(dto.mileage)
+    private func mapToVehicle(_ item: MyProductListItem) -> Vehicle {
+        let priceText = formatPrice(item.cost)
+        let yearText = item.generation > 0 ? "\(item.generation)년" : "-"
+        let mileageText = formatMileage(String(item.mileage))
+        let status = mapStatus(item.status)
+        let thumbnailURL = urlFrom(item.thumbnailUrls.first)
+
         return Vehicle(
-            id: id,
+            id: String(item.productId),
             imageName: nil,
-            thumbnailURL: thumb,
-            title: dto.title,
-            price: dto.price,
-            year: extractedYear,
-            mileage: formattedMileage,
-            fuelType: dto.fuelType,
-            transmission: dto.transmission,
-            location: locationText,
+            thumbnailURL: thumbnailURL,
+            title: item.title,
+            price: priceText,
+            year: yearText,
+            mileage: mileageText,
+            fuelType: item.fuelType ?? "-",
+            transmission: item.transmission ?? "-",
+            location: item.location,
             status: status,
-            postedDate: dto.createdAt,
+            postedDate: item.createdAt,
             isOnSale: status == .active,
-            isFavorite: dto.isLiked,
-            likeCount: dto.likeCount
+            isFavorite: true
         )
+    }
+
+    private func mapStatus(_ raw: String) -> VehicleStatus {
+        switch raw.uppercased() {
+        case "AVAILABLE", "ACTIVE":
+            return .active
+        case "RESERVED":
+            return .reserved
+        case "SOLD", "COMPLETED":
+            return .sold
+        default:
+            return .active
+        }
+    }
+
+    private func formatPrice(_ value: Int) -> String {
+        guard value > 0 else { return "가격 정보 없음" }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.locale = Locale(identifier: "ko_KR")
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(value)
+        return formatted
     }
 
     private func formatMileage(_ s: String) -> String {
@@ -105,6 +117,13 @@ final class FavoritesViewModel: ObservableObject {
         return "\(formatted)km"
     }
 
+    fileprivate func urlFrom(_ s: String?) -> URL? {
+        guard let s = s, !s.isEmpty else { return nil }
+        if let u = URL(string: s) { return u }
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
+        return nil
+    }
+
     private func formatManValue(_ value: Double) -> String {
         let scaled = (value * 10).rounded() / 10
         if abs(scaled.rounded() - scaled) < 0.0001 {
@@ -114,4 +133,3 @@ final class FavoritesViewModel: ObservableObject {
         }
     }
 }
-
