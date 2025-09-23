@@ -73,8 +73,8 @@ final class ChatViewModel: ObservableObject {
 
        
     func isMyMessage(_ chat: Chat) -> Bool {
-        guard let buyerId = chatResponse?.buyerId else { return false }
-        return chat.senderId == buyerId
+        let myId = Int(UserState.shared.memberId) ?? -1
+        return chat.senderId == myId
     }
     
     func sellerName() -> String? {
