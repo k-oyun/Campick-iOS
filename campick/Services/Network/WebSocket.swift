@@ -8,8 +8,11 @@
 import Foundation
 
 class WebSocket {
+    static let shared = WebSocket()
     private var webSocketTask: URLSessionWebSocketTask?
-    
+    var isConnected: Bool {
+        return webSocketTask?.state == .running
+    }
     func connect(userId: String) {
         guard let url = URL(string: "wss://campick.shop/ws/\(userId)") else { return }
         let urlSession = URLSession(configuration: .default)
@@ -59,13 +62,30 @@ class WebSocket {
         }
     }
     
-    func send(_ text: String) {
-        webSocketTask?.send(.string(text)) { error in
-            if let error = error {
-                print("전송 실패:", error)
-            } else {
-                print("전송 성공:", text)
+    
+    func send<T: Encodable>(_ data: T) {
+        let encoder = JSONEncoder()
+        do {
+            let jsonData = try encoder.encode(data)
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("📤 전송 시도:", jsonString)
+
+                guard let webSocketTask = webSocketTask else {
+                    print("⚠️ webSocketTask is nil")
+                    return
+                }
+                print("webSocketTask state:", webSocketTask.state.rawValue) // 0: running, 1: suspended, 2: canceling, 3: completed
+
+                webSocketTask.send(.string(jsonString)) { error in
+                    if let error = error {
+                        print("전송 실패:", error)
+                    } else {
+                        print("전송 성공:", jsonString)
+                    }
+                }
             }
+        } catch {
+            print("인코딩 실패:", error)
         }
     }
     
@@ -74,3 +94,16 @@ class WebSocket {
         print("웹소켓 연결 해제")
     }
 }
+
+struct ChatMessagePayload: Encodable {
+    let type: String
+    let data: ChatMessageData
+}
+
+struct ChatMessageData: Encodable {
+    let chatId: Int
+    let content: String
+    let senderId: Int
+}
+
+

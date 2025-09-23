@@ -76,7 +76,7 @@ struct ChatRoomListView: View {
                     .padding()
                     .listStyle(.plain)
                     .navigationDestination(item: $selectedRoom) { room in
-                        ChatRoomView(chatRoomId: room.id)
+                        ChatRoomView(chatRoomId: room.id, chatMessage: "")
                             .navigationBarHidden(true)
                             .toolbar(.hidden, for: .navigationBar)
                     }

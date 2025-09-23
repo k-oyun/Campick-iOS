@@ -18,8 +18,10 @@ struct ChatRoomView: View {
     @State private var pendingImage: UIImage? = nil
     @State private var keyboardHeight: CGFloat = 0
     @State private var permissionAlert: PermissionAlert?
+    let userState = UserState.shared
     
     let chatRoomId: Int
+    let chatMessage: String?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -42,8 +44,28 @@ struct ChatRoomView: View {
                 newMessage: $newMessage,
                 pendingImage: $pendingImage,
                 showAttachmentMenu: $showAttachmentMenu,
-                onSend: {
-                }
+                onSend: { message in
+                        print("onSend called with:", message)
+                        let payload = ChatMessagePayload(
+                            type: "chat_message",
+                            data: ChatMessageData(
+                                chatId: chatRoomId,
+                                content: message,
+                                senderId: Int(userState.memberId) ?? 0
+                            )
+                        )
+                           WebSocket.shared.send(payload)
+
+                           // 2. 로컬에서도 바로 추가 → 화면에 메시지 버블 표시
+                           let newChat = Chat(
+                               message: message,
+                               senderId: Int(userState.memberId) ?? 0,
+                               sendAt: ISO8601DateFormatter().string(from: Date()),
+                               isRead: false
+                           )
+                           viewModel.messages.append(newChat)
+                        newMessage = ""
+                    }
             )
             .background(
                 AppColors.brandBackground
@@ -58,7 +80,23 @@ struct ChatRoomView: View {
         }
         .background(AppColors.brandBackground)
         .onAppear {
-            viewModel.loadChatRoom(chatRoomId: 1)  // 예: chatRoomId 1
+            if WebSocket.shared.isConnected == false {
+                        WebSocket.shared.connect(userId: userState.memberId)
+            }
+            viewModel.loadChatRoom(chatRoomId: chatRoomId)
+            
+            
+            if let initialMessage = chatMessage, !initialMessage.isEmpty {
+                let payload = ChatMessagePayload(
+                    type: "chat_message",
+                    data: ChatMessageData(
+                        chatId: chatRoomId,
+                        content: initialMessage,
+                        senderId: Int(userState.memberId) ?? 0
+                    )
+                )
+                WebSocket.shared.send(payload)
+            }
         }
     }
     

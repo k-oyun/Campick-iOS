@@ -17,6 +17,8 @@ struct VehicleDetailView: View {
     @State private var isFavorite = false
     @State private var chatMessage = ""
     @State private var navigateToEdit = false
+    @State private var navigateToChat = false
+    @State private var createdChatId: Int? = nil
 
     init(vehicleId: String, isOwnerHint: Bool = false) {
         self.vehicleId = vehicleId
@@ -131,16 +133,19 @@ struct VehicleDetailView: View {
                     }
 
                     Button(action: {
-                        ChatService.shared.startChat(productId: vehicleId) { result in
-                            switch result {
-                            case .success(let chatId):
-                                print("채팅방 생성 완료, chatId: \(chatId)")
-                            case .failure(let error):
-                                print("채팅방 생성 실패: \(error.localizedDescription)")
+                        if let id = Int(vehicleId) {
+                            ChatService.shared.startChat(productId: id) { result in
+                                switch result {
+                                case .success(let chatId):
+                                    print("채팅방 생성 완료, chatId: \(chatId)")
+                                    createdChatId = chatId
+                                    navigateToChat = true   // 👉 네비게이션 트리거
+                                case .failure(let error):
+                                    print("채팅방 생성 실패: \(error.localizedDescription)")
+                                }
                             }
                         }
-                        .buttonStyle(PlainButtonStyle())
-                    }) {
+                    })  {
                         Image(systemName: "paperplane.fill")
                             .foregroundColor(.white)
                             .frame(width: 48, height: 48)
@@ -171,6 +176,13 @@ struct VehicleDetailView: View {
         .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToEdit) {
             VehicleRegistrationView(showBackButton: true, editingProductId: vehicleId)
+        }
+        .navigationDestination(isPresented: $navigateToChat) {
+            if let chatId = createdChatId {
+                ChatRoomView(chatRoomId: chatId, chatMessage: chatMessage)
+                    .navigationBarHidden(true) // iOS 15 이하
+                    .toolbar(.hidden, for: .navigationBar)
+            }
         }
         .sheet(isPresented: $showSellerModal) {
             if let seller = viewModel.detail?.seller {

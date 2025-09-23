@@ -52,7 +52,7 @@ struct HomeView: View {
         }
         .onAppear {
             
-//            viewModel.connectWebSocket(userId: userState.memberId)
+            viewModel.connectWebSocket(userId: userState.memberId)
         }
     }
 }

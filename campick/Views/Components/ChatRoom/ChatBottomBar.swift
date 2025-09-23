@@ -11,7 +11,9 @@ struct ChatBottomBar: View {
     @Binding var newMessage: String
     @Binding var pendingImage: UIImage?
     @Binding var showAttachmentMenu: Bool
-    var onSend: () -> Void
+        
+    
+    var onSend: (String) -> Void
 
     var body: some View {
         HStack {
@@ -29,13 +31,14 @@ struct ChatBottomBar: View {
 
             TextField("메시지를 입력하세요...", text: $newMessage)
                 .submitLabel(.send)
-                .onSubmit { onSend() }
                 .padding(10)
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(20)
                 .foregroundColor(.white)
 
-            Button(action: onSend) {
+            Button(action: {
+                onSend(newMessage)
+            }) {
                 Image(systemName: "paperplane.fill")
                     .foregroundColor(.white)
                     .padding(10)
