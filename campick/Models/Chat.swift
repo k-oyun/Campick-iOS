@@ -19,6 +19,10 @@ enum MessageStatus {
     case read
 }
 
+struct ChatStartRequest: Encodable {
+    let productId: Int
+}
+
 struct ChatMessage: Identifiable, Hashable {
     let id: String
     let text: String

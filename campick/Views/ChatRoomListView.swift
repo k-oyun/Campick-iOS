@@ -192,7 +192,7 @@ struct ChatRoomRow: View {
                         ProgressView()
                     }
                 }
-                .frame(width: 48, height: 48) // 전체 원 크기
+                .frame(width: 48, height: 48)
                 .clipShape(Circle())
                 
 //                if room.isOnline {
