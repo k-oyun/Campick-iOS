@@ -81,12 +81,10 @@ struct ChatRoomView: View {
         .background(AppColors.brandBackground)
         .onAppear {
             let initPayload = InitChat(
-                type:"start_room",
-                data: InitChatData(
-                    chatId: chatRoomId
-                ))
-            
-            
+                type: "start_room",
+                data: InitChatData(chatId: chatRoomId)
+            )
+            print("🚀 initPayload: \(initPayload)")
             WebSocket.shared.send(initPayload)
             
         
@@ -95,7 +93,6 @@ struct ChatRoomView: View {
             }
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
-           
             
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
                 let payload = ChatMessagePayload(

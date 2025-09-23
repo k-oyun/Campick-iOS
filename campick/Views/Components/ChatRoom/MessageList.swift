@@ -85,6 +85,7 @@ struct MessageList: View {
                 guard !didScrollToBottomInitially else { return }
                 didScrollToBottomInitially = true
                 scrollToBottom(proxy: proxy, animated: false)
+                
             }
             .onChange(of: viewModel.messages.count) { _, _ in
                 scrollToBottom(proxy: proxy, animated: true)
