@@ -68,4 +68,25 @@ class ChatService: ObservableObject {
                 }
             }
     }
+    
+    func getChatMessages(chatRoomId: Int, completion: @escaping (Result<ChatResponse, AFError>) -> Void) {
+        APIService.shared
+            .request(Endpoint.chatGet(chatRoomId: String(chatRoomId)).url)
+            .validate()
+            .responseDecodable(of: ApiResponse<ChatResponse>.self, decoder: decoder) { response in
+                switch response.result {
+                case .success(let apiResponse):
+                    if let data = apiResponse.data {
+                        print("채팅방(\(chatRoomId)) 메시지 조회 성공: \(data.chatData.count)개 메시지")
+                        completion(.success(data))
+                    } else {
+                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
 }
+
+
