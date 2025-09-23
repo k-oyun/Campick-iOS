@@ -163,7 +163,7 @@ final class SignupFlowViewModel: ObservableObject {
             let roleValue = (userType == .dealer) ? "DEALER" : "USER"
             let dealershipName = (userType == .dealer) ? "캠픽딜러" : ""
             let dealershipRegNo = (userType == .dealer) ? dealerNumber : ""
-            if let res = try await AuthAPI.signupAllowingEmpty(
+            if let _ = try await AuthAPI.signupAllowingEmpty(
                 email: email,
                 password: password,
                 checkedPassword: confirm,
@@ -173,21 +173,7 @@ final class SignupFlowViewModel: ObservableObject {
                 dealershipName: dealershipName,
                 dealershipRegistrationNumber: dealershipRegNo
             ) {
-                // 응답 본문이 있으며 디코딩 성공 시 토큰/유저 저장
-                TokenManager.shared.saveAccessToken(res.accessToken)
-                if let user = res.user {
-                    UserState.shared.applyUserDTO(user)
-                } else {
-                    UserState.shared.saveUserData(
-                        name: nickname,
-                        nickName: nickname,
-                        phoneNumber: phoneDashed(),
-                        memberId: "",
-                        dealerId: "",
-                        role: roleValue,
-                        email: email
-                    )
-                }
+                // 회원가입 성공. 자동 로그인은 수행하지 않습니다.
             }
             await MainActor.run { go(to: .complete) }
         } catch {
