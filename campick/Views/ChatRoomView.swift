@@ -45,6 +45,33 @@ struct ChatRoomView: View {
                 //                isTyping: $isTyping
             )
             
+            // 👇 pendingImage 미리보기 (입력창 바로 위)
+            if let preview = pendingImage {
+                ZStack(alignment: .topTrailing) {
+                    // 어두운 반투명 배경
+                    Color.black.opacity(0.5)
+                        .frame(height: 220) // 배경 높이
+
+                    // 미리보기 이미지
+                    Image(uiImage: preview)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: 200) // 크기 줄임
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+
+                    // 닫기 버튼
+                    Button(action: { pendingImage = nil }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.white)
+                            .padding()
+                    }
+                }
+                .transition(.move(edge: .bottom))
+                .animation(.easeInOut, value: pendingImage)
+            }
+            
             ChatBottomBar(
                 newMessage: $newMessage,
                 pendingImage: $pendingImage,
@@ -70,6 +97,7 @@ struct ChatRoomView: View {
                     )
                     viewModel.messages.append(newChat)
                     newMessage = ""
+                    pendingImage=nil
                 }
             )
             .background(
@@ -84,6 +112,12 @@ struct ChatRoomView: View {
             )
         }
         .background(AppColors.brandBackground)
+        .onChange(of: selectedImage) { _, newValue in
+            if let img = newValue {
+                print("✅ 선택된 이미지 있음:", img)
+                pendingImage = img
+            }
+        }
         .alert(isPresented: $showCallAlert) {
             Alert(
                 title: Text("전화 연결"),
