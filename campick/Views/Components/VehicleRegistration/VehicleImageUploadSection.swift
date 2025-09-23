@@ -20,6 +20,8 @@ struct VehicleImageUploadSection: View {
     @State private var showingMainImagePicker = false
     @State private var isUploading = false
     @State private var permissionAlert: PermissionAlertItem?
+    @State private var showingImageSourcePicker = false
+    @State private var showPickerWithAnimation = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -33,29 +35,49 @@ struct VehicleImageUploadSection: View {
                     .foregroundColor(.white.opacity(0.6))
             }
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                ForEach(vehicleImages) { vehicleImage in
-                    imageItemView(vehicleImage)
+            ZStack {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                    ForEach(vehicleImages) { vehicleImage in
+                        imageItemView(vehicleImage)
+                    }
+
+                    if vehicleImages.count < 10 {
+                        unifiedImageButton
+                    }
                 }
 
-                if vehicleImages.count < 10 {
-                    addImageButtons
-                }
-
-                if vehicleImages.count < 9 {
-                    cameraButton
-                }
-
-                if vehicleImages.count < 8 {
-                    mainImageCropButton
-                }
             }
 
             ErrorText(message: errors["images"])
         }
+        .overlay(
+            showingImageSourcePicker ?
+            ZStack {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        closePickerWithAnimation()
+                    }
+
+                GeometryReader { geometry in
+                    VStack {
+                        HStack {
+                            imageSourceDropdown
+                                .frame(maxWidth: 180)
+                            Spacer()
+                        }
+                        .padding(.leading, 16)
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
+            .zIndex(1000) : nil
+        )
         .onChange(of: selectedPhotos) { _, newItems in
             loadSelectedPhotos(newItems)
         }
+        .photosPicker(isPresented: $showingImagePicker, selection: $selectedPhotos, maxSelectionCount: 10 - vehicleImages.count, matching: .images)
         .fullScreenCover(isPresented: $showingCamera) {
             CameraView { image in
                 if let image = image {
@@ -79,13 +101,22 @@ struct VehicleImageUploadSection: View {
     }
 
     private func imageItemView(_ vehicleImage: VehicleImage) -> some View {
-        ZStack {
-            Image(uiImage: vehicleImage.image)
-                .resizable()
-                .aspectRatio(1, contentMode: .fill)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
-                .cornerRadius(8)
+        Button(action: {
+            if vehicleImage.uploadedUrl != nil {
+                setMainImage(vehicleImage)
+            }
+        }) {
+            ZStack {
+                Image(uiImage: vehicleImage.image)
+                    .resizable()
+                    .aspectRatio(4/3, contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(vehicleImage.isMain ? AppColors.brandOrange : Color.clear, lineWidth: 3)
+                    )
 
             // Loading overlay when uploading
             if vehicleImage.uploadedUrl == nil {
@@ -116,24 +147,9 @@ struct VehicleImageUploadSection: View {
                 .padding(4)
             }
 
-            VStack {
-                HStack {
-                    Spacer()
-
-                    VStack(spacing: 4) {
-                        if !vehicleImage.isMain && vehicleImage.uploadedUrl != nil {
-                            Button(action: { setMainImage(vehicleImage) }) {
-                                ZStack {
-                                    Circle()
-                                        .fill(AppColors.primaryText.opacity(0.8))
-                                        .frame(width: 20, height: 20)
-
-                                    Image(systemName: "star")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.gray)
-                                }
-                            }
-                        }
+                VStack {
+                    HStack {
+                        Spacer()
 
                         if vehicleImage.uploadedUrl != nil {
                             Button(action: { deleteImage(vehicleImage) }) {
@@ -149,104 +165,134 @@ struct VehicleImageUploadSection: View {
                             }
                         }
                     }
+
+                    Spacer()
                 }
-
-                Spacer()
+                .padding(4)
             }
-            .padding(4)
         }
-        .aspectRatio(1, contentMode: .fit)
+        .aspectRatio(4/3, contentMode: .fit)
     }
 
-    private var addImageButtons: some View {
-        PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 10 - vehicleImages.count, matching: .images) {
-            VStack(spacing: 4) {
-                Image(systemName: "photo.on.rectangle.angled")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white.opacity(0.6))
-
-                Text("갤러리")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .aspectRatio(1, contentMode: .fit)
-            .background(AppColors.brandBackground.opacity(0.5))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.primaryText.opacity(0.2), lineWidth: 1)
-            )
-        }
-        .frame(height: 80)
-    }
-
-    private var cameraButton: some View {
+    private var unifiedImageButton: some View {
         Button(action: {
-            MediaPermissionManager.requestCameraPermission { granted in
-                if granted {
-                    showingCamera = true
-                } else {
-                    permissionAlert = PermissionAlertItem(
-                        title: "카메라 접근이 제한되었습니다",
-                        message: "설정 앱에서 카메라 접근 권한을 허용한 뒤 다시 시도해주세요."
-                    )
-                }
+            showingImageSourcePicker = true
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showPickerWithAnimation = true
             }
         }) {
             VStack(spacing: 4) {
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(.white.opacity(0.6))
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(AppColors.brandOrange)
 
-                Text("카메라")
-                    .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.6))
+                Text("이미지 추가")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .aspectRatio(1, contentMode: .fit)
+            .aspectRatio(4/3, contentMode: .fit)
             .background(AppColors.brandBackground.opacity(0.5))
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.primaryText.opacity(0.2), lineWidth: 1)
+                    .stroke(AppColors.brandOrange.opacity(0.3), lineWidth: 1)
             )
         }
-        .frame(height: 80)
     }
 
-    private var mainImageCropButton: some View {
-        Button(action: {
-            MediaPermissionManager.requestPhotoPermission { granted in
-                if granted {
-                    showingMainImagePicker = true
-                } else {
-                    permissionAlert = PermissionAlertItem(
-                        title: "사진 접근이 제한되었습니다",
-                        message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
-                    )
-                }
-            }
-        }) {
-            VStack(spacing: 4) {
-                Image(systemName: "crop")
-                    .font(.system(size: 20))
-                    .foregroundColor(AppColors.brandOrange)
 
-                Text("메인이미지")
-                    .font(.system(size: 10))
-                    .foregroundColor(AppColors.brandOrange)
+    private var imageSourceDropdown: some View {
+        VStack(spacing: 0) {
+            Button(action: {
+                closePickerWithAnimation()
+                showingImagePicker = true
+            }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 16))
+                        .foregroundColor(AppColors.brandOrange)
+
+                    Text("갤러리에서 선택")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(AppColors.brandBackground)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .aspectRatio(1, contentMode: .fit)
-            .background(AppColors.brandBackground.opacity(0.5))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.brandOrange.opacity(0.5), lineWidth: 1)
-            )
+
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 1)
+
+            Button(action: {
+                closePickerWithAnimation()
+                requestCameraPermission()
+            }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(AppColors.brandOrange)
+
+                    Text("카메라로 촬영")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(AppColors.brandBackground)
+            }
         }
-        .frame(height: 80)
+        .background(AppColors.brandBackground)
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(AppColors.brandOrange.opacity(0.3), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+        .scaleEffect(showPickerWithAnimation ? 1.0 : 0.8)
+        .opacity(showPickerWithAnimation ? 1.0 : 0.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: showPickerWithAnimation)
+    }
+
+    private func closePickerWithAnimation() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            showPickerWithAnimation = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            showingImageSourcePicker = false
+        }
+    }
+
+    private func requestCameraPermission() {
+        MediaPermissionManager.requestCameraPermission { granted in
+            if granted {
+                showingCamera = true
+            } else {
+                permissionAlert = PermissionAlertItem(
+                    title: "카메라 접근이 제한되었습니다",
+                    message: "설정 앱에서 카메라 접근 권한을 허용한 뒤 다시 시도해주세요."
+                )
+            }
+        }
+    }
+
+    private func requestPhotoPermissionForCrop() {
+        MediaPermissionManager.requestPhotoPermission { granted in
+            if granted {
+                showingMainImagePicker = true
+            } else {
+                permissionAlert = PermissionAlertItem(
+                    title: "사진 접근이 제한되었습니다",
+                    message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
+                )
+            }
+        }
     }
 
     private func setMainImage(_ vehicleImage: VehicleImage) {
