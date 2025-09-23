@@ -69,6 +69,7 @@ final class SignupFlowViewModel: ObservableObject {
     @Published var termsAgreed: Bool = false
     @Published var privacyAgreed: Bool = false
     @Published var emailVerified: Bool = false
+    @Published var shouldNavigateHome: Bool = false
 
     func emailOnTapVerify() { /* handled by sendEmailCode() */ }
     func emailOnChangeCode(_ value: String) { emailCode = value.filter { $0.isNumber } }
@@ -159,7 +160,7 @@ final class SignupFlowViewModel: ObservableObject {
             submitError = nil
         }
         do {
-            let roleValue = (userType == .dealer) ? "ROLE_DEALER" : "ROLE_USER"
+            let roleValue = (userType == .dealer) ? "DEALER" : "USER"
             let dealershipName = (userType == .dealer) ? "캠픽딜러" : ""
             let dealershipRegNo = (userType == .dealer) ? dealerNumber : ""
             if let res = try await AuthAPI.signupAllowingEmpty(
@@ -174,22 +175,19 @@ final class SignupFlowViewModel: ObservableObject {
             ) {
                 // 응답 본문이 있으며 디코딩 성공 시 토큰/유저 저장
                 TokenManager.shared.saveAccessToken(res.accessToken)
-                let u = res.user
-                let name = u?.name ?? u?.nickname ?? ""
-                let nick = u?.nickname ?? u?.name ?? ""
-                let phoneValue = u?.mobileNumber ?? phoneDashed()
-                let memberId = u?.memberId ?? u?.id ?? ""
-                let dealerId = u?.dealerId ?? ""
-                let role = u?.role ?? roleValue
-
-                UserState.shared.saveUserData(
-                    name: name,
-                    nickName: nick,
-                    phoneNumber: phoneValue,
-                    memberId: memberId,
-                    dealerId: dealerId,
-                    role: role
-                )
+                if let user = res.user {
+                    UserState.shared.applyUserDTO(user)
+                } else {
+                    UserState.shared.saveUserData(
+                        name: nickname,
+                        nickName: nickname,
+                        phoneNumber: phoneDashed(),
+                        memberId: "",
+                        dealerId: "",
+                        role: roleValue,
+                        email: email
+                    )
+                }
             }
             await MainActor.run { go(to: .complete) }
         } catch {
@@ -285,22 +283,9 @@ final class SignupFlowViewModel: ObservableObject {
         do {
             let res = try await AuthAPI.login(email: email, password: password)
             TokenManager.shared.saveAccessToken(res.accessToken)
-            let u = res.user
-            let name = u?.name ?? u?.nickname ?? ""
-            let nick = u?.nickname ?? u?.name ?? ""
-            let phoneValue = u?.mobileNumber ?? phoneDashed()
-            let memberId = u?.memberId ?? u?.id ?? ""
-            let dealerId = u?.dealerId ?? ""
-            let role = u?.role ?? ""
             await MainActor.run {
-                UserState.shared.saveUserData(
-                    name: name,
-                    nickName: nick,
-                    phoneNumber: phoneValue,
-                    memberId: memberId,
-                    dealerId: dealerId,
-                    role: role
-                )
+                UserState.shared.applyUserDTO(res.user)
+                self.shouldNavigateHome = true
             }
         } catch {
             await MainActor.run {

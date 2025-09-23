@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct SettingsSection: View {
-    @ObservedObject var viewModel: ProfileViewViewModel
+    let onChangePassword: () -> Void
+    let onLogout: () -> Void
+    let onDeleteAccount: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -18,19 +20,16 @@ struct SettingsSection: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(spacing: 8) {
-                SettingsRow(title: "프로필 수정", icon: "person.crop.circle") {
-                    viewModel.editProfile()
-                }
-
                 SettingsRow(title: "비밀번호 변경", icon: "lock") {
-                    viewModel.changePassword()
+                    onChangePassword()
                 }
 
                 SettingsRow(title: "로그아웃", icon: "arrow.right.square", isDestructive: true) {
-                    viewModel.showLogoutModal = true
+                    onLogout()
                 }
+
                 SettingsRow(title: "회원 탈퇴", icon: "xmark.circle", isDestructive: true) {
-                    viewModel.deleteAccount()
+                    onDeleteAccount()
                 }
             }
             .padding(16)

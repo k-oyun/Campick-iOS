@@ -10,11 +10,16 @@ import PhotosUI
 import UIKit
 
 struct VehicleImageUploadSection: View {
+    @EnvironmentObject private var vm: VehicleRegistrationViewModel
     @Binding var vehicleImages: [VehicleImage]
+    @Binding var uploadedImageUrls: [String]
     @Binding var selectedPhotos: [PhotosPickerItem]
     @Binding var showingImagePicker: Bool
     @Binding var errors: [String: String]
     @State private var showingCamera = false
+    @State private var showingMainImagePicker = false
+    @State private var isUploading = false
+    @State private var permissionAlert: PermissionAlertItem?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -40,6 +45,10 @@ struct VehicleImageUploadSection: View {
                 if vehicleImages.count < 9 {
                     cameraButton
                 }
+
+                if vehicleImages.count < 8 {
+                    mainImageCropButton
+                }
             }
 
             ErrorText(message: errors["images"])
@@ -54,6 +63,18 @@ struct VehicleImageUploadSection: View {
                 }
                 showingCamera = false
             }
+            .ignoresSafeArea()
+        }
+        .sheet(isPresented: $showingMainImagePicker) {
+            CropEnabledImagePickerView { croppedImage in
+                if let croppedImage = croppedImage {
+                    addMainImage(croppedImage)
+                }
+                showingMainImagePicker = false
+            }
+        }
+        .alert(item: $permissionAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("확인")))
         }
     }
 
@@ -65,6 +86,16 @@ struct VehicleImageUploadSection: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
                 .cornerRadius(8)
+
+            // Loading overlay when uploading
+            if vehicleImage.uploadedUrl == nil {
+                Color.black.opacity(0.6)
+                    .cornerRadius(8)
+
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(0.8)
+            }
 
             if vehicleImage.isMain {
                 VStack {
@@ -90,7 +121,7 @@ struct VehicleImageUploadSection: View {
                     Spacer()
 
                     VStack(spacing: 4) {
-                        if !vehicleImage.isMain {
+                        if !vehicleImage.isMain && vehicleImage.uploadedUrl != nil {
                             Button(action: { setMainImage(vehicleImage) }) {
                                 ZStack {
                                     Circle()
@@ -104,15 +135,17 @@ struct VehicleImageUploadSection: View {
                             }
                         }
 
-                        Button(action: { deleteImage(vehicleImage) }) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.red)
-                                    .frame(width: 20, height: 20)
+                        if vehicleImage.uploadedUrl != nil {
+                            Button(action: { deleteImage(vehicleImage) }) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 20, height: 20)
 
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.white)
+                                    Image(systemName: "xmark")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.white)
+                                }
                             }
                         }
                     }
@@ -150,7 +183,16 @@ struct VehicleImageUploadSection: View {
 
     private var cameraButton: some View {
         Button(action: {
-            showingCamera = true
+            MediaPermissionManager.requestCameraPermission { granted in
+                if granted {
+                    showingCamera = true
+                } else {
+                    permissionAlert = PermissionAlertItem(
+                        title: "카메라 접근이 제한되었습니다",
+                        message: "설정 앱에서 카메라 접근 권한을 허용한 뒤 다시 시도해주세요."
+                    )
+                }
+            }
         }) {
             VStack(spacing: 4) {
                 Image(systemName: "camera.fill")
@@ -173,6 +215,40 @@ struct VehicleImageUploadSection: View {
         .frame(height: 80)
     }
 
+    private var mainImageCropButton: some View {
+        Button(action: {
+            MediaPermissionManager.requestPhotoPermission { granted in
+                if granted {
+                    showingMainImagePicker = true
+                } else {
+                    permissionAlert = PermissionAlertItem(
+                        title: "사진 접근이 제한되었습니다",
+                        message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
+                    )
+                }
+            }
+        }) {
+            VStack(spacing: 4) {
+                Image(systemName: "crop")
+                    .font(.system(size: 20))
+                    .foregroundColor(AppColors.brandOrange)
+
+                Text("메인이미지")
+                    .font(.system(size: 10))
+                    .foregroundColor(AppColors.brandOrange)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .aspectRatio(1, contentMode: .fit)
+            .background(AppColors.brandBackground.opacity(0.5))
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(AppColors.brandOrange.opacity(0.5), lineWidth: 1)
+            )
+        }
+        .frame(height: 80)
+    }
+
     private func setMainImage(_ vehicleImage: VehicleImage) {
         for i in vehicleImages.indices {
             vehicleImages[i].isMain = (vehicleImages[i].id == vehicleImage.id)
@@ -180,6 +256,10 @@ struct VehicleImageUploadSection: View {
     }
 
     private func deleteImage(_ vehicleImage: VehicleImage) {
+        if let uploadedUrl = vehicleImage.uploadedUrl {
+            uploadedImageUrls.removeAll { $0 == uploadedUrl }
+        }
+
         vehicleImages.removeAll { $0.id == vehicleImage.id }
 
         if vehicleImage.isMain && !vehicleImages.isEmpty {
@@ -191,6 +271,28 @@ struct VehicleImageUploadSection: View {
         let newImage = VehicleImage(image: image, isMain: vehicleImages.isEmpty)
         vehicleImages.append(newImage)
         errors["images"] = nil
+
+        // 즉시 서버에 업로드
+        uploadImageToServer(image, for: newImage.id)
+    }
+
+    private func addMainImage(_ image: UIImage) {
+        // 기존 메인 이미지들을 모두 일반 이미지로 변경
+        for i in vehicleImages.indices {
+            vehicleImages[i].isMain = false
+        }
+
+        // 새 메인 이미지를 맨 앞에 추가
+        let newMainImage = VehicleImage(image: image, isMain: true)
+        vehicleImages.insert(newMainImage, at: 0)
+        errors["images"] = nil
+
+        // 즉시 서버에 업로드
+        uploadImageToServer(image, for: newMainImage.id)
+    }
+
+    private func uploadImageToServer(_ image: UIImage, for imageId: UUID) {
+        vm.uploadImage(image, for: imageId)
     }
 
     private func loadSelectedPhotos(_ items: [PhotosPickerItem]) {
@@ -212,19 +314,48 @@ struct VehicleImageUploadSection: View {
     }
 }
 
+private struct PermissionAlertItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
 // CameraView 정의
 struct CameraView: UIViewControllerRepresentable {
     let onImageCaptured: (UIImage?) -> Void
 
-    func makeUIViewController(context: Context) -> UIImagePickerController {
+    func makeUIViewController(context: Context) -> UIViewController {
+        // 카메라 사용 가능 여부 체크
+        guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
+            print("카메라를 사용할 수 없습니다.")
+            // 카메라를 사용할 수 없는 경우 빈 ViewController 반환
+            let alertController = UIAlertController(
+                title: "카메라 사용 불가",
+                message: "이 기기에서는 카메라를 사용할 수 없습니다. 시뮬레이터가 아닌 실제 기기에서 테스트해주세요.",
+                preferredStyle: .alert
+            )
+            alertController.addAction(UIAlertAction(title: "확인", style: .default) { _ in
+                onImageCaptured(nil)
+            })
+
+            let viewController = UIViewController()
+            DispatchQueue.main.async {
+                viewController.present(alertController, animated: true)
+            }
+            return viewController
+        }
+
         let picker = UIImagePickerController()
         picker.delegate = context.coordinator
         picker.sourceType = .camera
         picker.allowsEditing = false
+        picker.cameraCaptureMode = .photo
+        picker.cameraDevice = .rear
+
         return picker
     }
 
-    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)

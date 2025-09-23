@@ -11,7 +11,9 @@ struct VehicleImageGallery: View {
     @Binding var currentImageIndex: Int
     let images: [String]
     let onBackTap: () -> Void
-    let onShareTap: () -> Void
+    // 편집 버튼 표시 여부 및 액션
+    var showsEditButton: Bool = false
+    let onEditTap: () -> Void
 
     @State private var isExpanded = false
 
@@ -20,13 +22,13 @@ struct VehicleImageGallery: View {
             ZStack {
                 TabView(selection: $currentImageIndex) {
                     ForEach(0..<images.count, id: \.self) { index in
-                        Image("bannerImage")
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
+                        RemoteOrAssetImage(images[index])
                             .tag(index)
                     }
                 }
-                .frame(height: 250)
+                // 헤더 이미지가 상단 안전영역까지 확장되도록 safeArea 상단만큼 높이를 늘리고, 위로 당겨 붙입니다.
+                .frame(height: 250 + topSafeArea)
+                .padding(.top, -topSafeArea)
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
 
                 VStack {
@@ -58,17 +60,17 @@ struct VehicleImageGallery: View {
 
                         Spacer()
 
-                        Button(action: onShareTap) {
-                            Image(systemName: "square.and.arrow.up")
-                                .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
-                                .background(Color.black.opacity(0.5))
-                                .clipShape(Circle())
+                        if showsEditButton {
+                            Button(action: onEditTap) {
+                                Image(systemName: "pencil")
+                                    .foregroundColor(.white)
+                                    .frame(width: 32, height: 32)
+                                    .background(Color.black.opacity(0.5))
+                                    .clipShape(Circle())
+                            }
+                            .padding(.trailing, 16)
                         }
-                        .padding(.trailing, 16)
                     }
-                    .padding(.top, 16)
-
                     Spacer()
                 }
             }
@@ -81,6 +83,7 @@ struct VehicleImageGallery: View {
                             ThumbnailImageView(
                                 index: index,
                                 currentIndex: currentImageIndex,
+                                imageString: images[index],
                                 onTap: {
                                     withAnimation {
                                         currentImageIndex = index
@@ -119,6 +122,7 @@ struct VehicleImageGallery: View {
                                     ThumbnailImageView(
                                         index: index,
                                         currentIndex: currentImageIndex,
+                                        imageString: images[index],
                                         onTap: {
                                             withAnimation {
                                                 currentImageIndex = index
@@ -127,7 +131,7 @@ struct VehicleImageGallery: View {
                                     )
                                 }
                             }
-                            .padding(.horizontal, 16)
+                            .padding(.leading, 16)
                         }
 
                         // +버튼 (5개 이상일 때만 표시)
@@ -159,19 +163,26 @@ struct VehicleImageGallery: View {
             }
             .padding(.vertical, 16)
         }
+        .ignoresSafeArea(edges: .top)
     }
+}
+
+private var topSafeArea: CGFloat {
+    let scenes = UIApplication.shared.connectedScenes
+    let windowScene = scenes.first as? UIWindowScene
+    let window = windowScene?.windows.first { $0.isKeyWindow }
+    return window?.safeAreaInsets.top ?? 0
 }
 
 struct ThumbnailImageView: View {
     let index: Int
     let currentIndex: Int
+    let imageString: String
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
-            Image("bannerImage")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+            RemoteOrAssetImage(imageString)
                 .frame(width: 64, height: 48)
                 .clipped()
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -186,11 +197,51 @@ struct ThumbnailImageView: View {
     }
 }
 
+// MARK: - RemoteOrAssetImage helper
+private struct RemoteOrAssetImage: View {
+    private let source: String
+    init(_ source: String) { self.source = source }
+
+    var body: some View {
+        if let url = urlFrom(source) {
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.gray.opacity(0.15)
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    }
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                case .failure:
+                    Image("bannerImage").resizable().scaledToFill()
+                @unknown default:
+                    Image("bannerImage").resizable().scaledToFill()
+                }
+            }
+        } else {
+            Image(source.isEmpty ? "bannerImage" : source)
+                .resizable()
+                .scaledToFill()
+        }
+    }
+
+    private func urlFrom(_ s: String?) -> URL? {
+        guard let s = s, !s.isEmpty else { return nil }
+        // Prefer original (Firebase download URLs include encoded path), then decoded as fallback
+        if let u = URL(string: s) { return u }
+        if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
+        return nil
+    }
+}
+
 #Preview {
     VehicleImageGallery(
         currentImageIndex: .constant(0),
         images: Array(1...8).map { "test\($0)" }, // 8개 이미지로 테스트
         onBackTap: {},
-        onShareTap: {}
+        showsEditButton: true,
+        onEditTap: {}
     )
 }

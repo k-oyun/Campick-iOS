@@ -30,6 +30,7 @@ struct ChatRoomView: View {
     @State private var selectedImage: UIImage? = nil
     @State private var pendingImage: UIImage? = nil
     @State private var keyboardHeight: CGFloat = 0
+    @State private var permissionAlert: PermissionAlert?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -75,8 +76,8 @@ struct ChatRoomView: View {
             if showAttachmentMenu {
                 AttachmentMenu(
                     showAttachmentMenu: $showAttachmentMenu,
-                    showImagePicker: $showImagePicker,
-                    showCamera: $showCamera
+                    onPhotoTap: { requestPhotoAccess() },
+                    onCameraTap: { requestCameraAccess() }
                 )
             }
         }
@@ -86,7 +87,7 @@ struct ChatRoomView: View {
         .ignoresSafeArea(edges: .bottom)
         // 이미지 선택
         .sheet(isPresented: $showImagePicker) {
-            ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+            MediaPickerSheet(source: .photoLibrary, selectedImage: $selectedImage)
                 .onChange(of: selectedImage) { _, newValue in
                     if let img = newValue {
                         pendingImage = img
@@ -104,6 +105,9 @@ struct ChatRoomView: View {
                         selectedImage = nil
                     }
                 }
+        }
+        .alert(item: $permissionAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("확인")))
         }
         
         // 키보드 이벤트 감지
@@ -214,12 +218,44 @@ struct ChatRoomView: View {
         openURL(url)
 #endif
     }
+
+    private func requestPhotoAccess() {
+        MediaPermissionManager.requestPhotoPermission { granted in
+            if granted {
+                showImagePicker = true
+            } else {
+                permissionAlert = PermissionAlert(
+                    title: "사진 접근이 제한되었습니다",
+                    message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
+                )
+            }
+        }
+    }
+
+    private func requestCameraAccess() {
+        MediaPermissionManager.requestCameraPermission { granted in
+            if granted {
+                showCamera = true
+            } else {
+                permissionAlert = PermissionAlert(
+                    title: "카메라 접근이 제한되었습니다",
+                    message: "설정 앱에서 카메라 접근 권한을 허용한 뒤 다시 시도해주세요."
+                )
+            }
+        }
+    }
     
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
     }
+}
+
+private struct PermissionAlert: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
 }
 // MARK: - Preview
 #Preview {

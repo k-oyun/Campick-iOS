@@ -28,12 +28,18 @@ final class AuthInterceptor: RequestInterceptor {
         if let url = request.url?.absoluteString {
             let isAuthEndpoint = url.contains("/api/member/login") ||
                                 url.contains("/api/member/signup") ||
-                                url.contains("/api/member/email/")
+                                url.contains("/api/member/email/") ||
+                                url.contains("/api/member/reissue")
             if !isAuthEndpoint {
                 let token = TokenManager.shared.accessToken
                 if !token.isEmpty {
-                    request.setValue("Bearer eyJhbGciOiJIUzI1NiJ9.eyJjYXRlZ29yeSI6ImFjY2VzcyIsImlkIjoxMiwicm9sZSI6IlJPTEVfVVNFUiIsImlhdCI6MTc1ODMyNDUyMywiZXhwIjoxNzU4MzI2MzIzfQ.klisE0qi7ZrkSkDVNXEIk75DMihS9m9_OTT0HGE71Tk", forHTTPHeaderField: "Authorization")
+                    request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+                    print("🔑 AuthInterceptor: Added Bearer token to \(url)")
+                } else {
+                    print("❌ AuthInterceptor: No token available for \(url)")
                 }
+            } else {
+                print("🚫 AuthInterceptor: Skipping auth for endpoint \(url)")
             }
         }
         completion(.success(request))
@@ -47,7 +53,35 @@ final class AuthInterceptor: RequestInterceptor {
         dueTo error: Error,
         completion: @escaping (RetryResult) -> Void
     ) {
-        // 현재는 액세스 토큰만 사용하므로 재시도 로직은 비활성화
-        completion(.doNotRetry)
+        // 401 응답 시 한 번만 토큰 재발급을 시도하고 원 요청을 재시도합니다.
+        // 로그인/회원가입/이메일/재발급 요청 자체는 제외합니다.
+        let urlString = request.request?.url?.absoluteString ?? ""
+        let isAuthEndpoint = urlString.contains("/api/member/login") ||
+                            urlString.contains("/api/member/signup") ||
+                            urlString.contains("/api/member/email/") ||
+                            urlString.contains("/api/member/reissue")
+
+        let statusCode: Int = (request.task?.response as? HTTPURLResponse)?.statusCode ?? -1
+
+        guard statusCode == 401, request.retryCount == 0, !isAuthEndpoint else {
+            completion(.doNotRetry)
+            return
+        }
+
+        // 비동기 토큰 재발급 후 재시도
+        Task {
+            do {
+                let newToken = try await AuthAPI.reissueAccessToken()
+                await MainActor.run { TokenManager.shared.saveAccessToken(newToken) }
+                completion(.retry)
+            } catch {
+                // 재발급 실패 시 전역 로그아웃 유도
+                TokenManager.shared.cancelAutoRefresh()
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .tokenReissueFailed, object: nil)
+                }
+                completion(.doNotRetry)
+            }
+        }
     }
 }

@@ -10,10 +10,14 @@ import SwiftUI
 struct VehicleSubmitButton: View {
     let action: () -> Void
     let isLoading: Bool
+    let label: String
+    let loadingLabel: String
 
-    init(action: @escaping () -> Void, isLoading: Bool = false) {
+    init(action: @escaping () -> Void, isLoading: Bool = false, label: String = "매물 등록하기", loadingLabel: String = "등록 중...") {
         self.action = action
         self.isLoading = isLoading
+        self.label = label
+        self.loadingLabel = loadingLabel
     }
 
     var body: some View {
@@ -33,7 +37,7 @@ struct VehicleSubmitButton: View {
                             .scaleEffect(0.8)
                     }
 
-                    Text(isLoading ? "등록 중..." : "매물 등록하기")
+                    Text(isLoading ? loadingLabel : label)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                 }

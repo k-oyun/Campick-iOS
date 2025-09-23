@@ -6,18 +6,20 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct FindVehicleView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var tabRouter: TabRouter
     @StateObject private var vm = FindVehicleViewModel()
+    // 홈 등에서 진입 시 초기 적용할 차량 종류(옵션)
+    var initialTypes: [String]? = nil
+    @State private var didApplyInitial = false
 
     var body: some View {
         ZStack {
             AppColors.background.edgesIgnoringSafeArea(.all)
             VStack {
-                TopBarView(title: "매물 찾기") {
-                    dismiss()
-                }
 
                 // 매물 검색 필드
                 ZStack(alignment: .leading) {
@@ -49,32 +51,6 @@ struct FindVehicleView: View {
                 .padding(.horizontal, 12)
                 .padding(.bottom, 4)
                 
-                // 자동차 브랜드 선택(선택)
-//                ScrollView(.horizontal, showsIndicators: false) {
-//                    HStack(spacing: 12) {
-//                        ForEach(vehicleType, id: \.self) { brand in
-//                            Chip(title: brand,
-//                                 isSelected: selectedBrands.contains(brand)) {
-//                                if brand == "전체" {
-//                                    selectedBrands = ["전체"]
-//                                } else {
-//                                    if
-//                                        selectedBrands.contains(brand) {
-//                                        selectedBrands.remove(brand)
-//                                    } else {
-//                                        selectedBrands.insert(brand)
-//                                    }
-//                                    selectedBrands.remove("전체")
-//                                    if selectedBrands.isEmpty {
-//                                        selectedBrands = ["전체"]
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    .padding(.horizontal, 12)
-//                }
-
                 // 필터링
                 HStack(spacing: 12) {
                     Chip(title: "필터", systemImage: "line.3.horizontal.decrease.circle", isSelected: false) {
@@ -90,6 +66,11 @@ struct FindVehicleView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
+
+                // 적용된 필터/정렬 Chips (구분선 위)
+                appliedFiltersView
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
 
                 Rectangle()
                     .fill(Color.white.opacity(0.12))
@@ -137,7 +118,110 @@ struct FindVehicleView: View {
         }
         .onChange(of: vm.filterOptions) { _, _ in vm.onChangeFilter() }
         .onChange(of: vm.selectedSort) { _, _ in vm.onChangeSort() }
-        .onAppear { vm.onAppear() }
+        .onAppear {
+            if !didApplyInitial, let types = initialTypes, !types.isEmpty {
+                let allowed: Set<String> = ["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]
+                let valid = types.first(where: { allowed.contains($0) })
+                vm.filterOptions.selectedVehicleTypes = valid.map { Set([$0]) } ?? []
+                didApplyInitial = true
+                vm.onChangeFilter()
+                // 초기 타입은 1회성으로 사용 후 초기화 (재진입 시 중복 적용 방지)
+                tabRouter.initialVehicleTypes = nil
+            } else {
+                vm.onAppear()
+            }
+        }
+        .padding(.bottom, 60)
+    }
+}
+
+// MARK: - Applied Filters Chips
+extension FindVehicleView {
+    private var appliedFiltersView: some View {
+        let currentYear = Double(Calendar.current.component(.year, from: Date()))
+        let defaultPrice: ClosedRange<Double> = 0...10000
+        let defaultMileage: ClosedRange<Double> = 0...100000
+        let defaultYear: ClosedRange<Double> = 1990...currentYear
+
+        let priceActive = vm.filterOptions.priceRange != defaultPrice
+        let mileageActive = vm.filterOptions.mileageRange != defaultMileage
+        let yearActive = vm.filterOptions.yearRange != defaultYear
+        let types = Array(vm.filterOptions.selectedVehicleTypes)
+        let anyFilterActive = priceActive || mileageActive || yearActive || !types.isEmpty
+
+        return VStack(alignment: .leading, spacing: 8) {
+            if anyFilterActive {
+                FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
+                    // 정렬 조건 Chip
+                    if vm.selectedSort == .recentlyAdded {
+                        // 최근 등록순은 제거(X) 불가 - 표시만
+                        Chip(text: vm.selectedSort.rawValue,
+                             foreground: .white,
+                             background: AppColors.brandOrange,
+                             horizontalPadding: 10,
+                             verticalPadding: 6,
+                             font: .system(size: 12),
+                             cornerStyle: .capsule,
+                             action: nil)
+                    } else {
+                        // 다른 정렬이 선택된 경우 제거 시 최근 등록순으로 복귀
+                        RemovableChip(text: vm.selectedSort.rawValue) {
+                            vm.selectedSort = .recentlyAdded
+                        }
+                    }
+                    if priceActive {
+                        RemovableChip(text: "\(Int(vm.filterOptions.priceRange.lowerBound))~\(Int(vm.filterOptions.priceRange.upperBound))만원") {
+                            vm.filterOptions.priceRange = defaultPrice
+                            vm.selectedSort = .recentlyAdded
+                        }
+                    }
+                    if mileageActive {
+                        RemovableChip(text: "\(Int(vm.filterOptions.mileageRange.lowerBound))~\(Int(vm.filterOptions.mileageRange.upperBound))km") {
+                            vm.filterOptions.mileageRange = defaultMileage
+                            vm.selectedSort = .recentlyAdded
+                        }
+                    }
+                    if yearActive {
+                        RemovableChip(text: "\(Int(vm.filterOptions.yearRange.lowerBound))~\(Int(vm.filterOptions.yearRange.upperBound))년") {
+                            vm.filterOptions.yearRange = defaultYear
+                            vm.selectedSort = .recentlyAdded
+                        }
+                    }
+                    ForEach(types, id: \.self) { t in
+                        RemovableChip(text: t) {
+                            vm.filterOptions.selectedVehicleTypes.remove(t)
+                            vm.selectedSort = .recentlyAdded
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct RemovableChip: View {
+    let text: String
+    let onRemove: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Chip(text: text,
+                 foreground: .white,
+                 background: AppColors.brandOrange,
+                 horizontalPadding: 10,
+                 verticalPadding: 6,
+                 font: .system(size: 12),
+                 cornerStyle: .capsule,
+                 action: nil)
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .background(Color.black.opacity(0.0001))
+            }
+            .offset(x: 6, y: -6)
+            .buttonStyle(.plain)
+        }
     }
 }
 

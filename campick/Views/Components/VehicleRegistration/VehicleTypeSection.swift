@@ -11,6 +11,7 @@ struct VehicleTypeSection: View {
     @Binding var vehicleType: String
     @Binding var showingVehicleTypePicker: Bool
     let errors: [String: String]
+    let availableTypes: [String]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -19,12 +20,12 @@ struct VehicleTypeSection: View {
             Button(action: { showingVehicleTypePicker = true }) {
                 StyledInputContainer(hasError: errors["vehicleType"] != nil) {
                     HStack {
-                        if let selectedType = vehicleTypes.first(where: { $0.value == vehicleType }) {
-                            Image(systemName: selectedType.iconName)
+                        if !vehicleType.isEmpty && availableTypes.contains(vehicleType) {
+                            Image(systemName: getIconForType(vehicleType))
                                 .foregroundColor(AppColors.brandOrange)
                                 .font(.system(size: 14))
 
-                            Text(selectedType.label)
+                            Text(vehicleType)
                                 .foregroundColor(.white)
                                 .font(.system(size: 14))
                         } else {
@@ -44,6 +45,17 @@ struct VehicleTypeSection: View {
             }
 
             ErrorText(message: errors["vehicleType"])
+        }
+    }
+
+    private func getIconForType(_ type: String) -> String {
+        let t = type.lowercased()
+        switch t {
+        case "모터홈", "motorhome": return "house.circle"
+        case "픽업트럭", "pickup": return "truck.box"
+        case "suv": return "car.side"
+        case "밴", "van": return "bus"
+        default: return "car"
         }
     }
 }

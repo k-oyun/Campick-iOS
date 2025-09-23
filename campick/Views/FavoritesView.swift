@@ -9,18 +9,12 @@ import SwiftUI
 
 struct FavoritesView: View {
     @Environment(\.dismiss) private var dismiss
-
-    @State private var favorites: [Vehicle] = [
-        Vehicle(id: "f1", imageName: "testImage1", thumbnailURL: nil, title: "현대 포레스트", price: "8,900만원", year: "2022년", mileage: "15,000km", fuelType: "-", transmission: "-", location: "서울", status: .active, postedDate: nil, isOnSale: true, isFavorite: true),
-        Vehicle(id: "f2", imageName: "testImage2", thumbnailURL: nil, title: "기아 봉고 캠퍼", price: "4,200만원", year: "2021년", mileage: "32,000km", fuelType: "-", transmission: "-", location: "부산", status: .reserved, postedDate: nil, isOnSale: true, isFavorite: true),
-        Vehicle(id: "f3", imageName: "testImage3", thumbnailURL: nil, title: "스타리아 캠퍼", price: "7,200만원", year: "2023년", mileage: "8,000km", fuelType: "-", transmission: "-", location: "인천", status: .active, postedDate: nil, isOnSale: true, isFavorite: true)
-    ]
+    @StateObject private var vm = FavoritesViewModel()
 
     var body: some View {
         ZStack {
             AppColors.background.edgesIgnoringSafeArea(.all)
             VStack(spacing: 0) {
-                TopBarView(title: "찜 목록") { dismiss() }
 
                 Rectangle()
                     .fill(Color.white.opacity(0.12))
@@ -31,7 +25,7 @@ struct FavoritesView: View {
                 ScrollView {
                     let columns = [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)]
                     LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(favorites, id: \.id) { vehicle in
+                        ForEach(vm.favorites, id: \.id) { vehicle in
                             NavigationLink {
                                 VehicleDetailView(vehicleId: vehicle.id)
                             } label: {
@@ -43,13 +37,18 @@ struct FavoritesView: View {
                     .padding(.vertical, 12)
                 }
             }
+            if vm.isLoading {
+                ProgressView()
+                    .scaleEffect(1.2)
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .task { vm.load() }
     }
 }
 
 #Preview {
     NavigationStack { FavoritesView() }
 }
-

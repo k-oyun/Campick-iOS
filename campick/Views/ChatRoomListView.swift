@@ -71,7 +71,7 @@ struct ChatRoomListView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
         VStack(alignment: .center) {
-            TopBarView(title: "매물 찾기") {
+            TopBarView(title: "채팅") {
                 dismiss()
             }
             if viewModel.chats.isEmpty {

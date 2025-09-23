@@ -2,18 +2,53 @@
 //  ProductAPI.swift
 //  campick
 //
-//  Created by Assistant on 9/19/25.
+//  Created by 호집 on 9/19/25.
 //
 
 import Foundation
 import Alamofire
 
 enum ProductAPI {
-    static func fetchProducts(page: Int? = nil, size: Int? = nil) async throws -> ProductListDTO {
+    static func fetchProductInfo() async throws -> ProductInfoResponse {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.productInfo.url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ProductInfoApiResponse.self).value
+            if wrapped.success, let data = wrapped.data {
+                return data
+            } else {
+                throw NSError(domain: "ProductInfoError", code: -1, userInfo: [NSLocalizedDescriptionKey: wrapped.message])
+            }
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    static func fetchProducts(
+        page: Int? = nil,
+        size: Int? = nil,
+        filter: ProductFilterRequest? = nil,
+        sort: ProductSort? = nil
+    ) async throws -> Page<ProductItemDTO> {
         do {
             var params: [String: Any] = [:]
             if let page = page { params["page"] = page }
             if let size = size { params["size"] = size }
+            if let f = filter {
+                if let v = f.mileageFrom { params["mileageFrom"] = v }
+                if let v = f.mileageTo { params["mileageTo"] = v }
+                if let v = f.costFrom { params["costFrom"] = v }
+                if let v = f.costTo { params["costTo"] = v }
+                if let v = f.generationFrom { params["generationFrom"] = v }
+                if let v = f.generationTo { params["generationTo"] = v }
+                if let types = f.types, !types.isEmpty {
+                    params["types"] = types // encode as repeated keys
+                }
+            }
+            if let sort = sort {
+                params["sort"] = sort.queryValue
+            }
 
             let parameters: [String: Any]? = params.isEmpty ? nil : params
 
@@ -22,13 +57,85 @@ enum ProductAPI {
                     Endpoint.products.url,
                     method: .get,
                     parameters: parameters,
-                    encoding: URLEncoding.default
+                    encoding: URLEncoding(destination: .methodDependent, arrayEncoding: .noBrackets, boolEncoding: .literal)
                 )
                 .validate()
-            // 서버 응답: ApiResponse<ProductListDTO>
-            let wrapped = try await request.serializingDecodable(ApiResponse<ProductListDTO>.self).value
-            guard let list = wrapped.data else { return ProductListDTO(totalElements: 0, totalPages: 0, size: 0, content: [], number: 0, sort: ProductSortDTO(empty: true, sorted: false, unsorted: true), pageable: ProductPageableDTO(offset: 0, sort: ProductSortDTO(empty: true, sorted: false, unsorted: true), paged: true, pageNumber: 0, pageSize: 0, unpaged: true), numberOfElements: 0, first: true, last: true, empty: true) }
-            return list
+            // 서버 응답: ApiResponse<Page<ProductItemDTO>>
+            let wrapped = try await request.serializingDecodable(ApiResponse<Page<ProductItemDTO>>.self).value
+            return wrapped.data ?? Page<ProductItemDTO>.empty()
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    static func fetchProductDetail(productId: String) async throws -> ProductDetailDTO {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.productDetail(productId: productId).url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ProductDetailResponse.self).value
+            if let detail = wrapped.data {
+                return detail
+            } else {
+                throw NSError(domain: "ProductDetailError", code: -1, userInfo: [NSLocalizedDescriptionKey: wrapped.message ?? "상품 정보를 불러오지 못했습니다."])
+            }
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    // 내가 찜한 차량 목록 조회 (GET /api/favorite)
+    static func fetchFavorites() async throws -> [ProductItemDTO] {
+        do {
+            let request = APIService.shared
+                .request(Endpoint.favorites.url, method: .get)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ApiResponse<[ProductItemDTO]>.self).value
+            return wrapped.data ?? []
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    // 매물 등록 요청: VehicleRegistrationRequest를 서버로 전송
+    // 서버 응답 예시: {"status":201,"success":true,"message":"매물 생성 성공","data":106}
+    static func createProduct(_ requestBody: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
+        do {
+            AppLog.info("Creating product (title: \(requestBody.title))", category: "PRODUCT")
+            let request = APIService.shared
+                .request(Endpoint.registerProduct.url, method: .post, parameters: requestBody, encoder: JSONParameterEncoder.default)
+                .validate()
+            let wrapped = try await request.serializingDecodable(ApiResponse<Int>.self).value
+            return wrapped
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    // 좋아요 토글 (PATCH /api/product/{productId}/like)
+    static func likeProduct(productId: String) async throws {
+        do {
+            AppLog.info("Like product: \(productId)", category: "PRODUCT")
+            let request = APIService.shared
+                .request(Endpoint.productLike(productId: productId).url, method: .patch)
+                .validate()
+            _ = try await request.serializingData().value
+        } catch {
+            throw ErrorMapper.map(error)
+        }
+    }
+
+    // 매물 수정 (PATCH /api/product/{productId})
+    static func updateProduct(productId: String, body: VehicleRegistrationRequest) async throws -> ApiResponse<Int> {
+        do {
+            AppLog.info("Updating product (id: \(productId), title: \(body.title))", category: "PRODUCT")
+            let request = APIService.shared
+                .request(Endpoint.productDetail(productId: productId).url,
+                         method: .patch,
+                         parameters: body,
+                         encoder: JSONParameterEncoder.default)
+                .validate()
+            return try await request.serializingDecodable(ApiResponse<Int>.self).value
         } catch {
             throw ErrorMapper.map(error)
         }

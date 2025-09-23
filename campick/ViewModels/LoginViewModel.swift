@@ -25,26 +25,68 @@ final class LoginViewModel: ObservableObject {
         Task {
             defer { isLoading = false }
             do {
+                AppLog.debug("login request start for email: \(self.email)", category: "AUTH")
                 let res = try await AuthAPI.login(email: email, password: password)
+                // Auto-login preference disabled (pending decision)
+                // AuthPreferences.keepLoggedIn = self.keepLoggedIn
                 TokenManager.shared.saveAccessToken(res.accessToken)
+                // Refresh token persistence disabled (pending auto-login decision)
+                // TokenManager.shared.saveRefreshToken(res.refreshToken)
 
-                // 서버 로그인 응답에 user 정보가 없을 수 있어 안전 매핑
-                let u = res.user
-                let name = u?.name ?? u?.nickname ?? ""
-                let nick = u?.nickname ?? u?.name ?? ""
-                let phone = u?.mobileNumber ?? ""
-                let memberId = u?.memberId ?? u?.id ?? ""
-                let dealerId = u?.dealerId ?? ""
-                let role = u?.role ?? ""
+                if let user = res.user {
+                    AppLog.info("Applying user DTO with memberId: \(user.memberId ?? "nil")", category: "AUTH")
+                    UserState.shared.applyUserDTO(user)
 
-                UserState.shared.saveUserData(
-                    name: name,
-                    nickName: nick,
-                    phoneNumber: phone,
-                    memberId: memberId,
-                    dealerId: dealerId,
-                    role: role
-                )
+                    if UserState.shared.memberId.isEmpty, let fallbackMemberId = res.memberId, !fallbackMemberId.isEmpty {
+                        AppLog.warn("UserState memberId empty. Falling back to response memberId: \(fallbackMemberId)", category: "AUTH")
+                        let current = UserState.shared
+                        let phoneValue = current.phoneNumber.isEmpty ? (user.mobileNumber ?? res.phoneNumber ?? "") : current.phoneNumber
+                        let dealerValue = current.dealerId.isEmpty ? (res.dealerId ?? "") : current.dealerId
+                        let roleValue = current.role.isEmpty ? (res.role ?? "") : current.role
+                        let emailValue = current.email.isEmpty ? (user.email ?? email) : current.email
+                        let imageUrl = current.profileImageUrl.isEmpty ? (user.resolvedProfileImageURL ?? res.profileImageUrl ?? res.profileThumbnailUrl ?? "") : current.profileImageUrl
+                        let nicknameValue = current.nickName.isEmpty ? (user.nickname ?? res.nickname ?? "") : current.nickName
+
+                        AppLog.debug("Saving fallback data -> phone: \(phoneValue), dealerId: \(dealerValue), role: \(roleValue), email: \(emailValue), imageUrl: \(imageUrl)", category: "AUTH")
+                        UserState.shared.saveUserData(
+                            name: current.name,
+                            nickName: nicknameValue,
+                            phoneNumber: phoneValue,
+                            memberId: fallbackMemberId,
+                            dealerId: dealerValue,
+                            role: roleValue,
+                            email: emailValue,
+                            profileImageUrl: imageUrl,
+                            joinDate: current.joinDate
+                        )
+                    }
+                } else {
+                    if let memberId = res.memberId, !memberId.isEmpty {
+                        AppLog.info("No user DTO. Using flat memberId: \(memberId)", category: "AUTH")
+                        let imageUrl = res.profileImageUrl ?? res.profileThumbnailUrl ?? ""
+                        UserState.shared.saveUserData(
+                            name: "",
+                            nickName: res.nickname ?? "",
+                            phoneNumber: res.phoneNumber ?? "",
+                            memberId: memberId,
+                            dealerId: res.dealerId ?? "",
+                            role: res.role ?? "",
+                            email: email,
+                            profileImageUrl: imageUrl
+                        )
+                    } else {
+                        AppLog.warn("No user DTO and flat memberId missing. Saving minimal data", category: "AUTH")
+                        UserState.shared.saveUserData(
+                            name: "",
+                            nickName: res.nickname ?? "",
+                            phoneNumber: "",
+                            memberId: "",
+                            dealerId: "",
+                            role: "",
+                            email: email
+                        )
+                    }
+                }
             } catch {
                 if let appError = error as? AppError {
                     switch appError {

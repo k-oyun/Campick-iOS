@@ -6,12 +6,33 @@
 //
 
 import SwiftUI
+import UIKit
+import Alamofire
 
 struct ProfileEditModal: View {
-    @ObservedObject var viewModel: ProfileViewViewModel
-    @Environment(\.presentationMode) var presentationMode
+    let profile: ProfileResponse
+    let onSave: () -> Void
+    @Environment(\.dismiss) private var dismiss
     @State private var showImagePicker = false
     @State private var selectedImage: UIImage?
+    @State private var nickName: String
+    @State private var description: String
+    @State private var mobileNumber: String
+    @State private var isUpdating = false
+    @State private var isImageUploading = false
+    // 로그인 전환은 RootView에서 일괄 처리
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
+    @State private var permissionAlert: PermissionAlertItem?
+
+    init(profile: ProfileResponse, onSave: @escaping () -> Void) {
+        self.profile = profile
+        self.onSave = onSave
+        self._nickName = State(initialValue: profile.nickname)
+        self._description = State(initialValue: profile.description ?? "")
+        // UserState에서 현재 사용자의 전화번호 가져오기
+        self._mobileNumber = State(initialValue: UserState.shared.phoneNumber)
+    }
 
     var body: some View {
         ZStack {
@@ -30,7 +51,7 @@ struct ProfileEditModal: View {
                     Spacer()
 
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        dismiss()
                     }) {
                         Image(systemName: "xmark")
                             .foregroundColor(.white)
@@ -45,7 +66,17 @@ struct ProfileEditModal: View {
                     // Profile Image Section with Camera Overlay
                     VStack(spacing: 12) {
                         Button(action: {
-                            showImagePicker = true
+                            guard !isImageUploading && !isUpdating else { return }
+                            MediaPermissionManager.requestPhotoPermission { granted in
+                                if granted {
+                                    showImagePicker = true
+                                } else {
+                                    permissionAlert = PermissionAlertItem(
+                                        title: "사진 접근이 제한되었습니다",
+                                        message: "설정 앱에서 사진 접근 권한을 허용한 뒤 다시 시도해주세요."
+                                    )
+                                }
+                            }
                         }) {
                             ZStack {
                                 if let selectedImage = selectedImage {
@@ -55,7 +86,7 @@ struct ProfileEditModal: View {
                                         .frame(width: 80, height: 80)
                                         .clipShape(Circle())
                                 } else {
-                                    AsyncImage(url: URL(string: viewModel.userProfile.avatar)) { image in
+                                    AsyncImage(url: URL(string: profile.profileImage ?? "")) { image in
                                         image
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
@@ -76,27 +107,38 @@ struct ProfileEditModal: View {
                             }
                         }
 
-                        Text("프로필 사진 변경")
+                        if isImageUploading {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.6)
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                Text("이미지 업로드 중...")
+                            }
                             .foregroundColor(.white.opacity(0.8))
-                            .font(.system(size: 14))
+                            .font(.system(size: 12))
+                        } else {
+                            Text("프로필 사진 변경")
+                                .foregroundColor(.white.opacity(0.8))
+                                .font(.system(size: 14))
+                        }
                     }
 
-                    // Form Fields (NO LOCATION FIELD as requested)
+                    // Form Fields
                     VStack(spacing: 12) {
                         FormField(
                             title: "닉네임",
-                            text: $viewModel.editForm.name,
+                            text: $nickName,
                             placeholder: "닉네임을 입력하세요"
                         )
                         FormField(
                             title: "자기소개",
-                            text: $viewModel.editForm.bio,
+                            text: $description,
                             placeholder: "자기소개를 입력하세요",
                             isMultiline: true
                         )
                         PhoneFormField(
                             title: "연락처",
-                            text: $viewModel.editForm.phone,
+                            text: $mobileNumber,
                             placeholder: "010-1234-5678"
                         )
                     }
@@ -104,36 +146,117 @@ struct ProfileEditModal: View {
                     Spacer()
 
                     Button(action: {
-                        // TODO: Save profile changes
-                        presentationMode.wrappedValue.dismiss()
+                        Task {
+                            await saveProfileChanges()
+                        }
                     }) {
-                        Text("저장하기")
-                            .foregroundColor(.white)
-                            .font(.system(size: 16, weight: .semibold))
-                            .frame(maxWidth: .infinity, minHeight: 48)
-                            .background(
-                                LinearGradient(
-                                    colors: [AppColors.brandOrange, AppColors.brandLightOrange],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        if isUpdating {
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                Text("저장 중...")
+                            }
+                        } else {
+                            Text("저장하기")
+                        }
                     }
+                    .foregroundColor(.white)
+                    .font(.system(size: 16, weight: .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .background(
+                        LinearGradient(
+                            colors: isUpdating ? [Color.gray, Color.gray] : [AppColors.brandOrange, AppColors.brandLightOrange],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .disabled(isUpdating || nickName.isEmpty)
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             }
         }
-        .onAppear {
-            // Initialize form with current profile data
-            viewModel.editForm.name = viewModel.userProfile.name
-            viewModel.editForm.bio = viewModel.userProfile.bio ?? ""
-            viewModel.editForm.phone = viewModel.userProfile.phone ?? ""
-        }
         .sheet(isPresented: $showImagePicker) {
-            ImagePickerView(sourceType: .photoLibrary, selectedImage: $selectedImage)
+            MediaPickerSheet(source: .photoLibrary, selectedImage: $selectedImage)
         }
+        // 로그인 전환은 RootView의 isLoggedIn 변화로 일원화
+        .alert("오류", isPresented: $showErrorAlert) {
+            Button("확인") { }
+        } message: {
+            Text(errorMessage)
+        }
+        .alert(item: $permissionAlert) { alert in
+            Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("확인")))
+        }
+    }
+
+    private struct PermissionAlertItem: Identifiable {
+        let id = UUID()
+        let title: String
+        let message: String
+    }
+
+    private func saveProfileChanges() async {
+        isUpdating = true
+
+        do {
+            // 1. 이미지가 변경된 경우 먼저 이미지 업로드
+            if let selectedImage = selectedImage {
+                isImageUploading = true
+                _ = try await ProfileService.updateMemberProfileImage(selectedImage)
+                isImageUploading = false
+            }
+
+            // 2. 프로필 정보 업데이트
+            // 전화번호에서 하이픈 제거
+            let cleanMobileNumber = mobileNumber.replacingOccurrences(of: "-", with: "")
+            try await ProfileService.updateMemberProfile(
+                nickname: nickName,
+                description: description,
+                mobileNumber: cleanMobileNumber
+            )
+
+            // 3. 성공 시 완료 처리
+            await MainActor.run {
+                onSave()
+                dismiss()
+            }
+
+        } catch {
+            // 상태 코드 기반 분기: 401만 재로그인 유도, 403은 알림만 표시
+            if let afError = error as? AFError,
+               case let .responseValidationFailed(reason) = afError,
+               case let .unacceptableStatusCode(code) = reason {
+                if code == 401 {
+                    await MainActor.run {
+                        // 전역 로그아웃 → RootView에서 로그인 화면으로 전환됨
+                        UserState.shared.logout()
+                    }
+                } else if code == 403 {
+                    await MainActor.run {
+                        errorMessage = "프로필 이미지를 변경할 권한이 없습니다. 잠시 후 다시 시도하거나 로그인 상태를 확인해주세요."
+                        showErrorAlert = true
+                    }
+                } else {
+                    await MainActor.run {
+                        errorMessage = "요청 처리 중 오류가 발생했습니다. (코드: \(code))"
+                        showErrorAlert = true
+                    }
+                }
+            } else {
+                // 기타 에러 처리
+                await MainActor.run {
+                    print("Profile update error: \(error)")
+                    errorMessage = "프로필 업데이트에 실패했습니다. 다시 시도해주세요."
+                    showErrorAlert = true
+                }
+            }
+        }
+
+        isUpdating = false
+        isImageUploading = false
     }
 }
 
@@ -224,13 +347,17 @@ struct CustomTextEditor: UIViewRepresentable {
 
         func textViewDidEndEditing(_ textView: UITextView) {
             if textView.text.isEmpty {
+                parent.text = ""
                 textView.text = parent.placeholder
                 textView.textColor = UIColor.white.withAlphaComponent(0.5)
             }
         }
 
         func textViewDidChange(_ textView: UITextView) {
-            if textView.text != parent.placeholder {
+            if textView.text == parent.placeholder {
+                // placeholder가 보이는 상태일 때는 빈 문자열로 처리
+                parent.text = ""
+            } else {
                 parent.text = textView.text
             }
         }

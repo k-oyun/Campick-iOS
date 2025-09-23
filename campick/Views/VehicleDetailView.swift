@@ -10,33 +10,17 @@ import SwiftUI
 struct VehicleDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let vehicleId: String
+    let isOwnerHint: Bool
+    @StateObject private var viewModel = VehicleDetailViewModel()
     @State private var currentImageIndex = 0
     @State private var showSellerModal = false
     @State private var isFavorite = false
     @State private var chatMessage = ""
+    @State private var navigateToEdit = false
 
-    private var vehicleData: VehicleData {
-        VehicleData(
-            id: vehicleId,
-            title: "현대 포레스트 프리미엄",
-            images: Array(1...8).map { _ in "bannerImage" }, // 8개 이미지로 확장 기능 테스트
-            price: 8900,
-            year: 2022,
-            mileage: 15000,
-            type: "모터홈",
-            description: "완벽한 상태의 프리미엄 모터홈입니다. 정기적인 관리로 최상의 컨디션을 유지하고 있으며, 모든 편의시설이 완비되어 있습니다. 전국 어디든 캐핑을 즐길 수 있는 최고의 선택입니다.",
-            seller: Seller(
-                id: "seller_001",
-                name: "김캠핑",
-                avatar: "bannerImage",
-                totalListings: 12,
-                totalSales: 8,
-                rating: 4.8,
-                isDealer: true
-            ),
-            location: "서울 강남구",
-            features: ["에어컨", "히터", "냉장고", "전자레인지", "화장실", "샤워시설", "소파베드", "테이블", "가스레인지", "오디오 시스템", "TV", "넓은 수납공간", "외부 차양", "태양광 패널", "인버터", "외부 샤워기"]
-        )
+    init(vehicleId: String, isOwnerHint: Bool = false) {
+        self.vehicleId = vehicleId
+        self.isOwnerHint = isOwnerHint
     }
 
     var body: some View {
@@ -44,39 +28,65 @@ struct VehicleDetailView: View {
             AppColors.background
                 .ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    VehicleImageGallery(
-                        currentImageIndex: $currentImageIndex,
-                        images: vehicleData.images,
-                        onBackTap: {
-                            dismiss()
-                        },
-                        onShareTap: {
-                            print("공유하기")
+            if let detail = viewModel.detail {
+                ScrollView {
+                    VStack {
+                        let isOwner: Bool = {
+                            if isOwnerHint { return true }
+                            let mine = UserState.shared.memberId.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let seller = detail.seller.id.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if let a = Int(mine), let b = Int(seller) { return a == b }
+                            return !mine.isEmpty && mine == seller
+                        }()
+                        VehicleImageGallery(
+                            currentImageIndex: $currentImageIndex,
+                            images: detail.images.isEmpty ? ["bannerImage"] : detail.images,
+                            onBackTap: { dismiss() },
+                            showsEditButton: isOwner,
+                            onEditTap: { navigateToEdit = true }
+                        )
+                        .ignoresSafeArea(edges: .top)
+                    }
+                    
+                    VStack(spacing: 20) {
+                        VehicleInfoCard(
+                            title: detail.title,
+                            priceText: detail.priceText,
+                            yearText: detail.yearText,
+                            mileageText: detail.mileageText,
+                            typeText: detail.typeText,
+                            location: detail.location
+                        )
+
+                        VehicleSellerCard(
+                            seller: detail.seller,
+                            onTap: { showSellerModal = true }
+                        )
+
+                        if !detail.features.isEmpty {
+                            VehicleFeaturesCard(features: detail.features)
                         }
-                    )
 
-                    VehicleInfoCard(
-                        title: vehicleData.title,
-                        price: vehicleData.price,
-                        year: vehicleData.year,
-                        mileage: vehicleData.mileage,
-                        type: vehicleData.type,
-                        location: vehicleData.location
-                    )
+                        VehicleDescriptionCard(description: detail.description)
 
-                    VehicleSellerCard(
-                        seller: vehicleData.seller,
-                        onTap: { showSellerModal = true }
-                    )
-
-                    VehicleFeaturesCard(features: vehicleData.features)
-
-                    VehicleDescriptionCard(description: vehicleData.description)
-
-                    Spacer(minLength: 120)
+                        Spacer(minLength: 120)
+                    }
+                    .padding(.horizontal, 16)
                 }
+            } else if viewModel.isLoading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+            } else if let error = viewModel.errorMessage {
+                VStack(spacing: 16) {
+                    Text(error)
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                    Button("다시 시도") {
+                        Task { await viewModel.load(productId: vehicleId) }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding()
             }
 
             VStack {
@@ -151,24 +161,21 @@ struct VehicleDetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .navigationDestination(isPresented: $navigateToEdit) {
+            VehicleRegistrationView(showBackButton: true, editingProductId: vehicleId)
+        }
         .sheet(isPresented: $showSellerModal) {
-            SellerModalView(seller: vehicleData.seller)
+            if let seller = viewModel.detail?.seller {
+                SellerModalView(seller: seller)
+            } else {
+                EmptyView()
+            }
+        }
+        .task { await viewModel.load(productId: vehicleId) }
+        .onChange(of: viewModel.detail?.isLiked ?? false) { isLiked in
+            isFavorite = isLiked
         }
     }
-}
-
-struct VehicleData {
-    let id: String
-    let title: String
-    let images: [String]
-    let price: Int
-    let year: Int
-    let mileage: Int
-    let type: String
-    let description: String
-    let seller: Seller
-    let location: String
-    let features: [String]
 }
 
 #Preview {

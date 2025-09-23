@@ -12,18 +12,21 @@ struct ProfileMenu: View {
     @Binding var showSlideMenu: Bool
     @State private var navigateToProfile = false
     @StateObject private var userState = UserState.shared
+    @StateObject private var viewModel = HomeProfileViewModel()
+    
+    
     
     var body: some View {
         ZStack{
-            if showSlideMenu {
-                Color.black.opacity(0.5)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showSlideMenu = false
-                        }
+            Color.black
+                .opacity(showSlideMenu ? 0.5 : 0)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showSlideMenu = false
                     }
-            }
+                }
             
             HStack {
                 Spacer()
@@ -52,25 +55,39 @@ struct ProfileMenu: View {
                         VStack(spacing: 16) {
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack(spacing: 12) {
-                                    Image("bannerImage",bundle: nil)
-                                        .resizable()
-                                        .frame(width: 40, height: 40)
-                                        .clipShape(Circle())
+                                    AsyncImage(url: URL(string: userState.profileImageUrl)) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Circle()
+                                            .fill(Color.white.opacity(0.2))
+                                            .overlay(
+                                                Image(systemName: "person.fill")
+                                                    .foregroundColor(.white.opacity(0.6))
+                                            )
+                                    }
+                                    .frame(width: 44, height: 44)
+                                    .clipShape(Circle())
                                     
                                     VStack(alignment: .leading, spacing: 4) {
-                                        Text(userState.name.isEmpty ? "사용자님" : userState.name)
-                                            .font(.system(size: 14, weight: .heavy))
+                                        Text(UserState.shared.nickName)
+                                            .font(.system(size: 15, weight: .semibold))
                                             .foregroundColor(.white)
-//                                        Text(userState.nickName.isEmpty ? "캠핑카 애호가" : userState.nickName)
-//                                            .font(.system(size: 11))
-//                                            .foregroundColor(.white.opacity(0.6))
+                                        if !userState.email.isEmpty {
+                                            Text(userState.email)
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.white.opacity(0.6))
+                                        }
                                     }
                                     .padding(.leading, 2)
                                 }
                                 .padding(.bottom,1)
                                 
                                 Button(action: {
-                                    showSlideMenu = false
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        showSlideMenu = false
+                                    }
                                     navigateToProfile = true
                                 }) {
                                     Text("프로필 보기")
@@ -91,7 +108,13 @@ struct ProfileMenu: View {
                             )
                             .padding(.horizontal)
                             VStack(spacing: 20){
-                                MenuItem(icon: "car.fill", title: "내 매물", subtitle: "등록한 매물 관리", destination: AnyView(Text("내 매물")), showSlideMenu: $showSlideMenu )
+                                MenuItem(
+                                    icon: "car.fill",
+                                    title: "내 매물",
+                                    subtitle: "등록한 매물 관리",
+                                    destination: AnyView(MyProductListView(memberId: userState.memberId)),
+                                    showSlideMenu: $showSlideMenu
+                                )
                                 MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3", destination: AnyView(ChatRoomListView()),  showSlideMenu: $showSlideMenu)
                             }
                             .padding(10)
@@ -101,7 +124,9 @@ struct ProfileMenu: View {
                         
                         Spacer()
                         
-                        Button(action: {}) {
+                        Button(action: {
+                            viewModel.logout()
+                        }) {
                             HStack {
                                 Image(systemName: "arrow.backward.square")
                                     .font(.system(size: 13))
@@ -119,15 +144,15 @@ struct ProfileMenu: View {
                     .ignoresSafeArea()
                 }
                 .navigationDestination(isPresented: $navigateToProfile) {
-                    ProfileView(userId: userState.memberId, isOwnProfile: true)
+                    ProfileView(memberId: userState.memberId, isOwnProfile: true, showBackButton: true, showTopBar: true)
                 }
                 .frame(width: 280)
                 .offset(x: showSlideMenu ? 0 : 300) // 오른쪽에서 슬라이드
+                .animation(.easeInOut(duration: 0.3), value: showSlideMenu)
                 .environmentObject(UserState.shared)
             }
         }
-        
+        .zIndex(300)
         
     }
 }
-

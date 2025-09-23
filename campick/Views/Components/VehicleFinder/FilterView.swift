@@ -6,14 +6,26 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct FilterOptions: Equatable {
-    var priceRange: ClosedRange<Double> = 0...10000
-    var mileageRange: ClosedRange<Double> = 0...100000
-    var yearRange: ClosedRange<Double> = 2010...2024
-    var selectedVehicleTypes: Set<String> = []
-    var selectedFuelTypes: Set<String> = []
-    var selectedTransmissions: Set<String> = []
+    var priceRange: ClosedRange<Double>
+    var mileageRange: ClosedRange<Double>
+    var yearRange: ClosedRange<Double>
+    var selectedVehicleTypes: Set<String>
+
+    init(
+        priceRange: ClosedRange<Double> = 0...10000,
+        mileageRange: ClosedRange<Double> = 0...100000,
+        yearRange: ClosedRange<Double>? = nil,
+        selectedVehicleTypes: Set<String> = []
+    ) {
+        self.priceRange = priceRange
+        self.mileageRange = mileageRange
+        let currentYear = Double(Calendar.current.component(.year, from: Date()))
+        self.yearRange = yearRange ?? 1990...currentYear
+        self.selectedVehicleTypes = selectedVehicleTypes
+    }
 }
 
 struct FilterView: View {
@@ -23,8 +35,7 @@ struct FilterView: View {
     @State private var tempFilters: FilterOptions
 
     let vehicleTypes = ["모터홈", "트레일러", "픽업캠퍼", "캠핑밴"]
-    let fuelTypes = ["가솔린", "디젤", "LPG", "하이브리드", "전기"]
-    let transmissions = ["자동", "수동", "CVT"]
+    // 연료/변속기 필터는 요구사항에 따라 제거되었습니다.
 
     init(filters: Binding<FilterOptions>, isPresented: Binding<Bool>) {
         self._filters = filters
@@ -50,13 +61,12 @@ struct FilterView: View {
                         mileageRangeSection
                         yearRangeSection
                         vehicleTypesSection
-                        fuelTypesSection
-                        transmissionsSection
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .padding(.top, 12)
+                    .padding(.bottom, 6)
                 }
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.44)
                 
                 footerView
             }
@@ -169,9 +179,10 @@ struct FilterView: View {
                 .foregroundColor(.white)
 
             VStack(spacing: 12) {
+                let currentYear = Double(Calendar.current.component(.year, from: Date()))
                 RangeSlider(
                     range: $tempFilters.yearRange,
-                    bounds: 2010...2024,
+                    bounds: 1990...currentYear,
                     step: 1
                 )
 
@@ -196,7 +207,8 @@ struct FilterView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
+            // 1 x 4 배열(가로 4열, 한 줄)로 표시
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
                 ForEach(vehicleTypes, id: \.self) { type in
                     FilterChip(
                         title: type,
@@ -209,43 +221,7 @@ struct FilterView: View {
         }
     }
 
-    private var fuelTypesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("연료")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
-                ForEach(fuelTypes, id: \.self) { fuelType in
-                    FilterChip(
-                        title: fuelType,
-                        isSelected: tempFilters.selectedFuelTypes.contains(fuelType)
-                    ) {
-                        toggleSelection(in: &tempFilters.selectedFuelTypes, item: fuelType)
-                    }
-                }
-            }
-        }
-    }
-
-    private var transmissionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("변속기")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
-                ForEach(transmissions, id: \.self) { transmission in
-                    FilterChip(
-                        title: transmission,
-                        isSelected: tempFilters.selectedTransmissions.contains(transmission)
-                    ) {
-                        toggleSelection(in: &tempFilters.selectedTransmissions, item: transmission)
-                    }
-                }
-            }
-        }
-    }
+    // 연료 및 변속기 섹션 제거됨
 
     private var footerView: some View {
         VStack(spacing: 0) {

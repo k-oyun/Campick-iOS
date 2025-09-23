@@ -9,25 +9,25 @@ import SwiftUI
 
 struct VehicleInfoCard: View {
     let title: String
-    let price: Int
-    let year: Int
-    let mileage: Int
-    let type: String
+    let priceText: String
+    let yearText: String
+    let mileageText: String
+    let typeText: String
     let location: String
 
     var body: some View {
         VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading) {
                 Text(title)
-                    .font(.title)
+                    .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.leading)
 
                 HStack {
-                    Text("\(price.formatted())만원")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
+                Text(priceText)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(AppColors.brandOrange)
 
                     Spacer()
 
@@ -53,21 +53,21 @@ struct VehicleInfoCard: View {
                 VehicleDetailItem(
                     icon: "calendar",
                     title: "연식",
-                    value: "\(String(year))년"
+                    value: yearText
                 )
                 .frame(maxWidth: .infinity)
 
                 VehicleDetailItem(
                     icon: "speedometer",
                     title: "주행거리",
-                    value: "\(mileage.formatted())km"
+                    value: mileageText
                 )
                 .frame(maxWidth: .infinity)
 
                 VehicleDetailItem(
                     icon: "car",
                     title: "차종",
-                    value: type
+                    value: typeText
                 )
                 .frame(maxWidth: .infinity)
             }
@@ -81,8 +81,6 @@ struct VehicleInfoCard: View {
                     .stroke(Color.white.opacity(0.2), lineWidth: 1)
             )
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 0)
     }
 }
 
@@ -119,10 +117,10 @@ struct VehicleDetailItem: View {
 
         VehicleInfoCard(
             title: "현대 포레스트 프리미엄",
-            price: 8900,
-            year: 2022,
-            mileage: 15000,
-            type: "모터홈",
+            priceText: "8,900만원",
+            yearText: "2022년",
+            mileageText: "15,000km",
+            typeText: "모터홈",
             location: "서울 강남구"
         )
     }

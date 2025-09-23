@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RecommendVehicle: View {
+    @EnvironmentObject private var tabRouter: TabRouter
     
 //    let vehicles: [VehicleViewModel]
     @StateObject private var viewModel =  HomeVehicleViewModel()
@@ -26,7 +27,7 @@ struct RecommendVehicle: View {
                         .fontWeight(.heavy)
                 }
                 Spacer()
-                NavigationLink(destination: FindVehicleView()) {
+                Button(action: { tabRouter.current = .vehicles }) {
                     HStack {
                         Text("전체보기")
                             .foregroundColor(AppColors.brandLightOrange)
@@ -49,18 +50,23 @@ struct RecommendVehicle: View {
                         .padding()
                 } else {
                     ForEach(Array(viewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
-                        VehicleCard(
-                            image: vehicle.thumbNail.isEmpty ? "testImage1" : vehicle.thumbNail,
-                            title: vehicle.title,
-//                            year: viewModel.yearText(for: vehicle),
-                            year: "목업연식",
-                            milage: vehicle.mileage,
-                            price: vehicle.price,
-                            likeCount: vehicle.likeCount,
-                            badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
-                            badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
-                            isLiked: vehicle.isLiked
-                        )
+                        NavigationLink {
+                            VehicleDetailView(vehicleId: String(vehicle.productId))
+                        } label: {
+                            VehicleCard(
+                                image: vehicle.thumbNail ?? "",
+                                title: vehicle.title,
+                                generation: viewModel.formatGeneration(vehicle.generation),
+                                milage: viewModel.formatMileage(vehicle.mileage),
+                                price: viewModel.formatPrice(vehicle.price),
+                                likeCount: vehicle.likeCount ?? 0,
+                                badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
+                                badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
+                                isLiked: vehicle.isLiked,
+                                onLike: { viewModel.toggleLike(productId: vehicle.id) }
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
             }
@@ -76,40 +82,46 @@ struct RecommendVehicle: View {
 struct VehicleCard: View {
     var image: String
     var title: String
-    var year: String
+    var generation: String
     var milage: String
     var price: String
     var likeCount: Int
     var badge: String?
     var badgeColor: Color
     var isLiked: Bool
+    var onLike: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
             ZStack(alignment: .topTrailing) {
-//                Image(image)
-//                    .resizable()
-//                    .frame(width: 90, height: 90)
-//                    .cornerRadius(12)
-//                    .shadow(radius: 3)
-                AsyncImage(url: URL(string: image)) { phase in
-                    switch phase {
-                    case .empty:
-                        ProgressView()
-                            .frame(width: 90, height: 90)
-                    case .success(let img):
-                        img.resizable()
-                            .frame(width: 90, height: 90)
-                            .cornerRadius(12)
-                            .shadow(radius: 3)
-                    case .failure(_):
-                        Image("testImage1")
-                            .resizable()
-                            .frame(width: 90, height: 90)
-                            .cornerRadius(12)
-                            .shadow(radius: 3)
-                    @unknown default:
-                        EmptyView()
+                if image.isEmpty {
+                    Image(systemName: "car.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 90, height: 90)
+                        .cornerRadius(12)
+                        .shadow(radius: 3)
+                } else {
+                    AsyncImage(url: URL(string: image)) { phase in
+                        switch phase {
+                        case .empty:
+                            ProgressView()
+                                .frame(width: 90, height: 90)
+                        case .success(let img):
+                            img.resizable()
+                                .frame(width: 90, height: 90)
+                                .cornerRadius(12)
+                                .shadow(radius: 3)
+                        case .failure:
+                            Image(systemName: "car.fill")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 90, height: 90)
+                                .cornerRadius(12)
+                                .shadow(radius: 3)
+                        @unknown default:
+                            EmptyView()
+                        }
                     }
                 }
                 Text(badge ?? "")
@@ -130,14 +142,14 @@ struct VehicleCard: View {
                         .foregroundColor(.white)
                         .bold()
                     Spacer()
-                    Button(action: {}) {
+                    Button(action: { onLike() }) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
                             .foregroundColor(isLiked ? .red : .white.opacity(0.7))
                     }
                 }
                 
                 HStack(spacing: 8) {
-                    Text(year)
+                    Text(generation)
                         .font(.caption)
                         .padding(4)
                         .background(.ultraThinMaterial)
@@ -157,11 +169,11 @@ struct VehicleCard: View {
                         .font(.headline)
                     Spacer()
                     HStack(spacing: 2) {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.red)
                             .font(.caption)
                         Text(String(likeCount))
-                            .foregroundColor(.yellow)
+                            .foregroundColor(.red)
                             .font(.caption)
                     }
                 }

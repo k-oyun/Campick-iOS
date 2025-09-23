@@ -18,13 +18,18 @@ struct RecommendedVehicle: Decodable, Identifiable {
     let productId: Int
     let title: String
     let price: String
+    let generation: Int
+    let fuelType: String
+    let transmission: String?
     let mileage: String
+    let vehicleType: String
+    let vehicleModel: String
     let location: String
     let createdAt: String
-    let thumbNail: String
+    let thumbNail: String?
     let status: RecommendedVehicleStats
-    let isLiked: Bool
-    let likeCount: Int
+    var isLiked: Bool
+    var likeCount: Int?
 
     var id: Int { productId }
 }

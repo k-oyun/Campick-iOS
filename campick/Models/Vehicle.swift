@@ -28,7 +28,7 @@ enum VehicleStatus: String, CaseIterable, Decodable {
         }
     }
 }
-struct Vehicle: Identifiable,Decodable {
+struct Vehicle: Identifiable, Decodable, Equatable {
     let id: String
     // Images
     let imageName: String?
