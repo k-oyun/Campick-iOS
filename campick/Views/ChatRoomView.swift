@@ -83,6 +83,7 @@ struct ChatRoomView: View {
             if WebSocket.shared.isConnected == false {
                         WebSocket.shared.connect(userId: userState.memberId)
             }
+            viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
             
             

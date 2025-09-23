@@ -16,6 +16,19 @@ final class ChatViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var seller: ChatSeller?
     @Published var vehicle: ChatVehicle?
+    
+
+    func bindWebSocket() {
+        WebSocket.shared.onMessageReceived = { [weak self] newMessage in
+            let chat = Chat(
+                message: newMessage.content,
+                senderId: newMessage.senderId,
+                sendAt: ISO8601DateFormatter().string(from: newMessage.sendAt),
+                isRead: newMessage.isRead
+            )
+            self?.messages.append(chat)
+        }
+    }
 
     func loadChatRoom(chatRoomId: Int) {
         ChatService.shared.getChatMessages(chatRoomId: chatRoomId) { [weak self] result in

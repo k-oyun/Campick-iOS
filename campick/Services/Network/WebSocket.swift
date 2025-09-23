@@ -10,6 +10,9 @@ import Foundation
 class WebSocket {
     static let shared = WebSocket()
     private var webSocketTask: URLSessionWebSocketTask?
+    
+    var onMessageReceived: ((ReceivedChatMessageData) -> Void)?
+
     var isConnected: Bool {
         return webSocketTask?.state == .running
     }
@@ -28,25 +31,35 @@ class WebSocket {
     }
     
     private func receive() {
-        webSocketTask?.receive { [weak self] result in
-            switch result {
-            case .failure(let error):
-                print("수신 실패:", error)
-            case .success(let message):
-                switch message {
-                case .string(let text):
-                    print("받은 메시지:", text)
-                case .data(let data):
-                    print("바이너리 데이터:", data)
-                @unknown default:
-                    break
+            webSocketTask?.receive { [weak self] result in
+                switch result {
+                case .failure(let error):
+                    print("수신 실패:", error)
+                case .success(let message):
+                    switch message {
+                    case .string(let text):
+                        print("받은 메시지(raw):", text)
+                        if let data = text.data(using: .utf8) {
+                            do {
+                                let decoded = try JSONDecoder().decode(ReceivedChatMessagePayload.self, from: data)
+                                print("받은 메시지 디코딩 성공:", decoded)
+                                
+                                DispatchQueue.main.async {
+                                    self?.onMessageReceived?(decoded.data)
+                                }
+                            } catch {
+                                print("디코딩 실패:", error)
+                            }
+                        }
+                    case .data(let data):
+                        print("바이너리 데이터:", data)
+                    @unknown default:
+                        break
+                    }
                 }
+                self?.receive()
             }
-            
-            // 계속 대기
-            self?.receive()
         }
-    }
     
     // Pong 확인 시 completion 핸들러 호출
     func startPing() {
@@ -104,6 +117,18 @@ struct ChatMessageData: Encodable {
     let chatId: Int
     let content: String
     let senderId: Int
+}
+
+struct ReceivedChatMessagePayload: Decodable {
+    let type: String
+    let data: ReceivedChatMessageData
+}
+
+struct ReceivedChatMessageData: Decodable {
+    let content: String
+    let senderId: Int
+    let sendAt: Date
+    let isRead: Bool
 }
 
 

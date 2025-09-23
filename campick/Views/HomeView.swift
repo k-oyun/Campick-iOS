@@ -12,8 +12,6 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeChatViewModel()
     @EnvironmentObject private var tabRouter: TabRouter
     @State private var selectedType: String? = nil
-    @StateObject private var userState = UserState.shared
-
 
     var body: some View {
         ZStack {
@@ -33,7 +31,7 @@ struct HomeView: View {
                         FindVehicle()
                         // 차량 종류
                         VehicleCategory { type in
-                            selectedType = type
+                            selectedType = type.displayName
                             tabRouter.navigateToVehicles(with: [type])
                         }
                         // 추천 매물
@@ -52,8 +50,7 @@ struct HomeView: View {
             // 네비게이션은 탭 전환(TabRouter)로 처리하므로 별도 NavigationLink 불필요
         }
         .onAppear {
-            
-            viewModel.connectWebSocket(userId: userState.memberId)
+            viewModel.connectWebSocket(userId: "1")
         }
     }
 }
