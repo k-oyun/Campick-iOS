@@ -12,6 +12,8 @@ struct campickApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        _ = ImageCacheManager.shared
+
         // Auto-login behavior disabled (pending decision)
         // Previously: restore session based on persisted preference and schedule refresh.
         // UserState.shared.loadUserData()

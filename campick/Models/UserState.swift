@@ -108,6 +108,11 @@ class UserState: ObservableObject {
         }
     }
 
+    func updateProfileImage(url: String) {
+        self.profileImageUrl = url
+        UserDefaultsManager.setString(url, forKey: "profileImageUrl")
+    }
+
     func logout() {
         // Clear keychain token & auto refresh timer
         TokenManager.shared.clearAll()
