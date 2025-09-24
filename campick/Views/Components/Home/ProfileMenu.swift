@@ -15,7 +15,6 @@ struct ProfileMenu: View {
     @StateObject private var viewModel = HomeProfileViewModel()
     
     
-    
     var body: some View {
         ZStack{
             Color.black
@@ -154,6 +153,9 @@ struct ProfileMenu: View {
                     .frame(width: 280)
                     .background(Color(red: 0.043, green: 0.129, blue: 0.102))
                     .ignoresSafeArea()
+                }
+                .onAppear{
+                    viewModel.totalUnreadMessage()
                 }
                 .navigationDestination(isPresented: $navigateToProfile) {
                     ProfileView(memberId: userState.memberId, isOwnProfile: true, showBackButton: true, showTopBar: true)
