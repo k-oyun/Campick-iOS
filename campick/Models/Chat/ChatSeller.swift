@@ -10,6 +10,6 @@ struct ChatSeller {
     let id: String
     let name: String
     let avatar: String
-    let isOnline: Bool
+    var isOnline: Bool
     let phoneNumber: String
 }

@@ -100,7 +100,6 @@ struct ChatRoomListView: View {
                         switch result {
                         case .success(let message):
                             print("채팅방 읽음 처리 성공: \(message)")
-                            // 필요하면 뱃지 갱신 API 호출
                             // viewModel.loadChats() 같은 것도 가능
                         case .failure(let error):
                             print("채팅방 읽음 처리 실패: \(error.localizedDescription)")

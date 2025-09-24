@@ -170,6 +170,9 @@ struct ChatRoomView: View {
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
             
+            viewModel.observeChatRoomOnlineStatus(chatId: chatRoomId)
+
+            
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
                     let payload = ChatMessagePayload(
                         type: "chat_message",

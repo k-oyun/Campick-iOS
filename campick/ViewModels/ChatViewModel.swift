@@ -20,22 +20,22 @@ final class ChatViewModel: ObservableObject {
     
     @Published var uploadedImageUrl: String? = nil
     
-
-//    func bindWebSocket() {
-//        WebSocket.shared.onMessageReceived = { [weak self] newMessage in
-//            let chat = Chat(
-//                message: newMessage.content,
-//                senderId: newMessage.senderId,
-//                sendAt: newMessage.sendAt,
-//                isRead: newMessage.isRead
-//            )
-//            self?.messages.append(chat)
-//        }
-//    }
+    
+    //    func bindWebSocket() {
+    //        WebSocket.shared.onMessageReceived = { [weak self] newMessage in
+    //            let chat = Chat(
+    //                message: newMessage.content,
+    //                senderId: newMessage.senderId,
+    //                sendAt: newMessage.sendAt,
+    //                isRead: newMessage.isRead
+    //            )
+    //            self?.messages.append(chat)
+    //        }
+    //    }
     func bindWebSocket() {
         WebSocket.shared.onMessageReceived = { [weak self] response in
             guard let self = self else { return }
-
+            
             switch response {
             case .chat(let chatData):
                 let chat = Chat(
@@ -45,13 +45,13 @@ final class ChatViewModel: ObservableObject {
                     isRead: chatData.isRead
                 )
                 self.messages.append(chat)
-
+                
             case .online(let onlineList):
                 print("온라인 상태 업데이트는 ChatListViewModel에서 처리해야 함: \(onlineList)")
             }
         }
     }
-
+    
     func loadChatRoom(chatRoomId: Int) {
         ChatService.shared.getChatMessages(chatRoomId: chatRoomId) { [weak self] result in
             DispatchQueue.main.async {
@@ -65,16 +65,16 @@ final class ChatViewModel: ObservableObject {
                         isOnline: response.isActive,
                         phoneNumber: response.sellerPhoneNumber
                     )
-
+                    
                     // 2. Vehicle 변환
                     self?.vehicle = ChatVehicle(
                         id: String(response.productId),
                         title: response.productTitle,
                         price: response.productPrice,
                         status: response.productStatus
-//                        image: response.productImage,
+                        //                        image: response.productImage,
                     )
-
+                    
                     // 3. 메시지 변환
                     self?.messages = response.chatData.map { chat in
                         Chat(
@@ -84,7 +84,7 @@ final class ChatViewModel: ObservableObject {
                             isRead: chat.isRead
                         )
                     }
-
+                    
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
@@ -97,7 +97,7 @@ final class ChatViewModel: ObservableObject {
                 switch result {
                 case .success(let imageUrl):
                     print("이미지 업로드 성공, URL: \(imageUrl)")
-                    self.uploadedImageUrl = imageUrl   
+                    self.uploadedImageUrl = imageUrl
                     completion(.success(imageUrl))
                 case .failure(let error):
                     print("이미지 업로드 실패: \(error.localizedDescription)")
@@ -107,8 +107,8 @@ final class ChatViewModel: ObservableObject {
         }
     }
     
-
-       
+    
+    
     func isMyMessage(_ chat: Chat) -> Bool {
         let myId = Int(UserState.shared.memberId) ?? -1
         return chat.senderId == myId
@@ -118,7 +118,7 @@ final class ChatViewModel: ObservableObject {
         return seller?.name
     }
     
-   
+    
     func isSellerOnline() -> Bool {
         return seller?.isOnline ?? false
     }
@@ -126,21 +126,21 @@ final class ChatViewModel: ObservableObject {
     
     
     
-//    func sellerLastSeen() -> String? {
-//        return seller?.lastSeen
-//    }
+    //    func sellerLastSeen() -> String? {
+    //        return seller?.lastSeen
+    //    }
     
-   
+    
     func sellerPhoneNumber() -> String? {
         return seller?.phoneNumber
     }
     
-   
+    
     func messageText(_ chat: Chat) -> String {
         return chat.message
     }
     
-   
+    
     func messageTimestamp(_ chat: Chat) -> String {
         return chat.sendAt
     }
@@ -178,5 +178,24 @@ final class ChatViewModel: ObservableObject {
         
         return "\(formatted)만원"
     }
-
+    
+    func observeChatRoomOnlineStatus(chatId: Int) {
+        WebSocket.shared.onMessageReceived = { [weak self] response in
+            guard let self = self else { return }
+            
+            switch response {
+            case .chat:
+                break
+            case .online(let onlineList):
+                // 특정 chatId만 필터링
+                if let target = onlineList.first(where: { $0.chatId == chatId }) {
+                    print("📡 채팅방 \(target.chatId) 온라인 상태: \(target.isOnline)")
+                    // ChatViewModel에서 seller에 반영
+                    self.seller?.isOnline = target.isOnline
+                    // UI 즉시 갱신
+                    self.objectWillChange.send()
+                }
+            }
+        }
+    }
 }
