@@ -39,14 +39,23 @@ struct MessageList: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(viewModel.messages) { msg in
+//                    ForEach(viewModel.messages) { msg in
+//                        MessageBubble(
+//                            message: msg,
+//                            viewModel: viewModel
+//                        )
+//                        .id(msg.id)
+//                    }
+                    ForEach(Array(viewModel.messages.enumerated()), id: \.1.id) { index, msg in
+                        let isLast = index == viewModel.messages.count - 1
                         MessageBubble(
                             message: msg,
+                            isLast: isLast,
                             viewModel: viewModel
+                            
                         )
                         .id(msg.id)
                     }
-                    
                     // 바닥 앵커
                     Color.clear
                         .frame(height: 1)
@@ -154,7 +163,9 @@ struct MessageList: View {
 
 struct MessageBubble: View {
     let message: Chat
+    let isLast: Bool
 //    let isLastMyMessage: Bool
+    
     
     @ObservedObject var viewModel: ChatViewModel
     
@@ -168,11 +179,18 @@ struct MessageBubble: View {
                         .background(AppColors.brandOrange)
                         .foregroundColor(.white)
                         .cornerRadius(16)
-                    HStack(spacing: 4) {
-                        Text(message.sendAt)
-                            .foregroundColor(.white.opacity(0.5))
-                            .font(.caption2)
+                    if isLast {
+                        HStack(spacing: 4) {
+                            Text(message.sendAt)
+                                .foregroundColor(.white.opacity(0.5))
+                                .font(.caption2)
+                        }
                     }
+//                    HStack(spacing: 4) {
+//                        Text(message.sendAt)
+//                            .foregroundColor(.white.opacity(0.5))
+//                            .font(.caption2)
+//                    }
                 }
                 .frame(maxWidth: 300, alignment: .trailing)
             } else {
