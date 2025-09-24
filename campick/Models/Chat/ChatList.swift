@@ -17,6 +17,7 @@ struct ChatList: Decodable, Identifiable, Hashable {
     let lastMessage: String
     let lastMessageCreatedAt: String   // 우선 String, 나중에 Date 포맷 맞추기
     let unreadMessage: Int
+    var isOnline: Bool = false
 
     enum CodingKeys: String, CodingKey {
         case id = "chatRoomId"

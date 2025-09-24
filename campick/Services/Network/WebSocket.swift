@@ -11,7 +11,7 @@ class WebSocket {
     static let shared = WebSocket()
     private var webSocketTask: URLSessionWebSocketTask?
     
-    var onMessageReceived: ((ReceivedChatMessageData) -> Void)?
+    var onMessageReceived: ((WebSocketResponse) -> Void)?
 
     var isConnected: Bool {
         return webSocketTask?.state == .running
@@ -30,14 +30,13 @@ class WebSocket {
         print("📡 receive() 호출 직전")
         receive()
         print("📡 receive() 호출 직후")
-        startPing()
+//        startPing()
         
     }
     
     func receive() {
         print("메시지 수신중")
             webSocketTask?.receive { [weak self] result in
-                print(result)
                 switch result {
                 case .failure(let error):
                     print("수신 실패:", error)
@@ -47,11 +46,9 @@ class WebSocket {
                         print("받은 메시지(raw):", text)
                         if let data = text.data(using: .utf8) {
                             do {
-                                let decoded = try JSONDecoder().decode(ReceivedChatMessagePayload.self, from: data)
-                                print("받은 메시지 디코딩 성공:", decoded)
-                                
+                                let decoded = try JSONDecoder().decode(WebSocketResponse.self, from: data)
                                 DispatchQueue.main.async {
-                                    self?.onMessageReceived?(decoded.data)
+                                    self?.onMessageReceived?(decoded)
                                 }
                             } catch {
                                 print("디코딩 실패:", error)
@@ -143,6 +140,7 @@ struct InitChatData: Encodable{
 struct ReceivedChatMessagePayload: Decodable {
     let type: String
     let data: ReceivedChatMessageData
+    
 }
 
 struct ReceivedChatMessageData: Decodable {
