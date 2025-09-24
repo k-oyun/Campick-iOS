@@ -45,32 +45,7 @@ struct ChatRoomView: View {
                 //                isTyping: $isTyping
             )
             
-            // 👇 pendingImage 미리보기 (입력창 바로 위)
-            if let preview = pendingImage {
-                ZStack(alignment: .topTrailing) {
-                    // 어두운 반투명 배경
-                    Color.black.opacity(0.5)
-                        .frame(height: 220) // 배경 높이
-
-                    // 미리보기 이미지
-                    Image(uiImage: preview)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxHeight: 200) // 크기 줄임
-                        .cornerRadius(12)
-                        .padding(.horizontal)
-
-                    // 닫기 버튼
-                    Button(action: { pendingImage = nil }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .padding()
-                    }
-                }
-                .transition(.move(edge: .bottom))
-                .animation(.easeInOut, value: pendingImage)
-            }
+            PendingImage(pendingImage:$pendingImage)
             
             ChatBottomBar(
                 newMessage: $newMessage,
