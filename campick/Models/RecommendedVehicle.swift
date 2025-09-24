@@ -14,7 +14,7 @@ enum RecommendedVehicleStats: String, Decodable {
     case reserved = "RESERVED"
 }
 
-struct RecommendedVehicle: Decodable, Identifiable {
+struct RecommendedVehicle: Decodable, Identifiable, Equatable {
     let productId: Int
     let title: String
     let price: String
@@ -32,4 +32,10 @@ struct RecommendedVehicle: Decodable, Identifiable {
     var likeCount: Int?
 
     var id: Int { productId }
+
+    static func == (lhs: RecommendedVehicle, rhs: RecommendedVehicle) -> Bool {
+        return lhs.productId == rhs.productId &&
+               lhs.isLiked == rhs.isLiked &&
+               lhs.likeCount == rhs.likeCount
+    }
 }

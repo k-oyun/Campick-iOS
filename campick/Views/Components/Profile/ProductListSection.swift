@@ -57,7 +57,7 @@ struct ProductCard: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack(alignment: .topLeading) {
-                AsyncImage(url: URL(string: product.thumbNailUrl)) { image in
+                CachedAsyncImage(url: URL(string: product.thumbNailUrl)) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -85,7 +85,7 @@ struct ProductCard: View {
                 .padding(4)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(product.title)
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(.white)
@@ -95,22 +95,55 @@ struct ProductCard: View {
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(AppColors.brandOrange)
 
-                HStack(spacing: 6) {
-                    Text("\(product.generation) 연식")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    Text("\(product.mileage.formatted())km")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    Text("•")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                    Text(shortLocation(product.location))
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                // 첫 번째 줄: 연식 | 주행거리
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Text("연식")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 25, alignment: .leading)
+                        Text(String(product.generation))
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 80, alignment: .leading)
+
+                    HStack(spacing: 4) {
+                        Text("주행거리")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 50, alignment: .leading)
+                        Text(formatMileage(product.mileage) + "km")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    Spacer()
+                }
+
+                // 두 번째 줄: 지역 | 등록일
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Text("지역")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 25, alignment: .leading)
+                        Text(shortLocation(product.location))
+                            .font(.caption)
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                    }
+                    .frame(width: 80, alignment: .leading)
+
+                    HStack(spacing: 4) {
+                        Text("등록일")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                            .frame(width: 50, alignment: .leading)
+                        Text(formattedDate(product.createdAt))
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    Spacer()
                 }
             }
 
@@ -136,6 +169,23 @@ struct ProductCard: View {
             return s + "만원"
         }
         return cost
+    }
+
+    private func formatMileage(_ mileage: Int) -> String {
+        if mileage >= 100000 {
+            // 10만 이상: 12.3만
+            let value = Double(mileage) / 10000.0
+            return String(format: "%.1f만", value)
+        } else if mileage >= 10000 {
+            // 1만 이상: 1.2만
+            let value = Double(mileage) / 10000.0
+            return String(format: "%.1f만", value)
+        } else {
+            // 1만 미만: 1,234
+            let f = NumberFormatter()
+            f.numberStyle = .decimal
+            return f.string(from: NSNumber(value: mileage)) ?? String(mileage)
+        }
     }
 }
 

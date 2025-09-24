@@ -24,6 +24,14 @@ class UserState: ObservableObject {
 
     private init() {
         loadUserData()
+
+        // 저장된 토큰과 사용자 데이터가 모두 있으면 일단 로그인 상태로 시작
+        // (검증은 RootView에서 수행하고, 실패 시 false로 변경)
+        let hasToken = !TokenManager.shared.accessToken.isEmpty
+        let hasUserData = !memberId.isEmpty
+        isLoggedIn = hasToken && hasUserData
+
+        AppLog.debug("🔍 UserState.init - token: \(hasToken ? "있음" : "없음"), memberId: \(memberId.isEmpty ? "없음" : memberId), isLoggedIn: \(isLoggedIn)", category: "AUTH")
     }
 
     func loadUserData() {

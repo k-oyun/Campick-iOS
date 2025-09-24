@@ -73,7 +73,7 @@ struct VehicleRegistrationView: View {
                                     .focused($focusedField, equals: .title)
                                     .submitLabel(.next)
                                     .onSubmit {
-                                        focusedField = .mileage
+                                        focusedField = .year
                                     }
                             }
 

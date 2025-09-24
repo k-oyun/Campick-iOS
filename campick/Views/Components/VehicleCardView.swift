@@ -97,26 +97,15 @@ struct VehicleCardView: View {
                 .resizable()
                 .scaledToFill()
         } else if let url = vm.thumbnailURL {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    ZStack {
-                        Color.gray.opacity(0.15)
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    }
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .failure:
-                    Image("testImage3")
-                        .resizable()
-                        .scaledToFill()
-                @unknown default:
-                    Image("testImage3")
-                        .resizable()
-                        .scaledToFill()
+            CachedAsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                ZStack {
+                    Color.gray.opacity(0.15)
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 }
             }
         } else {
@@ -168,7 +157,7 @@ struct VehicleCardView: View {
             }
             
             VStack(alignment: .center) {
-                HStack(spacing: 28) {
+                HStack(spacing: 16) {
                     // 반복되는 항목을 데이터로 구성하여 ForEach로 렌더링
                     let specs: [(label: String, value: String)] = [
                         ("연식", vm.year),
@@ -177,20 +166,22 @@ struct VehicleCardView: View {
                         ("변속기", vm.transmission)
                     ]
                     ForEach(Array(specs.enumerated()), id: \.offset) { idx, spec in
-                        VStack {
+                        VStack(spacing: 3) {
                             Text(spec.label)
                                 .foregroundColor(AppColors.brandWhite70)
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
                             Text(spec.value)
                                 .foregroundColor(.white)
-                                .font(.system(size: 18))
-                                .bold()
+                                .font(.system(size: 15, weight: .medium))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
                         }
-                        .padding(.vertical, idx == 0 ? 7 : 0)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
                     }
                 }
-                .padding(.horizontal, 30)
-                .padding(.vertical, 2)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
                 .background {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(.ultraThinMaterial)

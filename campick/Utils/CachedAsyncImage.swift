@@ -61,6 +61,12 @@ class ImageLoader: ObservableObject {
     func load(from url: URL?) {
         guard let url = url, url != currentURL else { return }
 
+        // Validate URL scheme
+        guard url.scheme == "http" || url.scheme == "https" else {
+            print("CachedAsyncImage: Invalid URL scheme: \(url)")
+            return
+        }
+
         currentURL = url
 
         // 메모리 캐시에서 먼저 확인 (동기)
@@ -100,7 +106,7 @@ class ImageLoader: ObservableObject {
 
             await ImageCache.shared.saveToDisk(uiImage, for: url)
         } catch {
-            print("Failed to load image from \(url): \(error)")
+            print("CachedAsyncImage: Failed to load image from \(url): \(error.localizedDescription)")
         }
     }
 }

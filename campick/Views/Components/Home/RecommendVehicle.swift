@@ -9,11 +9,11 @@ import SwiftUI
 
 struct RecommendVehicle: View {
     @EnvironmentObject private var tabRouter: TabRouter
-    
-    
-    @StateObject private var viewModel =  HomeVehicleViewModel()
-    init() {
-        print("로딩 완")
+
+    @ObservedObject var homeVehicleViewModel: HomeVehicleViewModel
+
+    init(homeVehicleViewModel: HomeVehicleViewModel) {
+        self.homeVehicleViewModel = homeVehicleViewModel
     }
     var body: some View {
         VStack(spacing: 16) {
@@ -42,28 +42,27 @@ struct RecommendVehicle: View {
             }
             
             VStack(spacing: 16) {
-                if viewModel.vehicles.isEmpty {
-                    
+                if homeVehicleViewModel.vehicles.isEmpty {
                     Text("추천 매물이 존재하지 않습니다")
                         .foregroundColor(.white.opacity(0.7))
                         .font(.subheadline)
                         .padding()
                 } else {
-                    ForEach(Array(viewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
+                    ForEach(Array(homeVehicleViewModel.vehicles.enumerated()), id: \.element.id) { index, vehicle in
                         NavigationLink {
                             VehicleDetailView(vehicleId: String(vehicle.productId))
                         } label: {
                             VehicleCard(
                                 image: vehicle.thumbNail ?? "",
                                 title: vehicle.title,
-                                generation: viewModel.formatGeneration(vehicle.generation),
-                                milage: viewModel.formatMileage(vehicle.mileage),
-                                price: viewModel.formatPrice(vehicle.price),
+                                generation: homeVehicleViewModel.formatGeneration(vehicle.generation),
+                                milage: homeVehicleViewModel.formatMileage(vehicle.mileage),
+                                price: homeVehicleViewModel.formatPrice(vehicle.price),
                                 likeCount: vehicle.likeCount ?? 0,
                                 badge: index == 0 ? "NEW" : (index == 1 ? "HOT" : nil),
                                 badgeColor: index == 0 ? AppColors.brandLightGreen : (index == 1 ? AppColors.brandOrange : .clear),
                                 isLiked: vehicle.isLiked,
-                                onLike: { viewModel.toggleLike(productId: vehicle.id) }
+                                onLike: { homeVehicleViewModel.toggleLike(productId: vehicle.id) }
                             )
                         }
                         .buttonStyle(PlainButtonStyle())
@@ -73,7 +72,7 @@ struct RecommendVehicle: View {
             
         }
         .onAppear{
-            viewModel.loadRecommendVehicles()
+            // 데이터 로딩은 HomeView에서 관리됨
         }
     }
 }
@@ -102,26 +101,22 @@ struct VehicleCard: View {
                         .cornerRadius(12)
                         .shadow(radius: 3)
                 } else {
-                    AsyncImage(url: URL(string: image)) { phase in
-                        switch phase {
-                        case .empty:
-                            ProgressView()
-                                .frame(width: 90, height: 90)
-                        case .success(let img):
-                            img.resizable()
-                                .frame(width: 90, height: 90)
-                                .cornerRadius(12)
-                                .shadow(radius: 3)
-                        case .failure:
-                            Image(systemName: "car.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 90, height: 90)
-                                .cornerRadius(12)
-                                .shadow(radius: 3)
-                        @unknown default:
-                            EmptyView()
-                        }
+                    CachedAsyncImage(url: URL(string: image)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 90, height: 90)
+                            .cornerRadius(12)
+                            .shadow(radius: 3)
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: 90, height: 90)
+                            .overlay(
+                                Image(systemName: "car.fill")
+                                    .foregroundColor(.gray)
+                            )
+                            .shadow(radius: 3)
                     }
                 }
                 Text(badge ?? "")
