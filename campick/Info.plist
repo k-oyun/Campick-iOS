@@ -6,6 +6,21 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
+		<key>NSPinnedDomains</key>
+		<dict>
+			<key>campick.shop</key>
+			<dict>
+        <key>NSPinnedLeafIdentities</key>
+        <array>
+          <dict>
+            <key>SPKI-SHA256-BASE64</key>
+            <string>zl7w9TnvVV4VXqpG2nIB3V4iapuAuk2+PMBmZl3lZVE=</string>
+          </dict>
+        </array>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
 	</dict>
 	<key>UIAppFonts</key>
 	<array>
