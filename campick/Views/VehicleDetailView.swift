@@ -133,18 +133,6 @@ struct VehicleDetailView: View {
                     }
 
                     Button(action: {
-//                        if let id = Int(vehicleId) {
-//                            ChatService.shared.startChat(productId: id) { result in
-//                                switch result {
-//                                case .success(let chatId):
-//                                    print("채팅방 생성 완료, chatId: \(chatId)")
-//                                    createdChatId = chatId
-//                                    navigateToChat = true   // 👉 네비게이션 트리거
-//                                case .failure(let error):
-//                                    print("채팅방 생성 실패: \(error.localizedDescription)")
-//                                }
-//                            }
-//                        }
                         
                         if let id = Int(vehicleId) {
                             ChatService.shared.startChat(productId: id) { result in
@@ -161,7 +149,7 @@ struct VehicleDetailView: View {
                                     print("🚀 initPayload: \(initPayload)")
                                     WebSocket.shared.send(initPayload)
 
-                                    navigateToChat = true   // 👉 네비게이션 트리거
+                                    navigateToChat = true
 
                                 case .failure(let error):
                                     print("채팅방 생성 실패: \(error.localizedDescription)")

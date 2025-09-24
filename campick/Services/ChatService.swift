@@ -34,7 +34,7 @@ class ChatService: ObservableObject {
                         completion(.success([]))
                     }
                 case .failure(let error):
-                    print("채팅방 조회 실패: \(error.localizedDescription)")
+//                    print("채팅방 조회 실패: \(error.localizedDescription)")
                     completion(.failure(error))
                 }
             }
@@ -57,13 +57,13 @@ class ChatService: ObservableObject {
                 switch response.result {
                 case .success(let apiResponse):
                     if let chatId = apiResponse.data {
-                        print("채팅방 생성 성공: chatId = \(chatId)")
+//                        print("채팅방 생성 성공: chatId = \(chatId)")
                         completion(.success(chatId))
                     } else {
                         completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
                     }
                 case .failure(let error):
-                    print("채팅방 생성 실패: \(error.localizedDescription)")
+//                    print("채팅방 생성 실패: \(error.localizedDescription)")
                     completion(.failure(error))
                 }
             }
@@ -90,54 +90,6 @@ class ChatService: ObservableObject {
     
     
 //    
-//    func uploadChatImage(chatId: Int, image: UIImage, completion: @escaping (Result<String, AFError>) -> Void) {
-//        guard let url = URL(string: Endpoint.chatImage.url) else { return }
-//
-//        guard let compressedData = ChatService.compressImage(image) else {
-//            completion(.failure(AFError.explicitlyCancelled))
-//            return
-//        }
-//
-//        // 디버깅: 토큰 확인
-//        let currentToken = TokenManager.shared.accessToken
-//        AppLog.debug("Access token present: \(!currentToken.isEmpty)", category: "UPLOAD")
-//
-//        APIService.shared.upload(
-//            multipartFormData: { formData in
-//                if let chatIdData = "\(chatId)".data(using: .utf8) {
-//                    formData.append(chatIdData, withName: "chatId")
-//                }
-//
-//                formData.append(
-//                    compressedData,
-//                    withName: "file",
-//                    fileName: "chat_image.jpg",
-//                    mimeType: "image/jpeg"
-//                )
-//            },
-//            to: url,
-//            method: .post,
-//            headers: [
-//                "Accept": "application/json",
-//                "Content-Type": "multipart/form-data",
-//                "Authorization": "Bearer \(currentToken)"
-//            ]
-//        )
-//        .validate(statusCode: 200..<300)
-//        .responseDecodable(of: ApiResponse<ChatImageUploadResponse>.self, decoder: decoder) { response in
-//            switch response.result {
-//            case .success(let apiResponse):
-//                if let imageUrl = apiResponse.data?.chatImageUrl {
-//                    completion(.success(imageUrl))
-//                } else {
-//                    completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
-//                }
-//            case .failure(let error):
-//                completion(.failure(error))
-//            }
-//        }
-//    }
-    
     func uploadChatImage(chatId: Int, image: UIImage, completion: @escaping (Result<String, AFError>) -> Void) {
         guard let url = URL(string: Endpoint.chatImage.url) else { return }
 
@@ -146,14 +98,14 @@ class ChatService: ObservableObject {
             return
         }
 
+        // 디버깅: 토큰 확인
         let currentToken = TokenManager.shared.accessToken
         AppLog.debug("Access token present: \(!currentToken.isEmpty)", category: "UPLOAD")
 
-        let request = APIService.shared.upload(
+        APIService.shared.upload(
             multipartFormData: { formData in
                 if let chatIdData = "\(chatId)".data(using: .utf8) {
                     formData.append(chatIdData, withName: "chatId")
-                    print("📦 chatId field appended: \(chatId)")
                 }
 
                 formData.append(
@@ -162,7 +114,6 @@ class ChatService: ObservableObject {
                     fileName: "chat_image.jpg",
                     mimeType: "image/jpeg"
                 )
-                print("📦 file field appended: chat_image.jpg (\(compressedData.count) bytes)")
             },
             to: url,
             method: .post,
@@ -172,27 +123,19 @@ class ChatService: ObservableObject {
                 "Authorization": "Bearer \(currentToken)"
             ]
         )
-
-        // 👉 최종 요청을 cURL로 출력 (여기에 boundary 포함됨)
-        request.cURLDescription { description in
-            print("📡 CURL REQUEST:\n\(description)")
-        }
-
-        request
-            .validate(statusCode: 200..<300)
-            .responseDecodable(of: ApiResponse<ChatImageUploadResponse>.self, decoder: decoder) { response in
-                debugPrint(response) // 응답도 상세하게 찍음
-                switch response.result {
-                case .success(let apiResponse):
-                    if let imageUrl = apiResponse.data?.chatImageUrl {
-                        completion(.success(imageUrl))
-                    } else {
-                        completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
-                    }
-                case .failure(let error):
-                    completion(.failure(error))
+        .validate(statusCode: 200..<300)
+        .responseDecodable(of: ApiResponse<ChatImageUploadResponse>.self, decoder: decoder) { response in
+            switch response.result {
+            case .success(let apiResponse):
+                if let imageUrl = apiResponse.data?.chatImageUrl {
+                    completion(.success(imageUrl))
+                } else {
+                    completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
                 }
+            case .failure(let error):
+                completion(.failure(error))
             }
+        }
     }
     
     private static func compressImage(_ image: UIImage, maxSizeInMB: Double = 0.005) -> Data? {

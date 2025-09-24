@@ -149,6 +149,7 @@ struct ChatRoomView: View {
         }
         
         .onAppear {
+            print("🚀🚀🚀🚀🚀🚀🚀🚀",chatMessage)
             let initPayload = InitChat(
                 type: "start_room",
                 data: InitChatData(chatId: chatRoomId)
@@ -164,15 +165,23 @@ struct ChatRoomView: View {
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
             
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
-                let payload = ChatMessagePayload(
-                    type: "chat_message",
-                    data: ChatMessageData(
-                        chatId: chatRoomId,
-                        content: initialMessage,
-                        senderId: Int(userState.memberId) ?? 0
+                    let payload = ChatMessagePayload(
+                        type: "chat_message",
+                        data: ChatMessageData(
+                            chatId: chatRoomId,
+                            content: initialMessage,
+                            senderId: Int(userState.memberId) ?? 0
+                        )
                     )
-                )
-            }
+                    print("🚀 initial message 보내기: \(payload)")
+                    WebSocket.shared.send(payload)   // 👈 send 추가
+                    viewModel.messages.append(
+                            Chat(message: initialMessage,
+                                 senderId: Int(userState.memberId) ?? 0,
+                                 sendAt: ISO8601DateFormatter().string(from: Date()),
+                                 isRead: false)
+                    )
+                }
             
         }
     }

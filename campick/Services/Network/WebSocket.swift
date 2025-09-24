@@ -37,7 +37,6 @@ class WebSocket {
     func receive() {
         print("메시지 수신중")
             webSocketTask?.receive { [weak self] result in
-                print(result)
                 switch result {
                 case .failure(let error):
                     print("수신 실패:", error)
