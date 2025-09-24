@@ -21,15 +21,34 @@ final class ChatViewModel: ObservableObject {
     @Published var uploadedImageUrl: String? = nil
     
 
+//    func bindWebSocket() {
+//        WebSocket.shared.onMessageReceived = { [weak self] newMessage in
+//            let chat = Chat(
+//                message: newMessage.content,
+//                senderId: newMessage.senderId,
+//                sendAt: newMessage.sendAt,
+//                isRead: newMessage.isRead
+//            )
+//            self?.messages.append(chat)
+//        }
+//    }
     func bindWebSocket() {
-        WebSocket.shared.onMessageReceived = { [weak self] newMessage in
-            let chat = Chat(
-                message: newMessage.content,
-                senderId: newMessage.senderId,
-                sendAt: newMessage.sendAt,
-                isRead: newMessage.isRead
-            )
-            self?.messages.append(chat)
+        WebSocket.shared.onMessageReceived = { [weak self] response in
+            guard let self = self else { return }
+
+            switch response {
+            case .chat(let chatData):
+                let chat = Chat(
+                    message: chatData.content,
+                    senderId: chatData.senderId,
+                    sendAt: chatData.sendAt,
+                    isRead: chatData.isRead
+                )
+                self.messages.append(chat)
+
+            case .online(let onlineList):
+                print("온라인 상태 업데이트는 ChatListViewModel에서 처리해야 함: \(onlineList)")
+            }
         }
     }
 
@@ -78,7 +97,7 @@ final class ChatViewModel: ObservableObject {
                 switch result {
                 case .success(let imageUrl):
                     print("이미지 업로드 성공, URL: \(imageUrl)")
-                    self.uploadedImageUrl = imageUrl   // 👈 여기 저장
+                    self.uploadedImageUrl = imageUrl   
                     completion(.success(imageUrl))
                 case .failure(let error):
                     print("이미지 업로드 실패: \(error.localizedDescription)")

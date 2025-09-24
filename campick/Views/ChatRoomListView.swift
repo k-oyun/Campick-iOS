@@ -19,7 +19,7 @@ struct ChatRoomListView: View {
             TopBarView(title: "채팅") {
                 dismiss()
             }
-
+            
             if viewModel.chats.isEmpty {
                 VStack {
                     Circle()
@@ -31,18 +31,18 @@ struct ChatRoomListView: View {
                                 .font(.system(size: 28))
                         )
                         .padding(.bottom, 8)
-
+                    
                     Text("진행중인 채팅이 없습니다")
                         .foregroundColor(.white)
                         .font(.headline)
-
+                    
                     Text("매물에 관심이 있으시면 판매자에게 메시지를 보내보세요!")
                         .foregroundColor(.white.opacity(0.6))
                         .font(.caption)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                         .padding(.bottom, 16)
-
+                    
                     Button(action: {
                         tabRouter.navigateToVehicles(with: nil)
                         dismiss()
@@ -58,7 +58,7 @@ struct ChatRoomListView: View {
                     .padding(.horizontal, 20)
                 }
                 .frame(maxHeight: .infinity)
-
+                
             } else {
                 List {
                     ForEach(viewModel.chats) { room in
@@ -89,6 +89,24 @@ struct ChatRoomListView: View {
         }
         .onAppear{
             viewModel.loadChats()
+            viewModel.onlineBindWebSocket()
+            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+                    let chatIds = viewModel.chats.map { $0.id }
+                    if !chatIds.isEmpty {
+                        let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
+                        WebSocket.shared.send(request)
+                        print("온라인 상태 요청 전송: \(chatIds)")
+                    }
+                }
+            
+            // Chats 온라인 여부
+            let chatIds = viewModel.chats.map { $0.id }
+            if !chatIds.isEmpty {
+                let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
+                WebSocket.shared.send(request)
+            }
+            
+            
         }
     }
     
@@ -102,14 +120,13 @@ struct ChatRoomRow: View {
         HStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
                 ProfileImageView(urlString: room.profileImage)
-                
-//                if room.isOnline {
-//                    Circle()
-//                        .fill(Color.green)
-//                        .frame(width: 12, height: 12)
-//                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
-//                        .offset(x: -2, y: 1)
-//                }
+                if room.isOnline {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 12, height: 12)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        .offset(x: -2, y: 1)
+                }
             }
             
             VStack(alignment: .leading, spacing: 4) {
