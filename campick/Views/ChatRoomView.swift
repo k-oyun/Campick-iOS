@@ -28,16 +28,18 @@ struct ChatRoomView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            ChatHeader(
-                viewModel: viewModel, showCallAlert: $showCallAlert,
-                onBack: { dismiss() },
-                onCall: {
-                    if let seller = viewModel.seller {
-                        callSeller(seller: seller)
-                        print(viewModel.seller?.phoneNumber ?? "no seller phone")
-                    }
-                },
-            )
+            NavigationStack{
+                ChatHeader(
+                    viewModel: viewModel, showCallAlert: $showCallAlert,
+                    onBack: { dismiss() },
+                    onCall: {
+                        if let seller = viewModel.seller {
+                            callSeller(seller: seller)
+                            print(viewModel.seller?.phoneNumber ?? "no seller phone")
+                        }
+                    },
+                )
+            }
             
             
             MessageList(
@@ -169,6 +171,9 @@ struct ChatRoomView: View {
             }
             viewModel.bindWebSocket()
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
+            
+            viewModel.observeChatRoomOnlineStatus(chatId: chatRoomId)
+
             
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
                     let payload = ChatMessagePayload(

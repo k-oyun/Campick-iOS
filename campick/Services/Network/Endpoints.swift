@@ -37,9 +37,12 @@ enum Endpoint {
     case productStatus
     case chatStart
     case chatGet(chatRoomId: String)
+    case chatPatch(chatRoomId: String)
     case favorites(memberId: String)
     case categoryType(typeName: String)
     case chatImage
+    case chatComplete(chatRoomId: String)
+    case totalUnreadMsg
     
     static let baseURL = "https://campick.shop"
 
@@ -73,9 +76,13 @@ enum Endpoint {
         case .productStatus: return "/api/product/status"
         case .chatStart: return "/api/chat/start"
         case .chatGet(let chatRoomId): return "/api/chat/\(chatRoomId)"
+        case .chatPatch(let chatRoomId): return "/api/chat/\(chatRoomId)"
         case .favorites(let memberId): return "/api/member/favorite/\(memberId)"
         case .categoryType(let typeName): return "/api/category/type/\(typeName)"
         case .chatImage: return "/api/chat/image"
+        case .chatComplete(let chatRoomId): return "/api/chat/complete/\(chatRoomId)"
+        case .totalUnreadMsg: return "/api/chat/totalUnreadMessage"
+        
         }
     }
 
