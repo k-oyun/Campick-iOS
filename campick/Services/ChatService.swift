@@ -167,6 +167,23 @@ class ChatService: ObservableObject {
     }
     
     
+    func leaveChatRoom(chatRoomId: Int, completion: @escaping (Result<Void, AFError>) -> Void) {
+        APIService.shared
+            .request(
+                Endpoint.chatComplete(chatRoomId: String(chatRoomId)).url,
+                method: .delete // 보통 나가기/삭제는 DELETE, 서버에 맞춰서 POST로 바꿔도 됨
+            )
+            .validate()
+            .response { response in
+                switch response.result {
+                case .success:
+                    completion(.success(()))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
+    
 }
 
 

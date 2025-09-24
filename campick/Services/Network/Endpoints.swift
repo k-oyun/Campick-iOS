@@ -40,6 +40,7 @@ enum Endpoint {
     case favorites(memberId: String)
     case categoryType(typeName: String)
     case chatImage
+    case chatComplete(chatRoomId: String)
     
     static let baseURL = "https://campick.shop"
 
@@ -76,6 +77,8 @@ enum Endpoint {
         case .favorites(let memberId): return "/api/member/favorite/\(memberId)"
         case .categoryType(let typeName): return "/api/category/type/\(typeName)"
         case .chatImage: return "/api/chat/image"
+        case .chatComplete(let chatRoomId): return "/api/chat/complete/\(chatRoomId)"
+        
         }
     }
 

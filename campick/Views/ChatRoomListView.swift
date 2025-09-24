@@ -72,6 +72,17 @@ struct ChatRoomListView: View {
                             .padding(.bottom, 10)
                     }
                     .onDelete { indexSet in
+                        for index in indexSet {
+                            let room = viewModel.chats[index]
+                            ChatService.shared.leaveChatRoom(chatRoomId: room.id) { result in
+                                switch result {
+                                case .success:
+                                    print("채팅방 나가기 성공: \(room.id)")
+                                case .failure(let error):
+                                    print("채팅방 나가기 실패: \(error.localizedDescription)")
+                                }
+                            }
+                        }
                         viewModel.chats.remove(atOffsets: indexSet)
                     }
                 }
