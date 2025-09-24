@@ -95,6 +95,18 @@ struct ChatRoomListView: View {
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $selectedRoom) { room in
             ChatRoomView(chatRoomId: room.id, chatMessage: "")
+                .onAppear {
+                    ChatService.shared.patchChatRoom(chatRoomId: room.id) { result in
+                        switch result {
+                        case .success(let message):
+                            print("채팅방 읽음 처리 성공: \(message)")
+                            // 필요하면 뱃지 갱신 API 호출
+                            // viewModel.loadChats() 같은 것도 가능
+                        case .failure(let error):
+                            print("채팅방 읽음 처리 실패: \(error.localizedDescription)")
+                        }
+                    }
+                }
                 .navigationBarHidden(true)
                 .toolbar(.hidden, for: .navigationBar)
         }
@@ -102,13 +114,13 @@ struct ChatRoomListView: View {
             viewModel.loadChats()
             viewModel.onlineBindWebSocket()
             Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-                    let chatIds = viewModel.chats.map { $0.id }
-                    if !chatIds.isEmpty {
-                        let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
-                        WebSocket.shared.send(request)
-                        print("온라인 상태 요청 전송: \(chatIds)")
-                    }
+                let chatIds = viewModel.chats.map { $0.id }
+                if !chatIds.isEmpty {
+                    let request = IsOnlineRequest(data: ChatIdList(chatId: chatIds))
+                    WebSocket.shared.send(request)
+                    print("온라인 상태 요청 전송: \(chatIds)")
                 }
+            }
             
             // Chats 온라인 여부
             let chatIds = viewModel.chats.map { $0.id }
