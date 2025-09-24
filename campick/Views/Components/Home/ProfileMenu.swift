@@ -118,7 +118,16 @@ struct ProfileMenu: View {
                                     destination: AnyView(MyProductListView(memberId: userState.memberId)),
                                     showSlideMenu: $showSlideMenu
                                 )
-                                MenuItem(icon: "message", title: "채팅", subtitle: "진행중인 대화", badge: "3", destination: AnyView(ChatRoomListView()),  showSlideMenu: $showSlideMenu)
+                                MenuItem(
+                                    icon: "message",
+                                    title: "채팅",
+                                    subtitle: "진행중인 대화",
+                                    badge: viewModel.totalUnreadCount > 0
+                                        ? "\(viewModel.totalUnreadCount)"
+                                        : "0",
+                                    destination: AnyView(ChatRoomListView()),
+                                    showSlideMenu: $showSlideMenu
+                                )
                             }
                             .padding(10)
                             

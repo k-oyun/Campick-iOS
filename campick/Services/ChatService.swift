@@ -184,6 +184,26 @@ class ChatService: ObservableObject {
             }
     }
     
+    
+    func getTotalUnreadMessage(completion: @escaping (Result<Int, AFError>) -> Void) {
+            APIService.shared
+                .request(Endpoint.totalUnreadMsg.url, method: .get)
+                .validate()
+                .responseDecodable(of: ApiResponse<Int>.self, decoder: decoder) { response in
+                    switch response.result {
+                    case .success(let apiResponse):
+                        if let count = apiResponse.data {
+                            print("안읽은 메시지:",count)
+                            completion(.success(count))
+                        } else {
+                            completion(.failure(AFError.responseValidationFailed(reason: .dataFileNil)))
+                        }
+                    case .failure(let error):
+                        completion(.failure(error))
+                    }
+                }
+        }
+    
 }
 
 

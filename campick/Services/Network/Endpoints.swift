@@ -41,6 +41,7 @@ enum Endpoint {
     case categoryType(typeName: String)
     case chatImage
     case chatComplete(chatRoomId: String)
+    case totalUnreadMsg
     
     static let baseURL = "https://campick.shop"
 
@@ -78,6 +79,7 @@ enum Endpoint {
         case .categoryType(let typeName): return "/api/category/type/\(typeName)"
         case .chatImage: return "/api/chat/image"
         case .chatComplete(let chatRoomId): return "/api/chat/complete/\(chatRoomId)"
+        case .totalUnreadMsg: return "/api/chat/totalUnreadMessage"
         
         }
     }
