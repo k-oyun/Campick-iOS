@@ -160,13 +160,9 @@ struct MessageList: View {
     }
 }
 
-
 struct MessageBubble: View {
     let message: Chat
     let isLast: Bool
-//    let isLastMyMessage: Bool
-    
-    
     @ObservedObject var viewModel: ChatViewModel
     
     var body: some View {
@@ -174,11 +170,34 @@ struct MessageBubble: View {
             if viewModel.isMyMessage(message) {
                 Spacer()
                 VStack(alignment: .trailing) {
-                    Text(message.message)
-                        .padding()
-                        .background(AppColors.brandOrange)
-                        .foregroundColor(.white)
-                        .cornerRadius(16)
+                    if let url = URL(string: message.message),
+                       message.message.hasPrefix("http") {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(width: 200, height: 200)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: 200, maxHeight: 200)
+                                    .cornerRadius(12)
+                            case .failure:
+                                Text("이미지를 불러올 수 없습니다")
+                                    .foregroundColor(.red)
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    } else {
+                        Text(message.message)
+                            .padding()
+                            .background(AppColors.brandOrange)
+                            .foregroundColor(.white)
+                            .cornerRadius(16)
+                    }
+
                     if isLast {
                         HStack(spacing: 4) {
                             Text(message.sendAt)
@@ -186,11 +205,6 @@ struct MessageBubble: View {
                                 .font(.caption2)
                         }
                     }
-//                    HStack(spacing: 4) {
-//                        Text(message.sendAt)
-//                            .foregroundColor(.white.opacity(0.5))
-//                            .font(.caption2)
-//                    }
                 }
                 .frame(maxWidth: 300, alignment: .trailing)
             } else {
@@ -199,7 +213,27 @@ struct MessageBubble: View {
                     .frame(width: 40, height: 40)
                     .clipShape(Circle())
                 VStack(alignment: .leading) {
-                    VStack(alignment: .leading, spacing: 6) {
+                    if let url = URL(string: message.message),
+                       message.message.hasPrefix("http") {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(width: 200, height: 200)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(maxWidth: 200, maxHeight: 200)
+                                    .cornerRadius(12)
+                            case .failure:
+                                Text("이미지를 불러올 수 없습니다")
+                                    .foregroundColor(.red)
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    } else {
                         Text(message.message)
                             .padding()
                             .background(.ultraThinMaterial.opacity(0.2))
@@ -209,14 +243,11 @@ struct MessageBubble: View {
                             )
                             .foregroundColor(.white)
                             .cornerRadius(16)
-                        //                    }
                     }
-                    .frame(maxWidth: 300, alignment: .leading)
-                    Spacer()
                 }
+                .frame(maxWidth: 300, alignment: .leading)
                 .padding(.vertical, 4)
             }
-            
         }
     }
 }

@@ -54,7 +54,6 @@ struct ChatRoomView: View {
                 showAttachmentMenu: $showAttachmentMenu,
                 onSend: { message in
                     if let url = viewModel.uploadedImageUrl {
-                        // 업로드된 이미지 URL 전송
                         let payload = ChatMessagePayload(
                             type: "chat_message",
                             data: ChatMessageData(
@@ -64,15 +63,19 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-                        
-//                        viewModel.messages.append(
-//                            Chat(message: "", senderId: Int(userState.memberId) ?? 0,
-//                                 sendAt: ISO8601DateFormatter().string(from: Date()),
-//                                 isRead: false)
-//                        )
-                        
+                        viewModel.messages.append(
+                            Chat(
+                                message: url,
+                                senderId: Int(userState.memberId) ?? 0,
+                                sendAt: ISO8601DateFormatter().string(from: Date()),
+                                isRead: false
+                            )
+                        )
+
                         viewModel.uploadedImageUrl = nil
+                        pendingImage = nil
                     } else {
+                        // 평범한 텍스트 메시지
                         let payload = ChatMessagePayload(
                             type: "chat_message",
                             data: ChatMessageData(
@@ -82,11 +85,14 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-                        
+
                         viewModel.messages.append(
-                            Chat(message: message, senderId: Int(userState.memberId) ?? 0,
-                                 sendAt: ISO8601DateFormatter().string(from: Date()),
-                                 isRead: false)
+                            Chat(
+                                message: message,
+                                senderId: Int(userState.memberId) ?? 0,
+                                sendAt: ISO8601DateFormatter().string(from: Date()),
+                                isRead: false
+                            )
                         )
                         newMessage = ""
                     }
@@ -175,12 +181,12 @@ struct ChatRoomView: View {
                     )
                     print("🚀 initial message 보내기: \(payload)")
                     WebSocket.shared.send(payload)   // 👈 send 추가
-                    viewModel.messages.append(
-                            Chat(message: initialMessage,
-                                 senderId: Int(userState.memberId) ?? 0,
-                                 sendAt: ISO8601DateFormatter().string(from: Date()),
-                                 isRead: false)
-                    )
+//                    viewModel.messages.append(
+//                            Chat(message: initialMessage,
+//                                 senderId: Int(userState.memberId) ?? 0,
+//                                 sendAt: ISO8601DateFormatter().string(from: Date()),
+//                                 isRead: false)
+//                    )
                 }
             
         }
