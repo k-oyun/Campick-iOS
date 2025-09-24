@@ -28,16 +28,18 @@ struct ChatRoomView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            ChatHeader(
-                viewModel: viewModel, showCallAlert: $showCallAlert,
-                onBack: { dismiss() },
-                onCall: {
-                    if let seller = viewModel.seller {
-                        callSeller(seller: seller)
-                        print(viewModel.seller?.phoneNumber ?? "no seller phone")
-                    }
-                },
-            )
+            NavigationStack{
+                ChatHeader(
+                    viewModel: viewModel, showCallAlert: $showCallAlert,
+                    onBack: { dismiss() },
+                    onCall: {
+                        if let seller = viewModel.seller {
+                            callSeller(seller: seller)
+                            print(viewModel.seller?.phoneNumber ?? "no seller phone")
+                        }
+                    },
+                )
+            }
             
             
             MessageList(

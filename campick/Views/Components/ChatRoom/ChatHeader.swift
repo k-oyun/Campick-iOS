@@ -85,87 +85,99 @@ struct ChatHeader: View {
         }
         .padding()
         .background(AppColors.brandBackground)
-        HStack {
-//            AsyncImage(url: URL(string: viewModel.vehicle?.image ?? "")) { phase in
-//                if let image = phase.image {
-//                    image.resizable().scaledToFill()
-//                } else if phase.error != nil {
-//                    ZStack {
-//                        RoundedRectangle(cornerRadius: 8)
-//                            .fill(Color.gray.opacity(0.3))
-//                            .frame(width: 60, height: 45)
-//                        Image(systemName: "car.fill")
-//                            .resizable()
-//                            .scaledToFit()
-//                            .frame(width: 24, height: 24)
-//                            .foregroundColor(.white.opacity(0.6))
-//                    }
-//                } else {
-//                    ZStack {
-//                        RoundedRectangle(cornerRadius: 8)
-//                            .fill(Color.gray.opacity(0.3))
-//                            .frame(width: 60, height: 45)
-//                        Image(systemName: "car.fill")
-//                            .resizable()
-//                            .scaledToFit()
-//                            .frame(width: 24, height: 24)
-//                            .foregroundColor(.white.opacity(0.6))
-//                    }
-//                }
-//            }
-//            .frame(width: 60, height: 45)
-//            .cornerRadius(8)
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
+        
+        NavigationLink {
+            if let vehicleId = viewModel.vehicle?.id {
+                VehicleDetailView(vehicleId: vehicleId)
+            } else {
+                ErrorView()
+            }
+        } label: {
+            HStack {
+                            
+                ZStack {
+//                    RoundedRectangle(cornerRadius: 8)
+//                        .fill(Color.gray.opacity(0.3))
+//                        .frame(width: 60, height: 45)
+//                    Image(systemName: "car.fill")
+//                        .resizable()
+//                        .scaledToFit()
+//                        .frame(width: 24, height: 24)
+//                        .foregroundColor(.white.opacity(0.6))
+                    AsyncImage(url: URL(string: viewModel.vehicle?.image ?? "")) { phase in
+                        if let image = phase.image {
+                            image.resizable().scaledToFill()
+                        } else if phase.error != nil {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 60, height: 45)
+                                Image(systemName: "car.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                        } else {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 60, height: 45)
+                                Image(systemName: "car.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 24, height: 24)
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                        }
+                    }
                     .frame(width: 60, height: 45)
-                Image(systemName: "car.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 24, height: 24)
+                    .cornerRadius(8)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(viewModel.vehicleStatus())
+                        .font(.system(size: 11, weight: .heavy))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                    
+                    Text(viewModel.vehicleTitle() ?? "")
+                        .foregroundColor(.white)
+                        .font(.system(size: 16, weight: .heavy))
+                        .lineLimit(1)
+                    
+                    Text(viewModel.vehiclePrice() ?? "")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 12, weight: .bold))
+                        .bold()
+                }
+                
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.6))
             }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(viewModel.vehicleStatus())
-                    .font(.system(size: 11, weight: .heavy))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                
-                Text(viewModel.vehicleTitle() ?? "")
-                    .foregroundColor(.white)
-                    .font(.system(size: 16, weight: .heavy))
-                    .lineLimit(1)
-                
-                Text(viewModel.vehiclePrice() ?? "")
-                    .foregroundColor(.orange)
-                    .font(.system(size: 12, weight: .bold))
-                    .bold()
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.6))
+            .padding([.horizontal, .bottom])
+            .background(
+                AppColors.brandBackground
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 1),
+                        alignment: .bottom
+                    )
+            )
         }
-        .padding([.horizontal, .bottom])
-        .background(
-            AppColors.brandBackground
-                .overlay(
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 1),
-                    alignment: .bottom
-                )
-        )
-//        .overlay(
-//            Rectangle()
-//                .fill(Color.gray.opacity(0.3))
-//                .frame(height: 1),
-//            alignment: .bottom
-//        )
+        //        .overlay(
+        //            Rectangle()
+        //                .fill(Color.gray.opacity(0.3))
+        //                .frame(height: 1),
+        //            alignment: .bottom
+        //        )
         
         
     }
@@ -179,5 +191,24 @@ struct ChatHeader: View {
     
 }
 
-
-
+struct ErrorView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 60, height: 60)
+                .foregroundColor(.red)
+            
+            Text("잘못된 접근입니다")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            Text("차량 정보를 불러올 수 없습니다.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppColors.brandBackground.ignoresSafeArea())
+    }
+}

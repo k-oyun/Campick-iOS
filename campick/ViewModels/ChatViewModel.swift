@@ -71,8 +71,8 @@ final class ChatViewModel: ObservableObject {
                         id: String(response.productId),
                         title: response.productTitle,
                         price: response.productPrice,
-                        status: response.productStatus
-                        //                        image: response.productImage,
+                        status: response.productStatus,
+                        image: response.productImage,
                     )
                     
                     // 3. 메시지 변환
