@@ -2,7 +2,7 @@
 //  KoreanDistricts.swift
 //  campick
 //
-//  Created by Claude on 9/23/25.
+//  Created by 호집 on 9/23/25.
 //
 
 import Foundation
