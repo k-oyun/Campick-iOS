@@ -136,30 +136,46 @@ final class ProfileScreenViewModel: ObservableObject {
     private func preloadProductImages(_ products: [ProfileProduct]) async {
         guard !products.isEmpty else { return }
 
+        var hasUncachedImages = false
+
+        for product in products {
+            guard let url = URL(string: product.thumbNailUrl) else { continue }
+
+            let isCached = await MainActor.run {
+                ImageCache.shared.getImage(for: url) != nil
+            }
+
+            if !isCached {
+                let diskCached = await ImageCache.shared.getDiskImage(for: url) != nil
+                if !diskCached {
+                    hasUncachedImages = true
+                    break
+                }
+            }
+        }
+
+        guard hasUncachedImages else { return }
+
         await MainActor.run {
             self.isPreloadingImages = true
         }
 
-        // Preload thumbnail images in parallel
         await withTaskGroup(of: Void.self) { group in
             for product in products {
                 group.addTask {
                     guard let url = URL(string: product.thumbNailUrl) else { return }
 
-                    // Check if image is already cached
                     let isCached = await MainActor.run {
                         ImageCache.shared.getImage(for: url) != nil
                     }
                     if isCached {
-                        return // Already cached
+                        return
                     }
 
-                    // Check disk cache
                     if await ImageCache.shared.getDiskImage(for: url) != nil {
-                        return // Available in disk cache
+                        return
                     }
 
-                    // Download and cache the image
                     do {
                         let (data, _) = try await URLSession.shared.data(from: url)
                         if let image = UIImage(data: data) {
@@ -169,7 +185,6 @@ final class ProfileScreenViewModel: ObservableObject {
                             await ImageCache.shared.saveToDisk(image, for: url)
                         }
                     } catch {
-                        // Silently fail for individual images
                         print("Failed to preload image: \(url)")
                     }
                 }

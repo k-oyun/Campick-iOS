@@ -57,12 +57,35 @@ struct ProfileView: View {
                             .padding(.bottom, 12)
                     }
                 }
-                
+
 
                 if screenVM.isLoading || screenVM.isPreloadingImages {
-                    profileSkeletonContent
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ProfileHeaderSkeleton(isOwnProfile: isOwnProfile)
+                            TabNavigationSkeleton()
+                                .padding(.horizontal, 16)
+                            ProductListSkeleton()
+                                .padding(.horizontal, 16)
+                            if isOwnProfile {
+                                SettingsSectionSkeleton()
+                                    .padding(.horizontal, 16)
+                                    .padding(.top, 8)
+                                    .padding(.bottom, 100)
+                            }
+                        }
+                    }
                 } else {
-                    profileMainContent
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            profileHeaderSection
+                            tabNavigationSection
+                            productListSection
+                            if isOwnProfile {
+                                settingsSection
+                            }
+                        }
+                    }
                 }
 
                 if let errorMessage = screenVM.errorMessage {
@@ -155,8 +178,6 @@ struct ProfileView: View {
     // MARK: - Content Views
     private var profileSkeletonContent: some View {
         ProfileSkeletonView(isOwnProfile: isOwnProfile)
-            .transition(.opacity)
-            .animation(.easeInOut(duration: 0.4), value: screenVM.isLoading || screenVM.isPreloadingImages)
     }
 
     private var profileMainContent: some View {
@@ -170,8 +191,6 @@ struct ProfileView: View {
                 }
             }
         }
-        .transition(.opacity)
-        .animation(.easeInOut(duration: 0.4), value: screenVM.isLoading || screenVM.isPreloadingImages)
     }
 
     private var profileHeaderSection: some View {

@@ -1,10 +1,12 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 @MainActor
 final class FavoritesViewModel: ObservableObject {
     @Published var favorites: [Vehicle] = []
     @Published var isLoading = false
+    @Published var isPreloadingImages = false
     @Published var errorMessage: String? = nil
 
     func load() {
@@ -20,7 +22,10 @@ final class FavoritesViewModel: ObservableObject {
                     return
                 }
                 let page = try await ProductAPI.fetchFavorites(memberId: memberId, page: 0, size: 20)
-                favorites = page.content.map(mapToVehicle)
+                let mapped = page.content.map(mapToVehicle)
+                favorites = mapped
+
+                await preloadVehicleImages(mapped)
             } catch {
                 let app = ErrorMapper.map(error)
                 errorMessage = app.message
@@ -131,5 +136,44 @@ final class FavoritesViewModel: ObservableObject {
         } else {
             return String(format: "%.1f", scaled)
         }
+    }
+
+    private func preloadVehicleImages(_ vehicles: [Vehicle]) async {
+        guard !vehicles.isEmpty else { return }
+
+        isPreloadingImages = true
+
+        await withTaskGroup(of: Void.self) { group in
+            for vehicle in vehicles {
+                group.addTask {
+                    guard let url = vehicle.thumbnailURL else { return }
+
+                    let isCached = await MainActor.run {
+                        ImageCache.shared.getImage(for: url) != nil
+                    }
+                    if isCached {
+                        return
+                    }
+
+                    if await ImageCache.shared.getDiskImage(for: url) != nil {
+                        return
+                    }
+
+                    do {
+                        let (data, _) = try await URLSession.shared.data(from: url)
+                        if let image = UIImage(data: data) {
+                            await MainActor.run {
+                                ImageCache.shared.setImage(image, for: url)
+                            }
+                            await ImageCache.shared.saveToDisk(image, for: url)
+                        }
+                    } catch {
+                        // Silently fail
+                    }
+                }
+            }
+        }
+
+        isPreloadingImages = false
     }
 }

@@ -15,7 +15,6 @@ struct FindVehicleView: View {
     // 홈 등에서 진입 시 초기 적용할 차량 종류(옵션)
     var initialTypes: [VehicleType]? = nil
     @State private var didApplyInitial = false
-    @State private var isLoading: Bool = true
 
     var body: some View {
         ZStack {
@@ -80,20 +79,14 @@ struct FindVehicleView: View {
             } else {
                 vm.onAppear()
             }
-            // 화면이 렌더링되면 잠시 후 초기 로딩을 숨김
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                if isLoading {
-                    isLoading = false
-                }
-            }
         }
         .padding(.bottom, 60)
     }
 
     // MARK: - Computed Properties
     private var shouldShowSkeleton: Bool {
-        // 초기 화면 로딩 타이머 또는 실제 데이터/이미지 로딩 중
-        isLoading || vm.isLoading || vm.isPreloadingImages
+        // 실제 데이터/이미지 로딩 중
+        vm.isLoading || vm.isPreloadingImages
     }
 
     // MARK: - Search Field
