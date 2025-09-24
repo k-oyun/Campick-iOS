@@ -244,6 +244,14 @@ struct MessageBubble: View {
                             .foregroundColor(.white)
                             .cornerRadius(16)
                     }
+                    
+                    if isLast {
+                        HStack(spacing: 4) {
+                            Text(message.sendAt)
+                                .foregroundColor(.white.opacity(0.5))
+                                .font(.caption2)
+                        }
+                    }
                 }
                 .frame(maxWidth: 300, alignment: .leading)
                 .padding(.vertical, 4)

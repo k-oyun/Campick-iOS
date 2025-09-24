@@ -163,10 +163,21 @@ struct ChatRoomRow: View {
                         .lineLimit(1)
                 }
                 
-                Text(room.lastMessage)
-                    .foregroundColor(.white.opacity(0.6))
-                    .font(.subheadline)
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    if room.lastMessage.hasPrefix("http") {
+                        Image(systemName: "photo.fill")
+                            .foregroundColor(.white.opacity(0.6))
+                        Text("사진")
+                            .foregroundColor(.white.opacity(0.6))
+                            .font(.subheadline)
+                            .lineLimit(1)
+                    } else {
+                        Text(room.lastMessage)
+                            .foregroundColor(.white.opacity(0.6))
+                            .font(.subheadline)
+                            .lineLimit(1)
+                    }
+                }
             }
             
             
