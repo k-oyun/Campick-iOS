@@ -126,6 +126,9 @@ final class ProfileService {
         }
     }
 
+    
+    
+    
     static func updateMemberProfileImage(_ image: UIImage) async throws -> String {
         let endpoint = Endpoint.memberImage
         let url = endpoint.url

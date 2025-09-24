@@ -14,7 +14,7 @@ class ImageUploadService {
     private init() {}
 
     // 이미지 압축 함수 (1MB 이하로 만들기)
-    private func compressImage(_ image: UIImage, maxSizeInMB: Double = 1.0) -> Data? {
+     func compressImage(_ image: UIImage, maxSizeInMB: Double = 1.0) -> Data? {
         let maxBytes = maxSizeInMB * 1024 * 1024
 
         var compression: CGFloat = 1.0

@@ -7,6 +7,7 @@
 
 import Foundation
 import Alamofire
+import UIKit
 
 
 final class ChatViewModel: ObservableObject {
@@ -16,6 +17,8 @@ final class ChatViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var seller: ChatSeller?
     @Published var vehicle: ChatVehicle?
+    
+    @Published var uploadedImageUrl: String? = nil
     
 
     func bindWebSocket() {
@@ -65,6 +68,21 @@ final class ChatViewModel: ObservableObject {
 
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+    func uploadChatImage(chatId: Int, image: UIImage, completion: @escaping (Result<String, AFError>) -> Void) {
+        ChatService.shared.uploadChatImage(chatId: chatId, image: image) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let imageUrl):
+                    print("이미지 업로드 성공, URL: \(imageUrl)")
+                    self.uploadedImageUrl = imageUrl   // 👈 여기 저장
+                    completion(.success(imageUrl))
+                case .failure(let error):
+                    print("이미지 업로드 실패: \(error.localizedDescription)")
+                    completion(.failure(error))
                 }
             }
         }

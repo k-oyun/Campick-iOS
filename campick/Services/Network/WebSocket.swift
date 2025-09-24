@@ -30,7 +30,7 @@ class WebSocket {
         print("📡 receive() 호출 직전")
         receive()
         print("📡 receive() 호출 직후")
-        startPing()
+//        startPing()
         
     }
     
