@@ -25,6 +25,7 @@ struct ProfileEditModal: View {
     @State private var showErrorAlert = false
     @State private var errorMessage = ""
     @State private var permissionAlert: PermissionAlertItem?
+    @State private var showSuccessAlert = false
 
     init(profile: ProfileResponse, onSave: @escaping () -> Void) {
         self.profile = profile
@@ -208,6 +209,13 @@ struct ProfileEditModal: View {
         .alert(item: $permissionAlert) { alert in
             Alert(title: Text(alert.title), message: Text(alert.message), dismissButton: .default(Text("확인")))
         }
+        .alert("저장 완료", isPresented: $showSuccessAlert) {
+            Button("확인") {
+                dismiss()
+            }
+        } message: {
+            Text("저장되었습니다")
+        }
     }
 
     private struct PermissionAlertItem: Identifiable {
@@ -268,7 +276,7 @@ struct ProfileEditModal: View {
             // 성공 시 완료 처리
             await MainActor.run {
                 onSave()
-                dismiss()
+                showSuccessAlert = true
             }
 
         } catch {

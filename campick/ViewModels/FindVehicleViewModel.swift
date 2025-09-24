@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import UIKit
 
 @MainActor
 final class FindVehicleViewModel: ObservableObject {
@@ -19,6 +20,8 @@ final class FindVehicleViewModel: ObservableObject {
 
     // Data
     @Published var vehicles: [Vehicle] = []
+    @Published var isLoading: Bool = false
+    @Published var isPreloadingImages: Bool = false
 
     func onSubmitQuery() {
         fetchVehicles()
@@ -38,6 +41,7 @@ final class FindVehicleViewModel: ObservableObject {
 
     func fetchVehicles() {
         Task {
+            isLoading = true
             do {
                 let allowedTypes = Set(VehicleType.allCases) // 서버 허용 값
                 let selectedTypes = vmSafeTypes()
@@ -57,10 +61,14 @@ final class FindVehicleViewModel: ObservableObject {
                 let page = try await ProductAPI.fetchProducts(page: 0, size: 30, filter: filter, sort: sort)
                 let mapped = page.content.map(mapToVehicle)
                 vehicles = mapped
+
+                // Preload vehicle images
+                await preloadVehicleImages(mapped)
             } catch {
                 // 네트워크 실패 시 현재 리스트 유지 또는 비우기 선택
                 vehicles = []
             }
+            isLoading = false
         }
     }
 
@@ -122,6 +130,18 @@ final class FindVehicleViewModel: ObservableObject {
     // Build URL from string, preferring original; fall back to percent-decoded
     private func urlFrom(_ s: String?) -> URL? {
         guard let s = s, !s.isEmpty else { return nil }
+
+        // Filter out invalid placeholder strings
+        let invalidStrings = ["string", "null", "undefined", "none", ""]
+        if invalidStrings.contains(s.lowercased()) {
+            return nil
+        }
+
+        // Must start with http or https
+        guard s.lowercased().hasPrefix("http://") || s.lowercased().hasPrefix("https://") else {
+            return nil
+        }
+
         // Firebase download URLs expect encoded path (%2F). Use original first.
         if let u = URL(string: s) { return u }
         if let decoded = s.removingPercentEncoding, let u = URL(string: decoded) { return u }
@@ -207,5 +227,48 @@ final class FindVehicleViewModel: ObservableObject {
         } else {
             return String(format: "%.1f", scaled)
         }
+    }
+
+    private func preloadVehicleImages(_ vehicles: [Vehicle]) async {
+        guard !vehicles.isEmpty else { return }
+
+        isPreloadingImages = true
+
+        // Preload thumbnail images in parallel
+        await withTaskGroup(of: Void.self) { group in
+            for vehicle in vehicles {
+                group.addTask {
+                    guard let url = vehicle.thumbnailURL else { return }
+
+                    // Check if image is already cached
+                    let isCached = await MainActor.run {
+                        ImageCache.shared.getImage(for: url) != nil
+                    }
+                    if isCached {
+                        return // Already cached
+                    }
+
+                    // Check disk cache
+                    if await ImageCache.shared.getDiskImage(for: url) != nil {
+                        return // Available in disk cache
+                    }
+
+                    // Download and cache the image
+                    do {
+                        let (data, _) = try await URLSession.shared.data(from: url)
+                        if let image = UIImage(data: data) {
+                            await MainActor.run {
+                                ImageCache.shared.setImage(image, for: url)
+                            }
+                            await ImageCache.shared.saveToDisk(image, for: url)
+                        }
+                    } catch {
+                        // Silently fail for individual images
+                    }
+                }
+            }
+        }
+
+        isPreloadingImages = false
     }
 }

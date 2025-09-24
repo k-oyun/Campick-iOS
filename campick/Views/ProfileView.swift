@@ -59,12 +59,13 @@ struct ProfileView: View {
                 }
                 
 
-                if screenVM.isLoading {
-                    Spacer()
-                    ProgressView("로딩 중...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    Spacer()
-                } else if let errorMessage = screenVM.errorMessage {
+                if screenVM.isLoading || screenVM.isPreloadingImages {
+                    profileSkeletonContent
+                } else {
+                    profileMainContent
+                }
+
+                if let errorMessage = screenVM.errorMessage {
                     Spacer()
                     VStack(spacing: 16) {
                         Text("오류가 발생했습니다")
@@ -81,50 +82,6 @@ struct ProfileView: View {
                     }
                     .padding()
                     Spacer()
-                } else {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            // ProfileHeaderSection 사용
-                            if let profile = screenVM.profile {
-                                ProfileHeaderSection(
-                                    profile: profile,
-                                    totalListings: screenVM.totalListings,
-                                    sellingCount: screenVM.sellingCount,
-                                    soldCount: screenVM.soldCount,
-                                    isOwnProfile: isOwnProfile,
-                                    onEditTapped: {
-                                        screenVM.openEdit()
-                                    }
-                                )
-                            }
-
-                            // TabNavigationSection 사용
-                            TabNavigationSection(activeTab: $activeTab)
-                                .padding(.horizontal, 16)
-
-                            // ProductListSection 사용
-                            ProductListSection(
-                                products: currentProducts,
-                                hasMore: hasMoreProducts,
-                                onLoadMore: {
-                                    // 더보기 버튼을 누르면 내 매물 페이지로 이동
-                                    screenVM.goToMyProducts()
-                                }
-                            )
-                            .padding(.horizontal, 16)
-
-                            if isOwnProfile {
-                                SettingsSection(
-                                    onChangePassword: { screenVM.showPasswordChangeView = true },
-                                    onLogout: { screenVM.showLogoutModal = true },
-                                    onDeleteAccount: { screenVM.showWithdrawalModal = true }
-                                )
-                                .padding(.horizontal, 16)
-                                .padding(.top, 8)
-                                .padding(.bottom, 100)
-                            }
-                        }
-                    }
                 }
             }
             .padding(.top, showTopBar ? 0 : 30)
@@ -195,6 +152,71 @@ struct ProfileView: View {
         return currentProducts.count > 0
     }
 
+    // MARK: - Content Views
+    private var profileSkeletonContent: some View {
+        ProfileSkeletonView(isOwnProfile: isOwnProfile)
+            .transition(.opacity)
+            .animation(.easeInOut(duration: 0.4), value: screenVM.isLoading || screenVM.isPreloadingImages)
+    }
+
+    private var profileMainContent: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                profileHeaderSection
+                tabNavigationSection
+                productListSection
+                if isOwnProfile {
+                    settingsSection
+                }
+            }
+        }
+        .transition(.opacity)
+        .animation(.easeInOut(duration: 0.4), value: screenVM.isLoading || screenVM.isPreloadingImages)
+    }
+
+    private var profileHeaderSection: some View {
+        Group {
+            if let profile = screenVM.profile {
+                ProfileHeaderSection(
+                    profile: profile,
+                    totalListings: screenVM.totalListings,
+                    sellingCount: screenVM.sellingCount,
+                    soldCount: screenVM.soldCount,
+                    isOwnProfile: isOwnProfile,
+                    onEditTapped: {
+                        screenVM.openEdit()
+                    }
+                )
+            }
+        }
+    }
+
+    private var tabNavigationSection: some View {
+        TabNavigationSection(activeTab: $activeTab)
+            .padding(.horizontal, 16)
+    }
+
+    private var productListSection: some View {
+        ProductListSection(
+            products: currentProducts,
+            hasMore: hasMoreProducts,
+            onLoadMore: {
+                screenVM.goToMyProducts()
+            }
+        )
+        .padding(.horizontal, 16)
+    }
+
+    private var settingsSection: some View {
+        SettingsSection(
+            onChangePassword: { screenVM.showPasswordChangeView = true },
+            onLogout: { screenVM.showLogoutModal = true },
+            onDeleteAccount: { screenVM.showWithdrawalModal = true }
+        )
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+        .padding(.bottom, 100)
+    }
 }
 
 

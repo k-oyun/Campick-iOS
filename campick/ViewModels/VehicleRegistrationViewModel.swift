@@ -87,6 +87,16 @@ final class VehicleRegistrationViewModel: ObservableObject {
         // 이미지 URL 세팅 (메인 + 나머지)
         if let urls = dto.productImage, !urls.isEmpty {
             uploadedImageUrls = urls
+
+            // 기존 이미지들을 VehicleImage 객체로 변환 (첫 번째가 메인)
+            vehicleImages = urls.enumerated().compactMap { index, url in
+                guard !url.isEmpty else { return nil }
+                return VehicleImage(
+                    image: UIImage(), // 실제 이미지는 URL로 로드됨
+                    isMain: index == 0, // 첫 번째 이미지가 메인
+                    uploadedUrl: url
+                )
+            }
         }
 
         // 옵션 매핑: availableOptions를 기준으로 포함 여부 세팅
@@ -138,10 +148,7 @@ final class VehicleRegistrationViewModel: ObservableObject {
         // 이미지 정책: 메인 이미지를 배열 첫번째로 위치시키기
         let mainImage = vehicleImages.first { $0.isMain }
         let mainUrl = mainImage?.uploadedUrl ?? ""
-        var productUrls = uploadedImageUrls.filter { $0 != mainUrl }
-        if !mainUrl.isEmpty {
-            productUrls.insert(mainUrl, at: 0)
-        }
+        let productUrls = uploadedImageUrls.filter { $0 != mainUrl }
 
         let request = VehicleRegistrationRequest(
             generation: Int(generation) ?? 0,

@@ -179,7 +179,6 @@ struct ChatRoomRow: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.gray.opacity(0.4), lineWidth: 1)
         )
-        
     }
 }
 

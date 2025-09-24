@@ -107,16 +107,32 @@ struct VehicleImageUploadSection: View {
             }
         }) {
             ZStack {
-                Image(uiImage: vehicleImage.image)
-                    .resizable()
-                    .aspectRatio(4/3, contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipped()
-                    .cornerRadius(8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(vehicleImage.isMain ? AppColors.brandOrange : Color.clear, lineWidth: 3)
-                    )
+                Group {
+                    if let uploadedUrl = vehicleImage.uploadedUrl, !uploadedUrl.isEmpty {
+                        CachedAsyncImage(url: URL(string: uploadedUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(4/3, contentMode: .fill)
+                        } placeholder: {
+                            ZStack {
+                                Color.gray.opacity(0.3)
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            }
+                        }
+                    } else {
+                        Image(uiImage: vehicleImage.image)
+                            .resizable()
+                            .aspectRatio(4/3, contentMode: .fill)
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(vehicleImage.isMain ? AppColors.brandOrange : Color.clear, lineWidth: 3)
+                )
 
             // Loading overlay when uploading
             if vehicleImage.uploadedUrl == nil {

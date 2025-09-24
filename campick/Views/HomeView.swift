@@ -9,9 +9,10 @@ import SwiftUI
 
 struct HomeView: View {
     @Binding var showSlideMenu: Bool
-    @StateObject private var viewModel = HomeChatViewModel()
+    @StateObject private var chatViewModel = HomeChatViewModel()
+    @StateObject private var vehicleViewModel = HomeVehicleViewModel()
     @EnvironmentObject private var tabRouter: TabRouter
-    @State private var selectedType: String? = nil
+    @State private var selectedType: VehicleType? = nil
 
     var body: some View {
         ZStack {
@@ -26,33 +27,71 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         // 상단 배너
-                        TopBanner()
+                        AutoSlidingBanner()
                         // 매물 찾기
                         FindVehicle()
                         // 차량 종류
                         VehicleCategory { type in
-                            selectedType = type.displayName
+                            selectedType = type
                             tabRouter.navigateToVehicles(with: [type])
                         }
                         // 추천 매물
-                        RecommendVehicle()
+                        RecommendVehicle(homeVehicleViewModel: vehicleViewModel)
                         // 하단 배너
                         BottomBanner()
                             .padding(.bottom, 70)
                     }
                     .padding()
                 }
-                // .safeAreaInset(edge: .bottom) {
-                //     BottomTabBarView(currentSelection: .home)
-                // }
             }
 
             // 네비게이션은 탭 전환(TabRouter)로 처리하므로 별도 NavigationLink 불필요
         }
         .onAppear {
-            viewModel.connectWebSocket(userId: UserState.shared.memberId)
-//            WebSocket.shared.sendChatInit()
-            
+            chatViewModel.connectWebSocket(userId: UserState.shared.memberId)
+            WebSocket.shared.sendChatInit()
+
+            // Load vehicle data
+            if vehicleViewModel.vehicles.isEmpty {
+                vehicleViewModel.loadRecommendVehicles()
+            }
+
+            // Preload profile image
+            Task {
+                await preloadProfileImage()
+            }
+        }
+    }
+
+    private func preloadProfileImage() async {
+        let userState = UserState.shared
+        guard !userState.profileImageUrl.isEmpty,
+              let url = URL(string: userState.profileImageUrl) else { return }
+
+        // Check if image is already cached
+        let isCached = await MainActor.run {
+            ImageCache.shared.getImage(for: url) != nil
+        }
+        if isCached {
+            return // Already cached
+        }
+
+        // Check disk cache
+        if await ImageCache.shared.getDiskImage(for: url) != nil {
+            return // Available in disk cache
+        }
+
+        // Download and cache the image
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let image = UIImage(data: data) {
+                await MainActor.run {
+                    ImageCache.shared.setImage(image, for: url)
+                }
+                await ImageCache.shared.saveToDisk(image, for: url)
+            }
+        } catch {
+            // Silently fail
         }
     }
 }

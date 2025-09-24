@@ -15,86 +15,36 @@ struct FindVehicleView: View {
     // 홈 등에서 진입 시 초기 적용할 차량 종류(옵션)
     var initialTypes: [VehicleType]? = nil
     @State private var didApplyInitial = false
+    @State private var isLoading: Bool = true
 
     var body: some View {
         ZStack {
             AppColors.background.edgesIgnoringSafeArea(.all)
-            VStack {
 
-                // 매물 검색 필드
-                ZStack(alignment: .leading) {
-                    if vm.query.isEmpty {
-                        HStack(spacing: 8) {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundStyle(.white.opacity(0.7))
-                            Text("차량명, 지역명으로 검색")
-                                .foregroundStyle(.white.opacity(0.6))
-                        }
-                        .padding(12)
-                    }
+            ZStack {
+                // 실제 콘텐츠 (항상 렌더링)
+                VStack {
+                    searchField
+                    filterSection
+                    appliedFiltersView
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
+                    dividerLine
 
-                    HStack(spacing: 8) {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundStyle(.white)
-                        TextField("", text: $vm.query)
-                            .foregroundStyle(.white)
-                            .tint(.white)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .onSubmit { vm.onSubmitQuery() }
-                    }
-                    .padding(12)
-                }
-                .background(Color.white.opacity(0.1))
-                .frame(maxWidth: 560)
-                .clipShape(Capsule())
-                .padding(.horizontal, 12)
-                .padding(.bottom, 4)
-                
-                // 필터링
-                HStack(spacing: 12) {
-                    Chip(title: "필터", systemImage: "line.3.horizontal.decrease.circle", isSelected: false) {
-                        vm.showingFilter = true
-                    }
-
-                    Spacer()
-
-                        /* 정렬 변경 처리 */
-                    Chip(title: vm.selectedSort.rawValue, systemImage: "arrow.up.arrow.down", isSelected: false) {
-                        vm.showingSortView = true
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 4)
-
-                // 적용된 필터/정렬 Chips (구분선 위)
-                appliedFiltersView
-                    .padding(.horizontal, 12)
-                    .padding(.top, 8)
-
-                Rectangle()
-                    .fill(Color.white.opacity(0.12))
-                    .frame(height: 1)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 4)
-
-                // 매물 카드뷰 리스트
-                ScrollView {
-                    let columns = [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)]
-                    LazyVGrid(columns: columns, spacing: 12) {
-                        ForEach(vm.vehicles, id: \.id) { vehicle in
-                            NavigationLink {
-                                VehicleDetailView(vehicleId: vehicle.id)
-                            } label: {
-                                VehicleCardView(vehicle: vehicle)
-                            }
+                    // 카드 영역 - 로딩 상태에 따라 스켈레톤 또는 실제 카드 표시
+                    ZStack {
+                        if shouldShowSkeleton {
+                            vehicleCardsSkeleton
+                                .transition(.opacity)
+                        } else {
+                            vehicleListSection
+                                .transition(.opacity)
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 12)
                 }
             }
         }
+        .animation(.easeInOut(duration: 0.4), value: shouldShowSkeleton)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .overlay {
@@ -130,14 +80,115 @@ struct FindVehicleView: View {
             } else {
                 vm.onAppear()
             }
+            // 화면이 렌더링되면 잠시 후 초기 로딩을 숨김
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                if isLoading {
+                    isLoading = false
+                }
+            }
         }
         .padding(.bottom, 60)
     }
-}
 
-// MARK: - Applied Filters Chips
-extension FindVehicleView {
-    private var appliedFiltersView: some View {
+    // MARK: - Computed Properties
+    private var shouldShowSkeleton: Bool {
+        // 초기 화면 로딩 타이머 또는 실제 데이터/이미지 로딩 중
+        isLoading || vm.isLoading || vm.isPreloadingImages
+    }
+
+    // MARK: - Search Field
+    var searchField: some View {
+        ZStack(alignment: .leading) {
+            if vm.query.isEmpty {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.white.opacity(0.7))
+                    Text("차량명, 지역명으로 검색")
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .padding(12)
+            }
+
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.white)
+                TextField("", text: $vm.query)
+                    .foregroundStyle(.white)
+                    .tint(.white)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .onSubmit { vm.onSubmitQuery() }
+            }
+            .padding(12)
+        }
+        .background(Color.white.opacity(0.1))
+        .frame(maxWidth: 560)
+        .clipShape(Capsule())
+        .padding(.horizontal, 12)
+        .padding(.bottom, 4)
+    }
+
+    // MARK: - Filter Section
+    var filterSection: some View {
+        HStack(spacing: 12) {
+            Chip(title: "필터", systemImage: "line.3.horizontal.decrease.circle", isSelected: false) {
+                vm.showingFilter = true
+            }
+
+            Spacer()
+
+            /* 정렬 변경 처리 */
+            Chip(title: vm.selectedSort.rawValue, systemImage: "arrow.up.arrow.down", isSelected: false) {
+                vm.showingSortView = true
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+    }
+
+    // MARK: - Divider Line
+    var dividerLine: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.12))
+            .frame(height: 1)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 4)
+    }
+
+    // MARK: - Vehicle Cards Skeleton
+    var vehicleCardsSkeleton: some View {
+        ScrollView {
+            let columns = [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)]
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(0..<4, id: \.self) { _ in
+                    FindVehicleCardSkeleton()
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+        }
+    }
+
+    // MARK: - Vehicle List Section
+    var vehicleListSection: some View {
+        ScrollView {
+            let columns = [GridItem(.adaptive(minimum: 300), spacing: 12, alignment: .top)]
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(vm.vehicles, id: \.id) { vehicle in
+                    NavigationLink {
+                        VehicleDetailView(vehicleId: vehicle.id)
+                    } label: {
+                        VehicleCardView(vehicle: vehicle)
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+        }
+    }
+
+    // MARK: - Applied Filters Chips
+    var appliedFiltersView: some View {
         let currentYear = Double(Calendar.current.component(.year, from: Date()))
         let defaultPrice: ClosedRange<Double> = 0...10000
         let defaultMileage: ClosedRange<Double> = 0...300000

@@ -6,11 +6,13 @@
 //
 
 import Foundation
+import UIKit
 
 
 final class HomeVehicleViewModel: ObservableObject {
     @Published var vehicles: [RecommendedVehicle] = []
     @Published var isLoading: Bool = false
+    @Published var isPreloadingImages: Bool = false
     @Published var errorMessage: String?
     @Published private var likingIds: Set<Int> = []
 
@@ -22,6 +24,10 @@ final class HomeVehicleViewModel: ObservableObject {
                 switch result {
                 case .success(let data):
                     self?.vehicles = data
+                    // Preload vehicle images
+                    Task {
+                        await self?.preloadVehicleImages(data)
+                    }
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription
                 }
@@ -93,6 +99,49 @@ final class HomeVehicleViewModel: ObservableObject {
     func formatGeneration(_ generation: Int) -> String {
         return "\(generation)년식"
     }
-    
-    
+
+    @MainActor
+    private func preloadVehicleImages(_ vehicles: [RecommendedVehicle]) async {
+        guard !vehicles.isEmpty else { return }
+
+        self.isPreloadingImages = true
+
+        // Preload thumbnail images in parallel
+        await withTaskGroup(of: Void.self) { group in
+            for vehicle in vehicles {
+                group.addTask {
+                    guard let thumbnail = vehicle.thumbNail,
+                          let url = URL(string: thumbnail) else { return }
+
+                    // Check if image is already cached
+                    let isCached = await MainActor.run {
+                        ImageCache.shared.getImage(for: url) != nil
+                    }
+                    if isCached {
+                        return // Already cached
+                    }
+
+                    // Check disk cache
+                    if await ImageCache.shared.getDiskImage(for: url) != nil {
+                        return // Available in disk cache
+                    }
+
+                    // Download and cache the image
+                    do {
+                        let (data, _) = try await URLSession.shared.data(from: url)
+                        if let image = UIImage(data: data) {
+                            await MainActor.run {
+                                ImageCache.shared.setImage(image, for: url)
+                            }
+                            await ImageCache.shared.saveToDisk(image, for: url)
+                        }
+                    } catch {
+                        // Silently fail for individual images
+                    }
+                }
+            }
+        }
+
+        self.isPreloadingImages = false
+    }
 }
