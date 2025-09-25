@@ -8,17 +8,16 @@
 import Foundation
 
 final class HomeChatViewModel: ObservableObject {
-    private let socket = WebSocket()
-    
     func connectWebSocket(userId: String) {
-            socket.connect(userId: userId)
-        }
+        WebSocket.shared.connect(userId: userId)
+    }
 
-        func disconnectWebSocket() {
-            socket.disconnect()
-        }
+    func disconnectWebSocket() {
+        WebSocket.shared.disconnect()
+    }
 
-        func sendMessage(_ text: String) {
-            socket.send(text)
-        }
+    func sendMessage(_ text: String) {
+        // 주의: 서버는 구조화된 JSON을 기대함. 단순 문자열은 사용하지 않는 것을 권장.
+        WebSocket.shared.send(text)
+    }
 }
