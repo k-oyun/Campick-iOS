@@ -46,7 +46,8 @@ struct MessageList: View {
 //                        )
 //                        .id(msg.id)
 //                    }
-                    ForEach(Array(viewModel.messages.enumerated()), id: \.1.id) { index, msg in
+                    // ID 충돌 방지를 위해 index 기반 ID 사용 (단기 해결)
+                    ForEach(Array(viewModel.messages.enumerated()), id: \.0) { index, msg in
                         let isLast = index == viewModel.messages.count - 1
                         MessageBubble(
                             message: msg,
