@@ -145,12 +145,20 @@ struct VehicleDetailView: View {
                                     createdChatId = chatId
 
                                     
+                                    // 연결 보장 후 start_room 전송
+                                    if WebSocket.shared.isConnected == false {
+                                        WebSocket.shared.connect(userId: UserState.shared.memberId)
+                                    }
                                     let initPayload = InitChat(
                                         type: "start_room",
                                         data: InitChatData(chatId: chatId)
                                     )
                                     print("🚀 initPayload: \(initPayload)")
-                                    WebSocket.shared.send(initPayload)
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                        if WebSocket.shared.isConnected {
+                                            WebSocket.shared.send(initPayload)
+                                        }
+                                    }
 
                                     navigateToChat = true
 
