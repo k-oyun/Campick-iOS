@@ -65,6 +65,7 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
+                        viewModel.optimisticAppendSent(content: url)
 
                         viewModel.uploadedImageUrl = nil
                         pendingImage = nil
@@ -79,6 +80,7 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
+                        viewModel.optimisticAppendSent(content: message)
                         newMessage = ""
                     }
                 }
