@@ -65,14 +65,7 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-                        viewModel.messages.append(
-                            Chat(
-                                message: url,
-                                senderId: Int(userState.memberId) ?? 0,
-                                sendAt: ISO8601DateFormatter().string(from: Date()),
-                                isRead: false
-                            )
-                        )
+                        viewModel.optimisticAppendSent(content: url)
 
                         viewModel.uploadedImageUrl = nil
                         pendingImage = nil
@@ -87,15 +80,7 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-
-                        viewModel.messages.append(
-                            Chat(
-                                message: message,
-                                senderId: Int(userState.memberId) ?? 0,
-                                sendAt: ISO8601DateFormatter().string(from: Date()),
-                                isRead: false
-                            )
-                        )
+                        viewModel.optimisticAppendSent(content: message)
                         newMessage = ""
                     }
                 }
@@ -158,21 +143,23 @@ struct ChatRoomView: View {
         
         .onAppear {
             print("🚀🚀🚀🚀🚀🚀🚀🚀",chatMessage)
+            // 먼저 연결 보장
+            if WebSocket.shared.isConnected == false {
+                WebSocket.shared.connect(userId: userState.memberId)
+            }
+            // 연결 확인 후 start_room 전송
             let initPayload = InitChat(
                 type: "start_room",
                 data: InitChatData(chatId: chatRoomId)
             )
-            print("🚀 initPayload: \(initPayload)")
-            WebSocket.shared.send(initPayload)
-            
-            
-            if WebSocket.shared.isConnected == false {
-                WebSocket.shared.connect(userId: userState.memberId)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                if WebSocket.shared.isConnected {
+                    print("🚀 initPayload: \(initPayload)")
+                    WebSocket.shared.send(initPayload)
+                }
             }
-            viewModel.bindWebSocket()
+            viewModel.bindWebSocket(chatId: chatRoomId)
             viewModel.loadChatRoom(chatRoomId: chatRoomId)
-            
-            viewModel.observeChatRoomOnlineStatus(chatId: chatRoomId)
 
             
             if let initialMessage = chatMessage, !initialMessage.isEmpty {
@@ -185,7 +172,11 @@ struct ChatRoomView: View {
                         )
                     )
                     print("🚀 initial message 보내기: \(payload)")
-                    WebSocket.shared.send(payload)   // 👈 send 추가
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        if WebSocket.shared.isConnected {
+                            WebSocket.shared.send(payload)
+                        }
+                    }
 //                    viewModel.messages.append(
 //                            Chat(message: initialMessage,
 //                                 senderId: Int(userState.memberId) ?? 0,
