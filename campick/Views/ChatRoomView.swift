@@ -65,14 +65,6 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-                        viewModel.messages.append(
-                            Chat(
-                                message: url,
-                                senderId: Int(userState.memberId) ?? 0,
-                                sendAt: ISO8601DateFormatter().string(from: Date()),
-                                isRead: false
-                            )
-                        )
 
                         viewModel.uploadedImageUrl = nil
                         pendingImage = nil
@@ -87,15 +79,6 @@ struct ChatRoomView: View {
                             )
                         )
                         WebSocket.shared.send(payload)
-
-                        viewModel.messages.append(
-                            Chat(
-                                message: message,
-                                senderId: Int(userState.memberId) ?? 0,
-                                sendAt: ISO8601DateFormatter().string(from: Date()),
-                                isRead: false
-                            )
-                        )
                         newMessage = ""
                     }
                 }
