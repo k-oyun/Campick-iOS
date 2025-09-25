@@ -48,8 +48,17 @@ struct HomeView: View {
             // 네비게이션은 탭 전환(TabRouter)로 처리하므로 별도 NavigationLink 불필요
         }
         .onAppear {
-            chatViewModel.connectWebSocket(userId: UserState.shared.memberId)
-            WebSocket.shared.sendChatInit()
+            // 연결 보장 후 초기 메시지 전송
+            if !UserState.shared.memberId.isEmpty {
+                if WebSocket.shared.isConnected == false {
+                    chatViewModel.connectWebSocket(userId: UserState.shared.memberId)
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    if WebSocket.shared.isConnected {
+                        WebSocket.shared.sendChatInit()
+                    }
+                }
+            }
 
             // Load vehicle data
             if vehicleViewModel.vehicles.isEmpty {
