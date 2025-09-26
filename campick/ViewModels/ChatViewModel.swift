@@ -66,6 +66,12 @@ final class ChatViewModel: ObservableObject {
             
             switch response {
             case .chat(let chatData):
+                
+                guard chatData.chatId == chatId else {
+                                print("무시: 다른 채팅방 메시지")
+                                return
+                            }
+                
                 let key = self.makeOptimisticKey(content: chatData.content, senderId: chatData.senderId)
                 let chat = Chat(
                     message: chatData.content,
