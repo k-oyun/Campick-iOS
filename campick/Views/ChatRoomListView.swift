@@ -61,7 +61,7 @@ struct ChatRoomListView: View {
                 
             } else {
                 List {
-                    ForEach(viewModel.chats) { room in
+                    ForEach(viewModel.chats.reversed()) { room in
                         ChatRoomRow(room: room)
                             .onTapGesture {
                                 selectedRoom = room
@@ -73,7 +73,8 @@ struct ChatRoomListView: View {
                     }
                     .onDelete { indexSet in
                         for index in indexSet {
-                            let room = viewModel.chats[index]
+                            let reversedChats = Array(viewModel.chats.reversed())
+                            let room = reversedChats[index]
                             ChatService.shared.leaveChatRoom(chatRoomId: room.id) { result in
                                 switch result {
                                 case .success:
@@ -82,8 +83,10 @@ struct ChatRoomListView: View {
                                     print("채팅방 나가기 실패: \(error.localizedDescription)")
                                 }
                             }
+                            if let originalIndex = viewModel.chats.firstIndex(where: { $0.id == room.id }) {
+                                viewModel.chats.remove(at: originalIndex)
+                            }
                         }
-                        viewModel.chats.remove(atOffsets: indexSet)
                     }
                 }
                 .listStyle(.plain)

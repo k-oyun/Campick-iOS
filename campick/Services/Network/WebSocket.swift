@@ -148,6 +148,7 @@ struct ReceivedChatMessagePayload: Decodable {
 }
 
 struct ReceivedChatMessageData: Decodable {
+    let chatId: Int
     let content: String
     let senderId: Int
     let sendAt: String
