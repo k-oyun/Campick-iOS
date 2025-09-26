@@ -61,7 +61,7 @@ struct ChatRoomListView: View {
                 
             } else {
                 List {
-                    ForEach(viewModel.chats) { room in
+                    ForEach(viewModel.chats.reversed()) { room in
                         ChatRoomRow(room: room)
                             .onTapGesture {
                                 selectedRoom = room
